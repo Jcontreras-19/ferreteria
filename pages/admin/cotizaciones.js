@@ -928,9 +928,11 @@ export default function AdminCotizaciones() {
                         <table className="w-full text-xs">
                           <thead className="bg-gradient-to-r from-gray-100 to-gray-200 sticky top-0 border-b-2 border-gray-300">
                             <tr>
-                              <th className="px-2 py-2 text-left font-bold text-gray-700 flex items-center gap-1">
-                                <FiPackage size={10} />
-                                Producto
+                              <th className="px-2 py-2 text-left font-bold text-gray-700">
+                                <div className="flex items-center gap-1">
+                                  <FiPackage size={10} />
+                                  Producto
+                                </div>
                               </th>
                               <th className="px-2 py-2 text-center font-bold text-gray-700">
                                 <div className="flex items-center justify-center gap-1">
