@@ -810,13 +810,16 @@ export default function AdminCotizaciones() {
         {showModal && selectedQuote && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn">
             <div className="bg-white rounded-lg w-full max-w-6xl shadow-2xl border border-gray-300 flex flex-col animate-slideUp" style={{ maxHeight: '90vh' }}>
-              {/* Header Compacto */}
-              <div className="bg-gray-800 px-4 py-3 flex items-center justify-between border-b border-gray-700">
+              {/* Header con Gradiente Colorido */}
+              <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-4 py-3 flex items-center justify-between border-b border-indigo-700 shadow-lg">
                 <div className="flex items-center gap-3">
-                  <FiFileText className="text-white" size={18} />
+                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center ring-2 ring-white/30">
+                    <FiFileText className="text-white" size={18} />
+                  </div>
                   <div>
                     <h3 className="text-base font-bold text-white">Detalles de Cotización</h3>
-                    <p className="text-gray-300 text-xs">
+                    <p className="text-blue-100 text-xs flex items-center gap-1">
+                      <FiTag size={10} />
                       {selectedQuote.quoteNumber 
                         ? `Cotización ${String(selectedQuote.quoteNumber).padStart(7, '0')}`
                         : `#${selectedQuote.id.slice(0, 8).toUpperCase()}`}
@@ -828,103 +831,169 @@ export default function AdminCotizaciones() {
                     setShowModal(false)
                     setSelectedQuote(null)
                   }}
-                  className="w-7 h-7 bg-gray-700 hover:bg-gray-600 rounded flex items-center justify-center transition-colors"
+                  className="w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110 ring-2 ring-white/30"
                 >
                   <FiX className="text-white" size={16} />
                 </button>
               </div>
 
-              {/* Contenido Compacto Sin Scroll */}
-              <div className="p-4 bg-white overflow-hidden">
+              {/* Contenido Compacto Sin Scroll con Colores */}
+              <div className="p-4 bg-gradient-to-br from-gray-50 to-white overflow-hidden">
                 <div className="grid grid-cols-12 gap-3">
-                  {/* Columna Izquierda - Info Principal */}
+                  {/* Columna Izquierda - Info Principal con Colores */}
                   <div className="col-span-12 lg:col-span-4 space-y-3">
-                    {/* Total */}
-                    <div className="bg-gray-50 rounded border border-gray-200 p-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-gray-600 font-medium">Total</span>
-                        <FiDollarSign className="text-gray-400" size={14} />
+                    {/* Total con Gradiente Verde */}
+                    <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg border-2 border-green-400 shadow-lg p-3 text-white relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8"></div>
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs text-green-100 font-semibold flex items-center gap-1">
+                            <FiDollarSign size={12} />
+                            Total
+                          </span>
+                          <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                            <FiDollarSign className="text-white" size={16} />
+                          </div>
+                        </div>
+                        <p className="text-2xl font-bold">S/. {selectedQuote.total?.toFixed(2) || '0.00'}</p>
                       </div>
-                      <p className="text-xl font-bold text-gray-900">S/. {selectedQuote.total?.toFixed(2) || '0.00'}</p>
                     </div>
 
-                    {/* Estado */}
-                    <div className="bg-gray-50 rounded border border-gray-200 p-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-gray-600 font-medium">Estado</span>
-                        <FiTag className="text-gray-400" size={14} />
+                    {/* Estado con Color según Estado */}
+                    <div className="bg-white rounded-lg border-2 border-gray-200 shadow-md p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-gray-600 font-semibold flex items-center gap-1">
+                          <FiTag size={12} />
+                          Estado
+                        </span>
+                        <div className="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <FiCheckCircle className="text-purple-600" size={14} />
+                        </div>
                       </div>
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded ${getStatusColor(selectedQuote.status)}`}>
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg shadow-sm ${getStatusColor(selectedQuote.status)}`}>
                         {getStatusIcon(selectedQuote.status)}
                         {getStatusLabel(selectedQuote.status)}
                       </span>
                     </div>
 
-                    {/* Cliente */}
-                    <div className="bg-gray-50 rounded border border-gray-200 p-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-gray-600 font-medium">Cliente</span>
-                        <FiUser className="text-gray-400" size={14} />
+                    {/* Cliente con Color Azul */}
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 shadow-md p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-blue-700 font-semibold flex items-center gap-1">
+                          <FiUser size={12} />
+                          Cliente
+                        </span>
+                        <div className="w-7 h-7 bg-blue-500 rounded-lg flex items-center justify-center shadow-sm">
+                          <FiUser className="text-white" size={14} />
+                        </div>
                       </div>
-                      <p className="text-sm font-semibold text-gray-900 truncate">{selectedQuote.name}</p>
+                      <p className="text-sm font-bold text-gray-900 truncate">{selectedQuote.name}</p>
                     </div>
 
-                    {/* Contacto */}
-                    <div className="bg-gray-50 rounded border border-gray-200 p-3">
+                    {/* Contacto con Iconos Coloridos */}
+                    <div className="bg-white rounded-lg border-2 border-gray-200 shadow-md p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <FiMail className="text-blue-500" size={14} />
+                        <span className="text-xs text-gray-600 font-semibold">Contacto</span>
+                      </div>
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <FiMail className="text-gray-400" size={12} />
-                          <p className="text-xs text-gray-900 truncate">{selectedQuote.email}</p>
+                        <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-100">
+                          <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center">
+                            <FiMail className="text-white" size={12} />
+                          </div>
+                          <p className="text-xs text-gray-900 truncate font-medium">{selectedQuote.email}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <FiPhone className="text-gray-400" size={12} />
-                          <p className="text-xs text-gray-900">{selectedQuote.whatsapp}</p>
+                        <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg border border-green-100">
+                          <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center">
+                            <FiPhone className="text-white" size={12} />
+                          </div>
+                          <p className="text-xs text-gray-900 font-medium">{selectedQuote.whatsapp}</p>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Columna Derecha - Tabla de Productos Compacta */}
+                  {/* Columna Derecha - Tabla de Productos con Colores */}
                   <div className="col-span-12 lg:col-span-8">
-                    <div className="bg-gray-50 rounded border border-gray-200 overflow-hidden">
-                      <div className="bg-gray-200 px-3 py-2 border-b border-gray-300">
-                        <h4 className="text-xs font-bold text-gray-700 flex items-center gap-1">
-                          <FiPackage size={12} />
+                    <div className="bg-white rounded-lg border-2 border-gray-200 shadow-md overflow-hidden">
+                      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-3 py-2.5 border-b border-purple-700">
+                        <h4 className="text-xs font-bold text-white flex items-center gap-2">
+                          <div className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded flex items-center justify-center">
+                            <FiPackage className="text-white" size={12} />
+                          </div>
                           Productos ({selectedQuote.products?.length || 0})
                         </h4>
                       </div>
                       <div className="max-h-64 overflow-y-auto">
                         <table className="w-full text-xs">
-                          <thead className="bg-gray-100 sticky top-0">
+                          <thead className="bg-gradient-to-r from-gray-100 to-gray-200 sticky top-0 border-b-2 border-gray-300">
                             <tr>
-                              <th className="px-2 py-1.5 text-left font-semibold text-gray-700">Producto</th>
-                              <th className="px-2 py-1.5 text-center font-semibold text-gray-700">Cant.</th>
-                              <th className="px-2 py-1.5 text-right font-semibold text-gray-700">P. Unit.</th>
-                              <th className="px-2 py-1.5 text-right font-semibold text-gray-700">Subtotal</th>
+                              <th className="px-2 py-2 text-left font-bold text-gray-700 flex items-center gap-1">
+                                <FiPackage size={10} />
+                                Producto
+                              </th>
+                              <th className="px-2 py-2 text-center font-bold text-gray-700">
+                                <div className="flex items-center justify-center gap-1">
+                                  <FiShoppingCart size={10} />
+                                  Cant.
+                                </div>
+                              </th>
+                              <th className="px-2 py-2 text-right font-bold text-gray-700">
+                                <div className="flex items-center justify-end gap-1">
+                                  <FiDollarSign size={10} />
+                                  P. Unit.
+                                </div>
+                              </th>
+                              <th className="px-2 py-2 text-right font-bold text-gray-700">
+                                <div className="flex items-center justify-end gap-1">
+                                  <FiTrendingUp size={10} />
+                                  Subtotal
+                                </div>
+                              </th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-200">
                             {selectedQuote.products?.map((product, index) => (
-                              <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                                <td className="px-2 py-1.5">
-                                  <div className="font-medium text-gray-900">{product.name}</div>
-                                  {product.description && (
-                                    <div className="text-gray-500 text-xs mt-0.5 line-clamp-1">{product.description}</div>
-                                  )}
+                              <tr key={index} className={index % 2 === 0 ? 'bg-white hover:bg-blue-50' : 'bg-gray-50 hover:bg-blue-50'}>
+                                <td className="px-2 py-2">
+                                  <div className="flex items-start gap-2">
+                                    <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
+                                      <FiPackage className="text-blue-600" size={10} />
+                                    </div>
+                                    <div>
+                                      <div className="font-semibold text-gray-900">{product.name}</div>
+                                      {product.description && (
+                                        <div className="text-gray-500 text-xs mt-0.5 line-clamp-1">{product.description}</div>
+                                      )}
+                                    </div>
+                                  </div>
                                 </td>
-                                <td className="px-2 py-1.5 text-center text-gray-900">{product.quantity}</td>
-                                <td className="px-2 py-1.5 text-right text-gray-900">S/. {product.price?.toFixed(2) || '0.00'}</td>
-                                <td className="px-2 py-1.5 text-right font-semibold text-gray-900">
-                                  S/. {((product.price || 0) * (product.quantity || 0)).toFixed(2)}
+                                <td className="px-2 py-2 text-center">
+                                  <span className="inline-flex items-center justify-center w-7 h-7 bg-indigo-100 text-indigo-700 font-bold rounded-lg text-xs">
+                                    {product.quantity}
+                                  </span>
+                                </td>
+                                <td className="px-2 py-2 text-right text-gray-900 font-medium">S/. {product.price?.toFixed(2) || '0.00'}</td>
+                                <td className="px-2 py-2 text-right">
+                                  <span className="font-bold text-green-600 text-xs">
+                                    S/. {((product.price || 0) * (product.quantity || 0)).toFixed(2)}
+                                  </span>
                                 </td>
                               </tr>
                             ))}
                           </tbody>
-                          <tfoot className="bg-gray-100 border-t-2 border-gray-300">
+                          <tfoot className="bg-gradient-to-r from-green-50 to-emerald-50 border-t-2 border-green-300">
                             <tr>
-                              <td colSpan="3" className="px-2 py-1.5 text-right font-semibold text-gray-700">Total:</td>
-                              <td className="px-2 py-1.5 text-right font-bold text-sm text-gray-900">
-                                S/. {selectedQuote.total?.toFixed(2) || '0.00'}
+                              <td colSpan="3" className="px-2 py-2 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <FiDollarSign className="text-green-600" size={12} />
+                                  <span className="font-bold text-gray-700 text-xs">Total:</span>
+                                </div>
+                              </td>
+                              <td className="px-2 py-2 text-right">
+                                <span className="font-bold text-green-600 text-sm">
+                                  S/. {selectedQuote.total?.toFixed(2) || '0.00'}
+                                </span>
                               </td>
                             </tr>
                           </tfoot>
@@ -935,11 +1004,13 @@ export default function AdminCotizaciones() {
                 </div>
               </div>
 
-              {/* Footer Compacto con Botones Rediseñados */}
-              <div className="bg-gray-50 border-t border-gray-200 px-4 py-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <FiClock size={12} />
-                  <span>{new Date(selectedQuote.createdAt).toLocaleDateString('es-PE', {
+              {/* Footer con Botones Coloridos y Diseño Mejorado */}
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-t-2 border-gray-300 px-4 py-3 flex items-center justify-between gap-3 shadow-inner">
+                <div className="flex items-center gap-2 text-xs text-gray-600 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="w-5 h-5 bg-blue-100 rounded flex items-center justify-center">
+                    <FiClock className="text-blue-600" size={12} />
+                  </div>
+                  <span className="font-medium">{new Date(selectedQuote.createdAt).toLocaleDateString('es-PE', {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric',
@@ -953,14 +1024,14 @@ export default function AdminCotizaciones() {
                       setShowModal(false)
                       handleViewPdf(selectedQuote)
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 hover:border-gray-400 text-gray-700 hover:text-gray-900 rounded text-xs font-medium transition-colors shadow-sm hover:shadow"
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-xs font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
                   >
-                    <FiFileText size={14} />
+                    <FiExternalLink size={14} />
                     Ver PDF
                   </button>
                   <button
                     onClick={() => handleDownloadPdf(selectedQuote)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 hover:border-gray-400 text-gray-700 hover:text-gray-900 rounded text-xs font-medium transition-colors shadow-sm hover:shadow"
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg text-xs font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
                   >
                     <FiDownload size={14} />
                     Descargar
@@ -970,7 +1041,7 @@ export default function AdminCotizaciones() {
                       setShowModal(false)
                       setSelectedQuote(null)
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded text-xs font-medium transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm hover:shadow"
                   >
                     <FiX size={14} />
                     Cerrar
