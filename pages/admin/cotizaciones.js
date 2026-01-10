@@ -772,27 +772,27 @@ export default function AdminCotizaciones() {
                             </div>
                           </td>
                           <td className="px-5 py-4 whitespace-nowrap">
-                            <div className="flex justify-end gap-1.5">
+                            <div className="flex justify-end gap-2">
                               <button
                                 onClick={() => handleViewQuote(quote)}
-                                className="group relative flex items-center justify-center w-8 h-8 bg-white border border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-900 rounded transition-all duration-150"
+                                className="group relative flex items-center justify-center w-9 h-9 bg-blue-50 hover:bg-blue-100 border-2 border-blue-300 hover:border-blue-400 text-blue-600 hover:text-blue-700 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-110"
                                 title="Ver detalles"
                               >
-                                <FiEye size={16} />
+                                <FiEye size={18} />
                               </button>
                               <button
                                 onClick={() => handleViewPdf(quote)}
-                                className="group relative flex items-center justify-center w-8 h-8 bg-white border border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-900 rounded transition-all duration-150"
+                                className="group relative flex items-center justify-center w-9 h-9 bg-purple-50 hover:bg-purple-100 border-2 border-purple-300 hover:border-purple-400 text-purple-600 hover:text-purple-700 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-110"
                                 title="Ver PDF"
                               >
-                                <FiFileText size={16} />
+                                <FiEye size={18} />
                               </button>
                               <button
                                 onClick={() => handleDownloadPdf(quote)}
-                                className="group relative flex items-center justify-center w-8 h-8 bg-white border border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-900 rounded transition-all duration-150"
+                                className="group relative flex items-center justify-center w-9 h-9 bg-green-50 hover:bg-green-100 border-2 border-green-300 hover:border-green-400 text-green-600 hover:text-green-700 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-110"
                                 title="Descargar PDF"
                               >
-                                <FiDownload size={16} />
+                                <FiEye size={18} />
                               </button>
                             </div>
                           </td>
