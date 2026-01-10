@@ -474,6 +474,22 @@ export default function AutorizarDespachos() {
                 {quotes.length} cotización{quotes.length !== 1 ? 'es' : ''} pendiente{quotes.length !== 1 ? 's' : ''}
               </p>
             </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setViewMode('cards')}
+                className={`p-2 rounded-lg transition-all ${viewMode === 'cards' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                title="Vista de cards"
+              >
+                <FiGrid size={16} />
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                title="Vista de tabla"
+              >
+                <FiList size={16} />
+              </button>
+            </div>
           </div>
 
           {/* Estadísticas Compactas */}

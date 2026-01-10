@@ -326,10 +326,109 @@ export default function AdminAdministradores() {
             </div>
           </div>
 
-          {/* Tabla de Administradores */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+          {/* Vista de Cards o Tabla */}
+          {viewMode === 'cards' ? (
+            /* Vista de Cards */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {users.filter(u => 
+                !searchQuery || 
+                u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                u.email.toLowerCase().includes(searchQuery.toLowerCase())
+              ).map((u) => {
+                const permissions = u.permissions
+                  ? JSON.parse(u.permissions)
+                  : []
+                return (
+                  <div key={u.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden border border-gray-200">
+                    {/* Header de la Card */}
+                    <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-4 text-white">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                          <span className="text-white font-bold text-lg">
+                            {u.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <span
+                          className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                            u.role === 'superadmin'
+                              ? 'bg-purple-500/30 text-white border border-white/30'
+                              : u.role === 'admin'
+                              ? 'bg-blue-500/30 text-white border border-white/30'
+                              : u.role === 'cotizador'
+                              ? 'bg-orange-500/30 text-white border border-white/30'
+                              : u.role === 'editor'
+                              ? 'bg-green-500/30 text-white border border-white/30'
+                              : 'bg-gray-500/30 text-white border border-white/30'
+                          }`}
+                        >
+                          {ROLES.find((r) => r.value === u.role)?.label || u.role}
+                        </span>
+                      </div>
+                      <div className="text-lg font-bold">{u.name}</div>
+                    </div>
+
+                    {/* Contenido de la Card */}
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <div className="flex items-center space-x-2 text-gray-700 text-sm mb-1">
+                          <FiUsers size={14} className="text-gray-400" />
+                          <span className="font-semibold truncate">{u.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2 text-gray-600 text-xs">
+                          <span className="truncate">{u.email}</span>
+                        </div>
+                      </div>
+
+                      {/* Permisos - Resumen */}
+                      <div className="border-t pt-2">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <FiShield size={14} className="text-gray-400" />
+                          <span className="text-xs font-semibold text-gray-700">Permisos ({permissions.length})</span>
+                        </div>
+                        <div className="text-xs text-gray-500 line-clamp-2">
+                          {permissions.length > 0 ? (
+                            permissions.slice(0, 3).map((perm, idx) => (
+                              <span key={idx}>
+                                {PERMISSIONS.find((p) => p.id === perm)?.label || perm}
+                                {idx < Math.min(permissions.length, 3) - 1 ? ', ' : ''}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-gray-400">Sin permisos específicos</span>
+                          )}
+                          {permissions.length > 3 && <span className="text-gray-400"> +{permissions.length - 3} más</span>}
+                        </div>
+                      </div>
+
+                      {/* Botones de Acción */}
+                      <div className="flex flex-col space-y-2 pt-2 border-t">
+                        <button
+                          onClick={() => handleEdit(u)}
+                          className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm transition-colors shadow-sm"
+                        >
+                          <FiEdit size={16} />
+                          <span>EDITAR</span>
+                        </button>
+                        {u.id !== user?.id && (
+                          <button
+                            onClick={() => handleDelete(u.id)}
+                            className="flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm transition-colors shadow-sm"
+                          >
+                            <FiTrash2 size={16} />
+                            <span>ELIMINAR</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            /* Vista de Tabla */
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
                   <thead className="bg-gradient-to-r from-blue-600 to-indigo-700">
                   <tr>
                     <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
@@ -440,6 +539,7 @@ export default function AdminAdministradores() {
               </table>
             </div>
           </div>
+          )}
         </div>
 
         {/* Modal */}
