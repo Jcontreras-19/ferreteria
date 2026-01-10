@@ -225,11 +225,9 @@ export default function AdminLayout({ children, user, onLogout }) {
 
         {/* Header Desktop */}
         <header className="hidden lg:block bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
-          <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center justify-between px-6 py-2">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                {menuItems.find((item) => isActive(item.href, item.exact))?.label || 'Dashboard'}
-              </h2>
+              {/* Título removido según solicitud del usuario */}
             </div>
             <div className="relative" ref={userMenuRef}>
               <button

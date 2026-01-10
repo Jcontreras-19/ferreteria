@@ -346,7 +346,7 @@ export default function AdminCotizaciones() {
           <div className="bg-white rounded-xl shadow-md border border-gray-200 p-3">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h1 className="text-base font-bold text-gray-900">Gestión de Cotizaciones</h1>
+                <h1 className="text-xl font-bold text-gray-900 uppercase tracking-wide">GESTIÓN DE COTIZACIONES</h1>
                 <p className="text-gray-600 text-xs mt-0.5">
                   {quotes.length} cotización{quotes.length !== 1 ? 'es' : ''} en total
                 </p>
@@ -771,35 +771,38 @@ export default function AdminCotizaciones() {
                             </div>
                           </td>
                           <td className="px-5 py-4 whitespace-nowrap">
-                            <div className="flex justify-end gap-2">
+                            <div className="flex justify-end gap-3">
                               <button
                                 onClick={() => handleViewQuote(quote)}
-                                className="group relative p-2.5 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all shadow-md hover:shadow-lg transform hover:scale-110"
+                                className="group relative flex items-center justify-center w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110 hover:-translate-y-0.5 border border-blue-400/30"
                                 title="Ver detalles"
                               >
-                                <FiEye size={18} />
-                                <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                <FiEye size={20} className="drop-shadow-sm" />
+                                <span className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap pointer-events-none shadow-lg z-50">
                                   Ver Detalles
+                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                                 </span>
                               </button>
                               <button
                                 onClick={() => handleViewPdf(quote)}
-                                className="group relative p-2.5 bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg transition-all shadow-md hover:shadow-lg transform hover:scale-110"
+                                className="group relative flex items-center justify-center w-11 h-11 bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 hover:from-purple-600 hover:via-purple-700 hover:to-purple-800 text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110 hover:-translate-y-0.5 border border-purple-400/30"
                                 title="Ver PDF"
                               >
-                                <FiFileText size={18} />
-                                <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                <FiFileText size={20} className="drop-shadow-sm" />
+                                <span className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap pointer-events-none shadow-lg z-50">
                                   Ver PDF
+                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                                 </span>
                               </button>
                               <button
                                 onClick={() => handleDownloadPdf(quote)}
-                                className="group relative p-2.5 bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all shadow-md hover:shadow-lg transform hover:scale-110"
+                                className="group relative flex items-center justify-center w-11 h-11 bg-gradient-to-br from-green-500 via-green-600 to-green-700 hover:from-green-600 hover:via-green-700 hover:to-green-800 text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110 hover:-translate-y-0.5 border border-green-400/30"
                                 title="Descargar PDF"
                               >
-                                <FiDownload size={18} />
-                                <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                <FiDownload size={20} className="drop-shadow-sm" />
+                                <span className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap pointer-events-none shadow-lg z-50">
                                   Descargar
+                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                                 </span>
                               </button>
                             </div>
