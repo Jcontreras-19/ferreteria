@@ -190,6 +190,127 @@ export default function AdminClientes() {
     XLSX.writeFile(wb, `clientes-${new Date().toISOString().split('T')[0]}.xlsx`)
   }
 
+  const exportToPDF = async () => {
+    try {
+      const { jsPDF } = await import('jspdf')
+      const doc = new jsPDF()
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
+      const margin = 15
+      let yPos = margin
+
+      // Encabezado
+      doc.setFillColor(37, 99, 235) // blue-600
+      doc.rect(0, 0, pageWidth, 30, 'F')
+      
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(18)
+      doc.setFont('helvetica', 'bold')
+      doc.text('CORPORACIÓN GRC', pageWidth - margin, 12, { align: 'right' })
+      doc.setFontSize(14)
+      doc.text('Reporte de Clientes', pageWidth - margin, 20, { align: 'right' })
+      doc.setFontSize(10)
+      doc.text('ISO 9001:2015', pageWidth - margin, 26, { align: 'right' })
+
+      doc.setTextColor(0, 0, 0)
+      yPos = 40
+
+      // Información del reporte
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      doc.text(`Fecha de exportación: ${new Date().toLocaleDateString('es-PE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })}`, margin, yPos)
+      yPos += 6
+      doc.text(`Total de clientes: ${filteredCustomers.length}`, margin, yPos)
+      yPos += 10
+
+      // Tabla
+      const colWidths = [15, 50, 45, 30, 30]
+      const colHeaders = ['N°', 'Nombre', 'Email', 'Teléfono', 'Total Gastado']
+      const colX = [
+        margin,
+        margin + colWidths[0],
+        margin + colWidths[0] + colWidths[1],
+        margin + colWidths[0] + colWidths[1] + colWidths[2],
+        margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3],
+      ]
+
+      // Encabezado de tabla
+      doc.setFillColor(59, 130, 246) // blue-500
+      doc.rect(margin, yPos - 8, pageWidth - (margin * 2), 8, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9)
+      colHeaders.forEach((header, idx) => {
+        doc.text(header, colX[idx] + 2, yPos - 2)
+      })
+      doc.setTextColor(0, 0, 0)
+      yPos += 5
+
+      // Filas
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      filteredCustomers.forEach((customer, index) => {
+        if (yPos > pageHeight - 30) {
+          doc.addPage()
+          yPos = margin + 20
+          doc.setFillColor(59, 130, 246)
+          doc.rect(margin, yPos - 8, pageWidth - (margin * 2), 8, 'F')
+          doc.setTextColor(255, 255, 255)
+          doc.setFont('helvetica', 'bold')
+          doc.setFontSize(9)
+          colHeaders.forEach((header, idx) => {
+            doc.text(header, colX[idx] + 2, yPos - 2)
+          })
+          doc.setTextColor(0, 0, 0)
+          doc.setFont('helvetica', 'normal')
+          doc.setFontSize(8)
+          yPos += 5
+        }
+
+        if (index % 2 === 0) {
+          doc.setFillColor(245, 245, 245)
+          doc.rect(margin, yPos - 4, pageWidth - (margin * 2), 6, 'F')
+        }
+
+        doc.text(String(index + 1), colX[0] + 2, yPos)
+        doc.text(customer.name, colX[1] + 2, yPos)
+        doc.setFontSize(7.5)
+        doc.text(customer.email || 'N/A', colX[2] + 2, yPos)
+        doc.setFontSize(8)
+        doc.text(customer.phone || 'N/A', colX[3] + 2, yPos)
+        doc.text(`S/. ${(customer.totalSpent || 0).toFixed(2)}`, colX[4] + 2, yPos)
+        yPos += 7
+      })
+
+      // Pie de página
+      const footerY = pageHeight - 20
+      doc.setFontSize(8)
+      doc.setTextColor(100, 100, 100)
+      doc.text('Corporación GRC - Av. José Gálvez 1322 Dpto. 302 La Perla - Callao', margin, footerY)
+      doc.text('Email: corporaciongrc@gmail.com | WhatsApp: (511) 957 216 908', margin, footerY + 5)
+      doc.text(`Página ${doc.internal.getNumberOfPages()}`, pageWidth - margin, footerY + 5, { align: 'right' })
+
+      const pdfBlob = doc.output('blob')
+      const url = URL.createObjectURL(pdfBlob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `clientes-${new Date().toISOString().split('T')[0]}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      alert('Error al generar reporte PDF')
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -319,13 +440,20 @@ export default function AdminClientes() {
                   </select>
                 </div>
 
-                {/* Botón de Exportar */}
+                {/* Botones de Exportar */}
                 <button
                   onClick={exportToExcel}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
                 >
                   <FiDownload size={14} />
                   <span>Excel</span>
+                </button>
+                <button
+                  onClick={exportToPDF}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
+                >
+                  <FiFileText size={14} />
+                  <span>PDF</span>
                 </button>
               </div>
 
