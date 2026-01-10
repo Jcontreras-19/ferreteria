@@ -119,14 +119,17 @@ export default function AdminConfiguracion() {
         <title>Configuración - Panel Administrador</title>
       </Head>
       <AdminLayout user={user} onLogout={handleLogout}>
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
-            <p className="text-gray-600 mt-1">Gestiona tu cuenta y preferencias</p>
+        <div className="space-y-4">
+          {/* Header Compacto */}
+          <div className="bg-white rounded-xl shadow-md border border-gray-200 p-3">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 uppercase tracking-wide">CONFIGURACIÓN</h1>
+              <p className="text-gray-600 text-xs mt-0.5">Gestiona tu cuenta y preferencias</p>
+            </div>
           </div>
 
           {/* Información del Usuario */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Información del Usuario</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -145,7 +148,7 @@ export default function AdminConfiguracion() {
           </div>
 
           {/* Cambiar Contraseña */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
               <FiKey size={20} />
               <span>Cambiar Contraseña</span>

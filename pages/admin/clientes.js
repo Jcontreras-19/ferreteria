@@ -208,105 +208,128 @@ export default function AdminClientes() {
       </Head>
       <AdminLayout user={user}>
         <div className="space-y-6">
-          {/* Header con Estadísticas */}
-          <div className="bg-gradient-to-br from-indigo-600 via-purple-700 to-pink-800 rounded-2xl shadow-2xl p-6 text-white">
-            <div className="flex items-center justify-between mb-6">
+          {/* Header Compacto con Estadísticas */}
+          <div className="bg-white rounded-xl shadow-md border border-gray-200 p-3">
+            <div className="flex items-center justify-between mb-2">
               <div>
-                <h1 className="text-3xl font-bold mb-2">Gestión de Clientes</h1>
-                <p className="text-purple-100 text-lg">
-                  {customers.length} cliente{customers.length !== 1 ? 's' : ''} registrado{customers.length !== 1 ? 's' : ''}
+                <h1 className="text-xl font-bold text-gray-900 uppercase tracking-wide">GESTIÓN DE CLIENTES</h1>
+                <p className="text-gray-600 text-xs mt-0.5">
+                  {customers.length} cliente{customers.length !== 1 ? 's' : ''} en total
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setViewMode('cards')}
-                  className={`p-3 rounded-lg transition-all ${viewMode === 'cards' ? 'bg-white/20' : 'bg-white/10 hover:bg-white/15'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'cards' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  title="Vista de cards"
                 >
-                  <FiGrid size={20} />
+                  <FiGrid size={16} />
                 </button>
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`p-3 rounded-lg transition-all ${viewMode === 'table' ? 'bg-white/20' : 'bg-white/10 hover:bg-white/15'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  title="Vista de tabla"
                 >
-                  <FiList size={20} />
+                  <FiList size={16} />
                 </button>
               </div>
             </div>
 
-            {/* Estadísticas */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-purple-100 text-sm">Total Clientes</span>
-                  <FiUsers className="text-purple-200" size={20} />
+            {/* Estadísticas Compactas */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border-2 border-blue-300 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-blue-800 text-xs font-semibold">Total</span>
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center shadow-md">
+                    <FiUsers className="text-white" size={16} />
+                  </div>
                 </div>
-                <p className="text-3xl font-bold">{stats.total}</p>
+                <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-purple-100 text-sm">Con Cotizaciones</span>
-                  <FiFileText className="text-purple-200" size={20} />
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border-2 border-purple-300 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-purple-800 text-xs font-semibold">Con Cotizaciones</span>
+                  <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center shadow-md">
+                    <FiFileText className="text-white" size={16} />
+                  </div>
                 </div>
-                <p className="text-3xl font-bold">{stats.withQuotes}</p>
+                <p className="text-2xl font-bold text-purple-900">{stats.withQuotes}</p>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-purple-100 text-sm">Total Ventas</span>
-                  <FiDollarSign className="text-purple-200" size={20} />
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border-2 border-green-300 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-green-800 text-xs font-semibold">Total Ventas</span>
+                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-md">
+                    <FiDollarSign className="text-white" size={16} />
+                  </div>
                 </div>
-                <p className="text-2xl font-bold">S/. {stats.totalSpent.toFixed(2)}</p>
+                <p className="text-lg font-bold text-green-900">S/. {stats.totalSpent.toFixed(2)}</p>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-purple-100 text-sm">Promedio</span>
-                  <FiTrendingUp className="text-purple-200" size={20} />
+              <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-3 border-2 border-indigo-300 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-indigo-800 text-xs font-semibold">Promedio</span>
+                  <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center shadow-md">
+                    <FiTrendingUp className="text-white" size={16} />
+                  </div>
                 </div>
-                <p className="text-2xl font-bold">S/. {stats.avgSpent.toFixed(2)}</p>
+                <p className="text-lg font-bold text-indigo-900">S/. {stats.avgSpent.toFixed(2)}</p>
               </div>
             </div>
           </div>
 
-          {/* Filtros y Búsqueda */}
+          {/* Filtros Compactos en una sola fila */}
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 flex items-center justify-between border-b border-gray-200">
-              <div className="flex items-center gap-2">
-                <FiFilter size={18} className="text-gray-600" />
-                <h2 className="text-base font-bold text-gray-800">Filtros y Búsqueda</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-700 text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  style={{ color: '#111827' }}
-                >
-                  <option value="name">Ordenar por Nombre</option>
-                  <option value="totalSpent">Ordenar por Total Gastado</option>
-                  <option value="totalQuotes">Ordenar por Cotizaciones</option>
-                  <option value="date">Ordenar por Fecha</option>
-                </select>
+            <div className="p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Título de Filtros */}
+                <div className="flex items-center gap-2 mr-2">
+                  <FiFilter size={16} className="text-gray-600" />
+                  <h2 className="text-sm font-bold text-gray-800">Filtros</h2>
+                  {searchQuery && (
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+                      Filtros activos
+                    </span>
+                  )}
+                </div>
+
+                {/* Búsqueda */}
+                <div className="relative flex-1 min-w-[200px]">
+                  <FiSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
+                  <input
+                    type="text"
+                    placeholder="Buscar clientes por nombre, email o teléfono..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm"
+                    style={{ color: '#111827' }}
+                  />
+                </div>
+
+                {/* Ordenar */}
+                <div className="min-w-[150px]">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white text-sm"
+                    style={{ color: '#111827' }}
+                  >
+                    <option value="name">Ordenar por Nombre</option>
+                    <option value="totalSpent">Ordenar por Total Gastado</option>
+                    <option value="totalQuotes">Ordenar por Cotizaciones</option>
+                    <option value="date">Ordenar por Fecha</option>
+                  </select>
+                </div>
+
+                {/* Botón de Exportar */}
                 <button
                   onClick={exportToExcel}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
                 >
                   <FiDownload size={14} />
                   <span>Excel</span>
                 </button>
               </div>
-            </div>
 
-            <div className="p-4">
-              <div className="relative">
-                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar clientes por nombre, email o teléfono..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 bg-white"
-                  style={{ color: '#111827' }}
-                />
-              </div>
+              {/* Contador de resultados */}
               <div className="flex items-center justify-between text-xs text-gray-600 pt-2 mt-2 border-t border-gray-200">
                 <span>Mostrando {filteredCustomers.length} de {customers.length} clientes</span>
               </div>
@@ -527,46 +550,48 @@ export default function AdminClientes() {
             <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gradient-to-r from-purple-600 to-indigo-700">
+                  <thead className="bg-gradient-to-r from-blue-600 to-indigo-700">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                      <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                         <div className="flex items-center gap-2">
-                          <FiUser size={16} />
+                          <FiUser size={14} />
                           Cliente
                         </div>
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                      <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                         <div className="flex items-center gap-2">
-                          <FiMail size={16} />
+                          <FiMail size={14} />
                           Contacto
                         </div>
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                      <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                         <div className="flex items-center gap-2">
-                          <FiCalendar size={16} />
+                          <FiCalendar size={14} />
                           Fecha Registro
                         </div>
                       </th>
-                      <th className="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
+                      <th className="px-5 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
                         <div className="flex items-center justify-center gap-2">
-                          <FiFileText size={16} />
+                          <FiFileText size={14} />
                           Cotizaciones
                         </div>
                       </th>
-                      <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">
+                      <th className="px-5 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">
                         Total Gastado
                       </th>
-                      <th className="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
+                      <th className="px-5 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
                         Acciones
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredCustomers.map((customer, index) => (
-                      <tr key={customer.id} className={`hover:bg-purple-50 transition-colors ${
-                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                      <tr key={customer.id} className={`transition-colors ${
+                        index % 2 === 0 
+                          ? 'bg-white hover:bg-blue-50' 
+                          : 'bg-gray-50 hover:bg-blue-50'
                       }`}>
-                        <td className="px-6 py-5 whitespace-nowrap">
+                        <td className="px-5 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mr-3 shadow-md ring-2 ring-purple-200">
                               <span className="text-white font-bold text-lg">
@@ -579,7 +604,7 @@ export default function AdminClientes() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-5 whitespace-nowrap">
+                        <td className="px-5 py-4 whitespace-nowrap">
                           {editingCustomer === customer.id ? (
                             <div className="space-y-2">
                               <input
@@ -631,7 +656,7 @@ export default function AdminClientes() {
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-5 whitespace-nowrap">
+                        <td className="px-5 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900 flex items-center gap-2">
                             <FiCalendar size={14} className="text-gray-400" />
                             {formatDate(customer.createdAt)}

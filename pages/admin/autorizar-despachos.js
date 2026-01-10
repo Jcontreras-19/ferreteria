@@ -426,65 +426,116 @@ export default function AutorizarDespachos() {
         <title>Autorizar Despachos - Panel Admin</title>
       </Head>
 
-      <div className="space-y-6">
-        {/* Filtros y Búsqueda - Diseño Compacto */}
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
-          {/* Header compacto */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2.5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FiSearch size={18} className="text-white" />
-              <h2 className="text-base font-bold text-white">Filtros</h2>
-              {(dateFrom || dateTo) && (
-                <span className="px-2 py-0.5 bg-white/20 rounded text-xs text-white">
-                  Filtro activo
-                </span>
-              )}
+      <div className="space-y-4">
+        {/* Header Compacto con Estadísticas */}
+        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-3">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 uppercase tracking-wide">AUTORIZAR DESPACHOS</h1>
+              <p className="text-gray-600 text-xs mt-0.5">
+                {quotes.length} cotización{quotes.length !== 1 ? 'es' : ''} pendiente{quotes.length !== 1 ? 's' : ''}
+              </p>
             </div>
-            <div className="flex items-center gap-2">
+          </div>
+
+          {/* Estadísticas Compactas */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border-2 border-blue-300 shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-blue-800 text-xs font-semibold">Pendientes</span>
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center shadow-md">
+                  <FiClock className="text-white" size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
+            </div>
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border-2 border-green-300 shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-green-800 text-xs font-semibold">Con Stock</span>
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-md">
+                  <FiCheckCircle className="text-white" size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-green-900">{stats.withStock}</p>
+            </div>
+            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-3 border-2 border-yellow-300 shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-yellow-800 text-xs font-semibold">Stock Parcial</span>
+                <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center shadow-md">
+                  <FiAlertCircle className="text-white" size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-yellow-900">{stats.partialStock}</p>
+            </div>
+            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-3 border-2 border-red-300 shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-red-800 text-xs font-semibold">Sin Stock</span>
+                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center shadow-md">
+                  <FiXCircle className="text-white" size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-red-900">{stats.noStock}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Filtros Compactos en una sola fila */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+          <div className="p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Título de Filtros */}
+              <div className="flex items-center gap-2 mr-2">
+                <FiFilter size={16} className="text-gray-600" />
+                <h2 className="text-sm font-bold text-gray-800">Filtros</h2>
+              </div>
+
+              {/* Búsqueda */}
+              <div className="relative flex-1 min-w-[200px]">
+                <FiSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
+                <input
+                  type="text"
+                  placeholder="Buscar por cliente, email, WhatsApp o número..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm"
+                  style={{ color: '#111827' }}
+                />
+              </div>
+
+              {/* Botón de Fechas */}
               <button
                 onClick={() => setShowDateFilters(!showDateFilters)}
-                className="flex items-center gap-1 px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded text-white text-xs font-medium transition-colors"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                  showDateFilters 
+                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
               >
                 <FiCalendar size={14} />
                 <span>Fechas</span>
                 {showDateFilters ? <FiChevronUp size={12} /> : <FiChevronDown size={12} />}
               </button>
+
+              {/* Botones de Exportar */}
               <button
                 onClick={exportToPDF}
-                className="flex items-center gap-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 rounded text-white text-xs font-medium transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
               >
                 <FiFileText size={14} />
                 <span>PDF</span>
               </button>
               <button
                 onClick={exportToExcel}
-                className="flex items-center gap-1 px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded text-white text-xs font-medium transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
               >
                 <FiDownload size={14} />
                 <span>Excel</span>
               </button>
             </div>
-          </div>
-
-          <div className="p-4">
-            {/* Filtros principales en una fila */}
-            <div className="mb-3">
-              <div className="relative">
-                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                <input
-                  type="text"
-                  placeholder="Buscar por cliente, email, WhatsApp o número..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm"
-                  style={{ color: '#111827' }}
-                />
-              </div>
-            </div>
 
             {/* Filtros de Fecha - Colapsable */}
             {showDateFilters && (
-              <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 mb-3">
+              <div className="mt-3 pt-3 border-t border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Desde</label>
@@ -528,48 +579,9 @@ export default function AutorizarDespachos() {
               </div>
             )}
 
-            <div className="flex items-center justify-between text-xs text-gray-600 pt-2 border-t border-gray-200">
+            {/* Contador de resultados */}
+            <div className="flex items-center justify-between text-xs text-gray-600 pt-2 mt-2 border-t border-gray-200">
               <span>Mostrando {filteredQuotes.length} de {quotes.length} cotizaciones</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow-md p-4 border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Pendientes</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.total}</p>
-              </div>
-              <FiClock className="text-blue-400" size={24} />
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-4 border border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Con Stock</p>
-                <p className="text-2xl font-bold text-green-600">{stats.withStock}</p>
-              </div>
-              <FiCheckCircle className="text-green-400" size={24} />
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-4 border border-yellow-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Stock Parcial</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.partialStock}</p>
-              </div>
-              <FiAlertCircle className="text-yellow-400" size={24} />
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-4 border border-red-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Sin Stock</p>
-                <p className="text-2xl font-bold text-red-600">{stats.noStock}</p>
-              </div>
-              <FiXCircle className="text-red-400" size={24} />
             </div>
           </div>
         </div>

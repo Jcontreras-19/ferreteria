@@ -243,60 +243,88 @@ export default function BoletasFacturas() {
         <title>Boletas y Facturas - Panel Admin</title>
       </Head>
 
-      <div className="space-y-6">
-        {/* Filtros y Búsqueda - Diseño Compacto */}
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
-          {/* Header compacto */}
-          <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-4 py-2.5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FiFileText size={18} className="text-white" />
-              <h2 className="text-base font-bold text-white">Filtros</h2>
-              {(dateFrom || dateTo) && (
-                <span className="px-2 py-0.5 bg-white/20 rounded text-xs text-white">
-                  Filtro activo
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowDateFilters(!showDateFilters)}
-                className="flex items-center gap-1 px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded text-white text-xs font-medium transition-colors"
-              >
-                <FiCalendar size={14} />
-                <span>Fechas</span>
-                {showDateFilters ? <FiChevronUp size={12} /> : <FiChevronDown size={12} />}
-              </button>
-              <button
-                onClick={exportToExcel}
-                className="flex items-center gap-1 px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded text-white text-xs font-medium transition-colors"
-              >
-                <FiDownload size={14} />
-                <span>Excel</span>
-              </button>
+      <div className="space-y-4">
+        {/* Header Compacto con Estadísticas */}
+        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-3">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 uppercase tracking-wide">BOLETAS Y FACTURAS</h1>
+              <p className="text-gray-600 text-xs mt-0.5">
+                {quotes.length} documento{quotes.length !== 1 ? 's' : ''} en total
+              </p>
             </div>
           </div>
 
-          <div className="p-4">
-            {/* Filtros principales en una fila */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-              <div>
-                <div className="relative">
-                  <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                  <input
-                    type="text"
-                    placeholder="Buscar por cliente, email, número de documento..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 text-sm"
-                    style={{ color: '#111827' }}
-                  />
+          {/* Estadísticas Compactas */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border-2 border-purple-300 shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-purple-800 text-xs font-semibold">Total</span>
+                <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center shadow-md">
+                  <FiFileText className="text-white" size={16} />
                 </div>
               </div>
-              <div>
+              <p className="text-2xl font-bold text-purple-900">{stats.total}</p>
+            </div>
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border-2 border-blue-300 shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-blue-800 text-xs font-semibold">Boletas</span>
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center shadow-md">
+                  <FiFileText className="text-white" size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-blue-900">{stats.boletas}</p>
+            </div>
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border-2 border-green-300 shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-green-800 text-xs font-semibold">Facturas</span>
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-md">
+                  <FiFileText className="text-white" size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-green-900">{stats.facturas}</p>
+            </div>
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-3 border-2 border-orange-300 shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-orange-800 text-xs font-semibold">Hoy</span>
+                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center shadow-md">
+                  <FiClock className="text-white" size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-orange-900">{stats.hoy}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Filtros Compactos en una sola fila */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+          <div className="p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Título de Filtros */}
+              <div className="flex items-center gap-2 mr-2">
+                <FiFilter size={16} className="text-gray-600" />
+                <h2 className="text-sm font-bold text-gray-800">Filtros</h2>
+              </div>
+
+              {/* Búsqueda */}
+              <div className="relative flex-1 min-w-[200px]">
+                <FiSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
+                <input
+                  type="text"
+                  placeholder="Buscar por cliente, email, número de documento..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm"
+                  style={{ color: '#111827' }}
+                />
+              </div>
+
+              {/* Tipo de Documento */}
+              <div className="min-w-[120px]">
                 <select
                   value={documentTypeFilter}
                   onChange={(e) => setDocumentTypeFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 bg-white text-sm"
+                  className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white text-sm"
                   style={{ color: '#111827' }}
                 >
                   <option value="all">Todos</option>
@@ -304,21 +332,44 @@ export default function BoletasFacturas() {
                   <option value="factura">Facturas</option>
                 </select>
               </div>
+
+              {/* Botón de Fechas */}
+              <button
+                onClick={() => setShowDateFilters(!showDateFilters)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                  showDateFilters 
+                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <FiCalendar size={14} />
+                <span>Fechas</span>
+                {showDateFilters ? <FiChevronUp size={12} /> : <FiChevronDown size={12} />}
+              </button>
+
+              {/* Botón de Exportar */}
+              <button
+                onClick={exportToExcel}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
+              >
+                <FiDownload size={14} />
+                <span>Excel</span>
+              </button>
             </div>
 
             {/* Filtros de Fecha - Colapsable */}
             {showDateFilters && (
-              <div className="bg-purple-50 rounded-lg p-3 border border-purple-200 mb-3">
+              <div className="mt-3 pt-3 border-t border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Desde</label>
                     <div className="relative">
-                      <FiCalendar className="absolute left-2 top-1/2 transform -translate-y-1/2 text-purple-600" size={14} />
+                      <FiCalendar className="absolute left-2 top-1/2 transform -translate-y-1/2 text-blue-600" size={14} />
                       <input
                         type="date"
                         value={dateFrom}
                         onChange={(e) => setDateFrom(e.target.value)}
-                        className="w-full pl-8 pr-2 py-1.5 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white text-sm"
+                        className="w-full pl-8 pr-2 py-1.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white text-sm"
                         style={{ color: '#111827' }}
                       />
                     </div>
@@ -326,12 +377,12 @@ export default function BoletasFacturas() {
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Hasta</label>
                     <div className="relative">
-                      <FiCalendar className="absolute left-2 top-1/2 transform -translate-y-1/2 text-purple-600" size={14} />
+                      <FiCalendar className="absolute left-2 top-1/2 transform -translate-y-1/2 text-blue-600" size={14} />
                       <input
                         type="date"
                         value={dateTo}
                         onChange={(e) => setDateTo(e.target.value)}
-                        className="w-full pl-8 pr-2 py-1.5 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white text-sm"
+                        className="w-full pl-8 pr-2 py-1.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white text-sm"
                         style={{ color: '#111827' }}
                       />
                     </div>
@@ -352,48 +403,9 @@ export default function BoletasFacturas() {
               </div>
             )}
 
-            <div className="flex items-center justify-between text-xs text-gray-600 pt-2 border-t border-gray-200">
+            {/* Contador de resultados */}
+            <div className="flex items-center justify-between text-xs text-gray-600 pt-2 mt-2 border-t border-gray-200">
               <span>Mostrando {filteredQuotes.length} de {quotes.length} documentos</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow-md p-4 border border-purple-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.total}</p>
-              </div>
-              <FiFileText className="text-purple-400" size={24} />
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-4 border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Boletas</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.boletas}</p>
-              </div>
-              <FiFileText className="text-blue-400" size={24} />
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-4 border border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Facturas</p>
-                <p className="text-2xl font-bold text-green-600">{stats.facturas}</p>
-              </div>
-              <FiFileText className="text-green-400" size={24} />
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-4 border border-orange-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Generadas Hoy</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.hoy}</p>
-              </div>
-              <FiClock className="text-orange-400" size={24} />
             </div>
           </div>
         </div>

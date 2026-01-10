@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import AdminLayout from '../../components/admin/AdminLayout'
-import { FiEdit, FiTrash2, FiPlus, FiDownload, FiSearch } from 'react-icons/fi'
+import { FiEdit, FiTrash2, FiPlus, FiDownload, FiSearch, FiFilter, FiGrid, FiList, FiEye, FiPackage, FiDollarSign, FiTrendingUp, FiAlertCircle } from 'react-icons/fi'
 import Image from 'next/image'
 
 export default function AdminProductos() {
@@ -21,6 +21,7 @@ export default function AdminProductos() {
     stock: '',
   })
   const [uploading, setUploading] = useState(false)
+  const [viewMode, setViewMode] = useState('table') // 'cards' or 'table'
 
   useEffect(() => {
     checkAuth()
@@ -250,157 +251,327 @@ export default function AdminProductos() {
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
+  // Calcular estadísticas
+  const stats = {
+    total: products.length,
+    withStock: products.filter(p => (p.stock || 0) > 0).length,
+    withoutStock: products.filter(p => (p.stock || 0) === 0).length,
+    totalValue: products.reduce((sum, p) => sum + ((p.price || 0) * (p.stock || 0)), 0),
+  }
+
   return (
     <>
       <Head>
         <title>Productos - Panel Administrador</title>
       </Head>
       <AdminLayout user={user} onLogout={handleLogout}>
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Gestión de Productos</h1>
-              <p className="text-gray-600 mt-1">
-                {products.length} producto{products.length !== 1 ? 's' : ''} en total
-              </p>
+        <div className="space-y-4">
+          {/* Header Compacto con Estadísticas */}
+          <div className="bg-white rounded-xl shadow-md border border-gray-200 p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <h1 className="text-xl font-bold text-gray-900 uppercase tracking-wide">GESTIÓN DE PRODUCTOS</h1>
+                <p className="text-gray-600 text-xs mt-0.5">
+                  {products.length} producto{products.length !== 1 ? 's' : ''} en total
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setViewMode('cards')}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'cards' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  title="Vista de cards"
+                >
+                  <FiGrid size={16} />
+                </button>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  title="Vista de tabla"
+                >
+                  <FiList size={16} />
+                </button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={handleExportExcel}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-              >
-                <FiDownload size={18} />
-                <span>Exportar Excel</span>
-              </button>
-              <button
-                onClick={() => {
-                  const emptyData = { name: '', description: '', price: '', image: '', stock: '' }
-                  setFormData(emptyData)
-                  setEditingProduct(null)
-                  setShowModal(true)
-                }}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-              >
-                <FiPlus size={18} />
-                <span>Nuevo Producto</span>
-              </button>
+
+            {/* Estadísticas Compactas */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border-2 border-blue-300 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-blue-800 text-xs font-semibold">Total</span>
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center shadow-md">
+                    <FiPackage className="text-white" size={16} />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
+              </div>
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border-2 border-green-300 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-green-800 text-xs font-semibold">Con Stock</span>
+                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-md">
+                    <FiTrendingUp className="text-white" size={16} />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-green-900">{stats.withStock}</p>
+              </div>
+              <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-3 border-2 border-red-300 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-red-800 text-xs font-semibold">Sin Stock</span>
+                  <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center shadow-md">
+                    <FiAlertCircle className="text-white" size={16} />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-red-900">{stats.withoutStock}</p>
+              </div>
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border-2 border-purple-300 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-purple-800 text-xs font-semibold">Valor Total</span>
+                  <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center shadow-md">
+                    <FiDollarSign className="text-white" size={16} />
+                  </div>
+                </div>
+                <p className="text-lg font-bold text-purple-900">S/. {stats.totalValue.toFixed(2)}</p>
+              </div>
             </div>
           </div>
 
-          {/* Buscador */}
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar productos..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-              />
+          {/* Filtros Compactos en una sola fila */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div className="p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Título de Filtros */}
+                <div className="flex items-center gap-2 mr-2">
+                  <FiFilter size={16} className="text-gray-600" />
+                  <h2 className="text-sm font-bold text-gray-800">Filtros</h2>
+                  {searchQuery && (
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+                      Filtros activos
+                    </span>
+                  )}
+                </div>
+
+                {/* Búsqueda */}
+                <div className="relative flex-1 min-w-[200px]">
+                  <FiSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
+                  <input
+                    type="text"
+                    placeholder="Buscar productos..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm"
+                    style={{ color: '#111827' }}
+                  />
+                </div>
+
+                {/* Botones de Exportar y Nuevo */}
+                <button
+                  onClick={handleExportExcel}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
+                >
+                  <FiDownload size={14} />
+                  <span>Excel</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const emptyData = { name: '', description: '', price: '', image: '', stock: '' }
+                    setFormData(emptyData)
+                    setEditingProduct(null)
+                    setShowModal(true)
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
+                >
+                  <FiPlus size={14} />
+                  <span>Nuevo</span>
+                </button>
+              </div>
+
+              {/* Contador de resultados */}
+              <div className="flex items-center justify-between text-xs text-gray-600 pt-2 mt-2 border-t border-gray-200">
+                <span>Mostrando {filteredProducts.length} de {products.length} productos</span>
+              </div>
             </div>
           </div>
 
-          {/* Tabla de Productos */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Imagen
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Nombre
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Precio
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Stock
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredProducts.length === 0 ? (
+          {/* Vista de Tabla o Cards */}
+          {viewMode === 'table' ? (
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gradient-to-r from-blue-600 to-indigo-700">
                     <tr>
-                      <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
-                        No hay productos disponibles
-                      </td>
+                      <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        <div className="flex items-center gap-2">
+                          <FiPackage size={14} />
+                          Imagen
+                        </div>
+                      </th>
+                      <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        Nombre
+                      </th>
+                      <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        Precio
+                      </th>
+                      <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        Stock
+                      </th>
+                      <th className="px-5 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">
+                        Acciones
+                      </th>
                     </tr>
-                  ) : (
-                    filteredProducts.map((product) => (
-                      <tr key={product.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="w-16 h-16 relative bg-gray-200 rounded-lg overflow-hidden">
-                            {product.image ? (
-                              <Image
-                                src={product.image}
-                                alt={product.name}
-                                fill
-                                className="object-cover"
-                                unoptimized
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                📦
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                          {product.description && (
-                            <div className="text-sm text-gray-500 line-clamp-1">
-                              {product.description}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-semibold text-gray-900">
-                            S/. {product.price.toFixed(2)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                              product.stock > 10
-                                ? 'bg-green-100 text-green-800'
-                                : product.stock > 0
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {product.stock || 0}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              onClick={() => handleEdit(product)}
-                              className="text-blue-600 hover:text-blue-900"
-                            >
-                              <FiEdit size={18} />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(product.id)}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              <FiTrash2 size={18} />
-                            </button>
-                          </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-100">
+                    {filteredProducts.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-12 text-center">
+                          <FiPackage className="mx-auto text-gray-400 mb-3" size={48} />
+                          <p className="text-gray-600 text-lg">No hay productos disponibles</p>
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      filteredProducts.map((product, index) => (
+                        <tr 
+                          key={product.id} 
+                          className={`transition-colors ${
+                            index % 2 === 0 
+                              ? 'bg-white hover:bg-blue-50' 
+                              : 'bg-gray-50 hover:bg-blue-50'
+                          }`}
+                        >
+                          <td className="px-5 py-4">
+                            <div className="w-16 h-16 relative bg-gray-200 rounded-lg overflow-hidden">
+                              {product.image ? (
+                                <Image
+                                  src={product.image}
+                                  alt={product.name}
+                                  fill
+                                  className="object-cover"
+                                  unoptimized
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                  <FiPackage size={24} />
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-5 py-4">
+                            <div>
+                              <div className="text-sm font-semibold text-gray-900">{product.name}</div>
+                              {product.description && (
+                                <div className="text-xs text-gray-500 line-clamp-2 mt-1">
+                                  {product.description}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-5 py-4 whitespace-nowrap">
+                            <div className="text-base font-bold text-green-600">
+                              S/. {product.price?.toFixed(2) || '0.00'}
+                            </div>
+                          </td>
+                          <td className="px-5 py-4 whitespace-nowrap">
+                            <span
+                              className={`inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-lg ${
+                                (product.stock || 0) > 10
+                                  ? 'bg-green-50 text-green-700 border-2 border-green-300'
+                                  : (product.stock || 0) > 0
+                                  ? 'bg-yellow-50 text-yellow-700 border-2 border-yellow-300'
+                                  : 'bg-red-50 text-red-700 border-2 border-red-300'
+                              }`}
+                            >
+                              {product.stock || 0}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 whitespace-nowrap">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => handleEdit(product)}
+                                className="group relative flex items-center justify-center w-9 h-9 bg-blue-50 hover:bg-blue-100 border-2 border-blue-300 hover:border-blue-400 text-blue-600 hover:text-blue-700 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-110"
+                                title="Editar"
+                              >
+                                <FiEdit size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(product.id)}
+                                className="group relative flex items-center justify-center w-9 h-9 bg-red-50 hover:bg-red-100 border-2 border-red-300 hover:border-red-400 text-red-600 hover:text-red-700 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-110"
+                                title="Eliminar"
+                              >
+                                <FiTrash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {filteredProducts.length === 0 ? (
+                <div className="col-span-full bg-white rounded-xl shadow-md border border-gray-200 p-12 text-center">
+                  <FiPackage className="mx-auto text-gray-400" size={48} />
+                  <p className="mt-4 text-gray-600 text-lg">No hay productos disponibles</p>
+                </div>
+              ) : (
+                filteredProducts.map((product) => (
+                  <div key={product.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden">
+                    <div className="relative h-48 bg-gray-100">
+                      {product.image ? (
+                        <Image
+                          src={product.image}
+                          alt={product.name}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          <FiPackage size={48} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-bold text-gray-900 mb-1">{product.name}</h3>
+                      {product.description && (
+                        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{product.description}</p>
+                      )}
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-lg font-bold text-green-600">S/. {product.price?.toFixed(2) || '0.00'}</span>
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded-lg ${
+                            (product.stock || 0) > 10
+                              ? 'bg-green-100 text-green-800'
+                              : (product.stock || 0) > 0
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          Stock: {product.stock || 0}
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEdit(product)}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-colors"
+                        >
+                          <FiEye size={14} />
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product.id)}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition-colors"
+                        >
+                          <FiTrash2 size={14} />
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
 
         {/* Modal */}
