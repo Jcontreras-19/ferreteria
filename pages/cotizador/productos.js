@@ -127,71 +127,45 @@ export default function CotizadorProductos() {
   const downloadTemplate = () => {
     const wb = XLSX.utils.book_new()
     
-    // Crear hoja con encabezado corporativo y diseño GRC
-    const headerRows = [
-      ['CORPORACIÓN GRC - FERRETERÍA'],
-      ['FORMATO DE IMPORTACIÓN DE PRODUCTOS'],
-      ['ISO 9001:2015'],
-      [''],
-      ['INSTRUCCIONES DE USO:'],
-      ['1. Complete las columnas requeridas marcadas con asterisco (*)'],
-      ['2. Las columnas opcionales pueden dejarse vacías'],
-      ['3. Si no tiene imagen, déjela vacía y el sistema buscará automáticamente'],
-      ['4. El Stock por defecto será 0 si no se especifica'],
-      ['5. La Categoría ayuda a organizar mejor sus productos'],
-      [''],
-      ['COLORES CORPORATIVOS GRC:'],
-      ['Verde (#22c55e) - Representa calidad, confianza y profesionalismo'],
-      [''],
-      ['NOTA IMPORTANTE:'],
-      ['Si no proporciona una URL de imagen, nuestro sistema buscará automáticamente'],
-      ['una imagen relacionada con el nombre del producto usando inteligencia artificial.'],
-      [''],
-    ]
+    // Logo GRC arriba a la izquierda (fila 1, columna A)
+    const logoRow = ['● GRC', '', '', '', '', ''] // Logo en A1
     
-    // Encabezados de tabla - como array simple (no anidado)
+    // Encabezados de tabla
     const headers = ['Nombre*', 'Descripción', 'Precio*', 'Stock', 'Categoría', 'Imagen (URL)']
     
-    // Datos de ejemplo - cada fila es un array
+    // Datos de ejemplo
     const exampleData = [
       ['Martillo Profesional', 'Martillo de acero con mango ergonómico', 25.99, 50, 'Herramientas', ''],
       ['Destornillador Phillips #2', 'Destornillador de punta Phillips tamaño #2', 8.50, 100, 'Herramientas', ''],
       ['Llave Inglesa Ajustable 10"', 'Llave ajustable de acero cromado', 15.99, 75, 'Herramientas', ''],
     ]
     
-    // Combinar todo - headers como array simple, no anidado
+    // Combinar: Logo arriba izquierda + espacio + Tabla
     const allData = [
-      ...headerRows,
-      ['TABLA DE PRODUCTOS:'], // Título de la tabla
-      [''],
-      headers, // Encabezados como array simple
-      ...exampleData, // Datos de ejemplo
-      [''],
-      ['* Campos requeridos'],
-      [''],
-      ['INFORMACIÓN DE CONTACTO:'],
-      ['Corporación GRC - Av. José Gálvez 1322 Dpto. 302 La Perla - Callao'],
-      ['Email: corporaciongrc@gmail.com | WhatsApp: (511) 957 216 908'],
+      logoRow, // Fila 1: Logo en A1
+      ['', '', '', '', '', ''], // Fila 2: Espacio
+      headers, // Fila 3: Encabezados
+      ...exampleData, // Filas 4-6: Datos
     ]
     
     const ws = XLSX.utils.aoa_to_sheet(allData)
     
     // Ajustar ancho de columnas
     ws['!cols'] = [
-      { wch: 35 }, // Nombre
-      { wch: 50 }, // Descripción
+      { wch: 30 }, // Nombre
+      { wch: 45 }, // Descripción
       { wch: 12 }, // Precio
       { wch: 10 }, // Stock
-      { wch: 20 }, // Categoría
-      { wch: 50 }  // Imagen
+      { wch: 18 }, // Categoría
+      { wch: 40 }  // Imagen
     ]
     
-    // Agregar estilos básicos usando celdas (XLSX tiene limitaciones pero podemos usar merge)
-    // Fusionar celdas para el título principal
+    // Fusionar celdas para el logo (A1:B1)
     if (!ws['!merges']) ws['!merges'] = []
-    ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }) // Título principal
-    ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }) // Subtítulo
-    ws['!merges'].push({ s: { r: 2, c: 0 }, e: { r: 2, c: 5 } }) // ISO
+    ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }) // Logo fusionado
+    
+    // Nota: XLSX básico no soporta colores directamente
+    // El usuario puede aplicar formato manualmente en Excel o usar ExcelJS para estilos completos
     
     XLSX.utils.book_append_sheet(wb, ws, 'Formato Productos')
     XLSX.writeFile(wb, 'formato-productos.xlsx')
