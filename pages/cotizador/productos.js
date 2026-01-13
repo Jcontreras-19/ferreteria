@@ -4,6 +4,7 @@ import { FiPackage, FiSearch, FiAlertCircle, FiCheckCircle, FiXCircle, FiFilter,
 import { checkCotizadorAuth } from '../../lib/cotizadorAuth'
 import CotizadorLayout from '../../components/cotizador/CotizadorLayout'
 import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 export default function CotizadorProductos() {
   const [user, setUser] = useState(null)
@@ -124,52 +125,133 @@ export default function CotizadorProductos() {
     XLSX.writeFile(wb, fileName)
   }
 
-  const downloadTemplate = () => {
-    const wb = XLSX.utils.book_new()
-    
-    // Logo GRC arriba a la izquierda (fila 1, columna A)
-    const logoRow = ['● GRC', '', '', '', '', ''] // Logo en A1
-    
-    // Encabezados de tabla
-    const headers = ['Nombre*', 'Descripción', 'Precio*', 'Stock', 'Categoría', 'Imagen (URL)']
-    
-    // Datos de ejemplo
-    const exampleData = [
-      ['Martillo Profesional', 'Martillo de acero con mango ergonómico', 25.99, 50, 'Herramientas', ''],
-      ['Destornillador Phillips #2', 'Destornillador de punta Phillips tamaño #2', 8.50, 100, 'Herramientas', ''],
-      ['Llave Inglesa Ajustable 10"', 'Llave ajustable de acero cromado', 15.99, 75, 'Herramientas', ''],
-    ]
-    
-    // Combinar: Logo arriba izquierda + espacio + Tabla
-    const allData = [
-      logoRow, // Fila 1: Logo en A1
-      ['', '', '', '', '', ''], // Fila 2: Espacio
-      headers, // Fila 3: Encabezados
-      ...exampleData, // Filas 4-6: Datos
-    ]
-    
-    const ws = XLSX.utils.aoa_to_sheet(allData)
-    
-    // Ajustar ancho de columnas
-    ws['!cols'] = [
-      { wch: 30 }, // Nombre
-      { wch: 45 }, // Descripción
-      { wch: 12 }, // Precio
-      { wch: 10 }, // Stock
-      { wch: 18 }, // Categoría
-      { wch: 40 }  // Imagen
-    ]
-    
-    // Fusionar celdas para el logo (A1:B1)
-    if (!ws['!merges']) ws['!merges'] = []
-    ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }) // Logo fusionado
-    
-    // Nota: XLSX básico no soporta colores directamente
-    // El usuario puede aplicar formato manualmente en Excel o usar ExcelJS para estilos completos
-    
-    XLSX.utils.book_append_sheet(wb, ws, 'Formato Productos')
-    XLSX.writeFile(wb, 'formato-productos.xlsx')
-    showNotification('Formato descargado exitosamente', 'success')
+  const downloadTemplate = async () => {
+    try {
+      const workbook = new ExcelJS.Workbook()
+      const worksheet = workbook.addWorksheet('Formato Productos')
+      
+      // Colores GRC
+      const GRC_GREEN = '22C55E' // Verde GRC
+      const GRC_DARK_GREEN = '14532D' // Verde oscuro
+      const WHITE = 'FFFFFF'
+      
+      // Agregar logo (fila 1, columna A)
+      try {
+        // Intentar cargar el logo desde public
+        const logoResponse = await fetch('/logo.png')
+        if (logoResponse.ok) {
+          const logoBuffer = await logoResponse.arrayBuffer()
+          const imageId = workbook.addImage({
+            buffer: Buffer.from(logoBuffer),
+            extension: 'png',
+          })
+          
+          // Insertar imagen en A1 con tamaño 80x80
+          worksheet.addImage(imageId, {
+            tl: { col: 0, row: 0 },
+            ext: { width: 80, height: 80 },
+          })
+        }
+      } catch (error) {
+        console.log('No se pudo cargar el logo, usando texto:', error)
+        // Si no hay logo, usar texto
+        const logoCell = worksheet.getCell('A1')
+        logoCell.value = 'GRC'
+        logoCell.font = { bold: true, size: 16, color: { argb: 'FF' + WHITE } }
+        logoCell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FF' + GRC_DARK_GREEN }
+        }
+        logoCell.alignment = { vertical: 'middle', horizontal: 'center' }
+        worksheet.mergeCells('A1:B1')
+        worksheet.getRow(1).height = 60
+      }
+      
+      // Espacio (fila 2)
+      worksheet.getRow(2).height = 10
+      
+      // Encabezados de tabla (fila 3)
+      const headers = ['Nombre*', 'Descripción', 'Precio*', 'Stock', 'Categoría', 'Imagen (URL)']
+      const headerRow = worksheet.getRow(3)
+      
+      headers.forEach((header, index) => {
+        const cell = headerRow.getCell(index + 1)
+        cell.value = header
+        cell.font = { bold: true, size: 11, color: { argb: 'FF' + WHITE } }
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FF' + GRC_GREEN }
+        }
+        cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF' + WHITE } },
+          bottom: { style: 'thin', color: { argb: 'FF' + WHITE } },
+          left: { style: 'thin', color: { argb: 'FF' + WHITE } },
+          right: { style: 'thin', color: { argb: 'FF' + WHITE } }
+        }
+      })
+      
+      headerRow.height = 30
+      
+      // Datos de ejemplo
+      const exampleData = [
+        ['Martillo Profesional', 'Martillo de acero con mango ergonómico', 25.99, 50, 'Herramientas', ''],
+        ['Destornillador Phillips #2', 'Destornillador de punta Phillips tamaño #2', 8.50, 100, 'Herramientas', ''],
+        ['Llave Inglesa Ajustable 10"', 'Llave ajustable de acero cromado', 15.99, 75, 'Herramientas', ''],
+      ]
+      
+      exampleData.forEach((row, rowIndex) => {
+        const dataRow = worksheet.getRow(4 + rowIndex)
+        row.forEach((value, colIndex) => {
+          const cell = dataRow.getCell(colIndex + 1)
+          cell.value = value
+          cell.alignment = { vertical: 'middle', horizontal: colIndex === 2 ? 'right' : 'left', wrapText: true }
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+            bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+            left: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+            right: { style: 'thin', color: { argb: 'FFE5E7EB' } }
+          }
+          
+          // Fondo alternado para filas
+          if (rowIndex % 2 === 0) {
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFF9FAFB' }
+            }
+          }
+        })
+        dataRow.height = 25
+      })
+      
+      // Ajustar ancho de columnas
+      worksheet.getColumn(1).width = 30 // Nombre
+      worksheet.getColumn(2).width = 45 // Descripción
+      worksheet.getColumn(3).width = 12 // Precio
+      worksheet.getColumn(4).width = 10 // Stock
+      worksheet.getColumn(5).width = 18 // Categoría
+      worksheet.getColumn(6).width = 40 // Imagen
+      
+      // Generar archivo
+      const buffer = await workbook.xlsx.writeBuffer()
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'formato-productos.xlsx'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      showNotification('Formato descargado exitosamente', 'success')
+    } catch (error) {
+      console.error('Error generando Excel:', error)
+      showNotification('Error al generar el formato', 'error')
+    }
   }
 
   const handleImportFile = (e) => {
