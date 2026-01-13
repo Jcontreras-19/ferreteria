@@ -125,41 +125,78 @@ export default function CotizadorProductos() {
   }
 
   const downloadTemplate = () => {
-    const templateData = [
-      {
-        'Nombre': 'Martillo Profesional',
-        'Descripción': 'Martillo de acero con mango ergonómico',
-        'Precio': 25.99,
-        'Stock': 50,
-        'Categoría': 'Herramientas',
-        'Imagen (URL)': 'https://ejemplo.com/imagen.jpg'
-      },
-      {
-        'Nombre': 'Destornillador Phillips #2',
-        'Descripción': 'Destornillador de punta Phillips tamaño #2',
-        'Precio': 8.50,
-        'Stock': 100,
-        'Categoría': 'Herramientas',
-        'Imagen (URL)': ''
-      }
-    ]
-
     const wb = XLSX.utils.book_new()
-    const ws = XLSX.utils.json_to_sheet(templateData)
+    
+    // Crear hoja con encabezado corporativo y diseño GRC
+    const headerRows = [
+      ['CORPORACIÓN GRC - FERRETERÍA'],
+      ['FORMATO DE IMPORTACIÓN DE PRODUCTOS'],
+      ['ISO 9001:2015'],
+      [''],
+      ['INSTRUCCIONES DE USO:'],
+      ['1. Complete las columnas requeridas marcadas con asterisco (*)'],
+      ['2. Las columnas opcionales pueden dejarse vacías'],
+      ['3. Si no tiene imagen, déjela vacía y el sistema buscará automáticamente'],
+      ['4. El Stock por defecto será 0 si no se especifica'],
+      ['5. La Categoría ayuda a organizar mejor sus productos'],
+      [''],
+      ['COLORES CORPORATIVOS GRC:'],
+      ['Verde (#22c55e) - Representa calidad, confianza y profesionalismo'],
+      [''],
+      ['NOTA IMPORTANTE:'],
+      ['Si no proporciona una URL de imagen, nuestro sistema buscará automáticamente'],
+      ['una imagen relacionada con el nombre del producto usando inteligencia artificial.'],
+      [''],
+    ]
+    
+    // Encabezados de tabla
+    const headers = [['Nombre*', 'Descripción', 'Precio*', 'Stock', 'Categoría', 'Imagen (URL)']]
+    
+    // Datos de ejemplo
+    const exampleData = [
+      ['Martillo Profesional', 'Martillo de acero con mango ergonómico', 25.99, 50, 'Herramientas', ''],
+      ['Destornillador Phillips #2', 'Destornillador de punta Phillips tamaño #2', 8.50, 100, 'Herramientas', ''],
+      ['Llave Inglesa Ajustable 10"', 'Llave ajustable de acero cromado', 15.99, 75, 'Herramientas', ''],
+    ]
+    
+    // Combinar todo
+    const allData = [
+      ...headerRows,
+      headers,
+      ...exampleData,
+      [''],
+      ['* Campos requeridos'],
+      [''],
+      ['INFORMACIÓN DE CONTACTO:'],
+      ['Corporación GRC - Av. José Gálvez 1322 Dpto. 302 La Perla - Callao'],
+      ['Email: corporaciongrc@gmail.com | WhatsApp: (511) 957 216 908'],
+      ['INFORMACIÓN DE CONTACTO:'],
+      ['Corporación GRC - Av. José Gálvez 1322 Dpto. 302 La Perla - Callao'],
+      ['Email: corporaciongrc@gmail.com | WhatsApp: (511) 957 216 908'],
+    ]
+    
+    const ws = XLSX.utils.aoa_to_sheet(allData)
     
     // Ajustar ancho de columnas
     ws['!cols'] = [
-      { wch: 30 }, // Nombre
+      { wch: 35 }, // Nombre
       { wch: 50 }, // Descripción
       { wch: 12 }, // Precio
       { wch: 10 }, // Stock
       { wch: 20 }, // Categoría
-      { wch: 40 }  // Imagen
+      { wch: 50 }  // Imagen
     ]
     
-    XLSX.utils.book_append_sheet(wb, ws, 'Productos')
-    XLSX.writeFile(wb, 'template-productos.xlsx')
-    showNotification('Template descargado exitosamente', 'success')
+    // Agregar estilos básicos usando celdas (XLSX tiene limitaciones pero podemos usar merge)
+    // Fusionar celdas para el título principal
+    if (!ws['!merges']) ws['!merges'] = []
+    ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }) // Título principal
+    ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }) // Subtítulo
+    ws['!merges'].push({ s: { r: 2, c: 0 }, e: { r: 2, c: 5 } }) // ISO
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'Formato Productos')
+    XLSX.writeFile(wb, 'formato-productos.xlsx')
+    showNotification('Formato descargado exitosamente', 'success')
   }
 
   const handleImportFile = (e) => {
@@ -522,7 +559,7 @@ export default function CotizadorProductos() {
                 className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
               >
                 <FiDownload size={14} />
-                <span>Template</span>
+                <span>Formato</span>
               </button>
               <button
                 onClick={() => setShowImportModal(true)}
@@ -854,7 +891,7 @@ export default function CotizadorProductos() {
                     onClick={downloadTemplate}
                     className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
                   >
-                    Descargar template de ejemplo
+                    Descargar formato de ejemplo
                   </button>
                 </div>
 

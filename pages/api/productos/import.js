@@ -3,6 +3,49 @@ import { getCurrentUser } from '../../../lib/auth'
 import XLSX from 'xlsx'
 import formidable from 'formidable'
 
+// Función para buscar imagen de producto automáticamente
+async function searchProductImage(productName) {
+  try {
+    // Limpiar el nombre del producto para la búsqueda
+    const cleanName = productName
+      .replace(/[#\d"]/g, '') // Remover números y símbolos
+      .trim()
+      .split(' ')
+      .slice(0, 3) // Tomar las primeras 3 palabras
+      .join(' ')
+    
+    const searchTerm = encodeURIComponent(cleanName + ' herramienta producto')
+    
+    // Usar Unsplash Source API (gratis, sin API key necesario)
+    // Esta API devuelve imágenes aleatorias relacionadas con el término de búsqueda
+    const unsplashUrl = `https://source.unsplash.com/400x400/?${searchTerm}`
+    
+    // Hacer una petición para obtener la URL real de la imagen
+    const response = await fetch(unsplashUrl, { 
+      method: 'GET',
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'Mozilla/5.0'
+      }
+    })
+    
+    if (response.ok && response.url && response.url.includes('unsplash.com')) {
+      // La URL de Unsplash Source redirige a la imagen real
+      return response.url
+    }
+    
+    // Si Unsplash no funciona, intentar con una búsqueda alternativa
+    // Usar un servicio de placeholder que simula búsqueda de productos
+    const alternativeUrl = `https://via.placeholder.com/400x400/22c55e/ffffff?text=${encodeURIComponent(cleanName)}`
+    
+    return alternativeUrl
+  } catch (error) {
+    console.error('Error searching image:', error)
+    // Retornar null si falla, el producto se creará sin imagen
+    return null
+  }
+}
+
 export const config = {
   api: {
     bodyParser: false,
@@ -86,6 +129,17 @@ export default async function handler(req, res) {
 
         const stockNum = parseInt(stock) || 0
 
+        // Buscar imagen automáticamente si no se proporcionó
+        let finalImage = image?.trim() || null
+        if (!finalImage || finalImage === '') {
+          try {
+            finalImage = await searchProductImage(name.trim())
+          } catch (error) {
+            console.log(`No se pudo buscar imagen para "${name.trim()}":`, error.message)
+            // Continuar sin imagen si falla la búsqueda
+          }
+        }
+
         // Verificar si el producto ya existe (por nombre)
         const existing = await prisma.product.findFirst({
           where: { name: name.trim() },
@@ -99,7 +153,7 @@ export default async function handler(req, res) {
               description: description?.trim() || existing.description,
               price: priceNum,
               stock: stockNum,
-              image: image?.trim() || existing.image,
+              image: finalImage || existing.image,
             },
           })
           success++
@@ -111,7 +165,7 @@ export default async function handler(req, res) {
               description: description?.trim() || null,
               price: priceNum,
               stock: stockNum,
-              image: image?.trim() || null,
+              image: finalImage,
             },
           })
           success++
