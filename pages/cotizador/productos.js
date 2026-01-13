@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
-import { FiPackage, FiSearch, FiAlertCircle, FiCheckCircle, FiXCircle, FiFilter, FiGrid, FiList, FiDownload, FiFileText, FiDollarSign, FiTag, FiInfo } from 'react-icons/fi'
+import { FiPackage, FiSearch, FiAlertCircle, FiCheckCircle, FiXCircle, FiFilter, FiGrid, FiList, FiDownload, FiFileText, FiDollarSign, FiTag, FiInfo, FiUpload, FiX } from 'react-icons/fi'
 import { checkCotizadorAuth } from '../../lib/cotizadorAuth'
 import CotizadorLayout from '../../components/cotizador/CotizadorLayout'
 import * as XLSX from 'xlsx'
@@ -12,6 +12,10 @@ export default function CotizadorProductos() {
   const [searchQuery, setSearchQuery] = useState('')
   const [stockFilter, setStockFilter] = useState('all') // all, low, medium, high, out
   const [viewMode, setViewMode] = useState('table') // 'cards' or 'table'
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [importFile, setImportFile] = useState(null)
+  const [importing, setImporting] = useState(false)
+  const [notifications, setNotifications] = useState([])
 
   useEffect(() => {
     checkAuth()
@@ -118,6 +122,102 @@ export default function CotizadorProductos() {
     XLSX.utils.book_append_sheet(wb, newWs, 'Productos')
     const fileName = `productos-${new Date().toISOString().split('T')[0]}.xlsx`
     XLSX.writeFile(wb, fileName)
+  }
+
+  const downloadTemplate = () => {
+    const templateData = [
+      {
+        'Nombre': 'Martillo Profesional',
+        'Descripción': 'Martillo de acero con mango ergonómico',
+        'Precio': 25.99,
+        'Stock': 50,
+        'Categoría': 'Herramientas',
+        'Imagen (URL)': 'https://ejemplo.com/imagen.jpg'
+      },
+      {
+        'Nombre': 'Destornillador Phillips #2',
+        'Descripción': 'Destornillador de punta Phillips tamaño #2',
+        'Precio': 8.50,
+        'Stock': 100,
+        'Categoría': 'Herramientas',
+        'Imagen (URL)': ''
+      }
+    ]
+
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.json_to_sheet(templateData)
+    
+    // Ajustar ancho de columnas
+    ws['!cols'] = [
+      { wch: 30 }, // Nombre
+      { wch: 50 }, // Descripción
+      { wch: 12 }, // Precio
+      { wch: 10 }, // Stock
+      { wch: 20 }, // Categoría
+      { wch: 40 }  // Imagen
+    ]
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'Productos')
+    XLSX.writeFile(wb, 'template-productos.xlsx')
+    showNotification('Template descargado exitosamente', 'success')
+  }
+
+  const handleImportFile = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+          file.type === 'application/vnd.ms-excel' ||
+          file.name.endsWith('.xlsx') || 
+          file.name.endsWith('.xls')) {
+        setImportFile(file)
+      } else {
+        showNotification('Por favor selecciona un archivo Excel (.xlsx o .xls)', 'error')
+        e.target.value = ''
+      }
+    }
+  }
+
+  const handleImportProducts = async () => {
+    if (!importFile) {
+      showNotification('Por favor selecciona un archivo', 'error')
+      return
+    }
+
+    setImporting(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', importFile)
+
+      const res = await fetch('/api/productos/import', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        showNotification(`✅ ${data.success} productos importados exitosamente. ${data.errors > 0 ? `${data.errors} errores.` : ''}`, 'success')
+        setShowImportModal(false)
+        setImportFile(null)
+        fetchProducts()
+      } else {
+        showNotification(data.error || 'Error al importar productos', 'error')
+      }
+    } catch (error) {
+      console.error('Error importing products:', error)
+      showNotification('Error al importar productos', 'error')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  const showNotification = (message, type = 'success') => {
+    const id = Date.now()
+    setNotifications(prev => [...prev, { id, message, type }])
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id))
+    }, 5000)
   }
 
   const exportToPDF = async () => {
@@ -416,7 +516,21 @@ export default function CotizadorProductos() {
                 </select>
               </div>
 
-              {/* Botones de Exportar */}
+              {/* Botones de Exportar e Importar */}
+              <button
+                onClick={downloadTemplate}
+                className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
+              >
+                <FiDownload size={14} />
+                <span>Template</span>
+              </button>
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
+              >
+                <FiUpload size={14} />
+                <span>Importar</span>
+              </button>
               <button
                 onClick={exportToExcel}
                 className="flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
@@ -449,119 +563,83 @@ export default function CotizadorProductos() {
               <p className="mt-4 text-gray-600 text-lg">No se encontraron productos</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {filteredProducts.map((product) => {
                 const stock = product.stock || 0
                 const stockStatus = getStockStatus(stock)
                 
-                // Colores dinámicos según el estado de stock
+                // Colores formales según el estado de stock
                 const headerGradient = stockStatus.color === 'green' 
-                  ? 'from-emerald-600 via-green-600 to-teal-600'
+                  ? 'from-slate-700 via-slate-600 to-slate-700'
                   : stockStatus.color === 'yellow'
-                  ? 'from-yellow-500 via-amber-500 to-orange-500'
+                  ? 'from-amber-600 via-amber-500 to-amber-600'
                   : stockStatus.color === 'orange'
-                  ? 'from-orange-500 via-red-500 to-pink-500'
-                  : 'from-red-600 via-rose-600 to-pink-600'
+                  ? 'from-orange-600 via-orange-500 to-orange-600'
+                  : 'from-red-700 via-red-600 to-red-700'
                 
                 return (
-                  <div key={product.id} className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-gray-200 hover:border-green-300 transform hover:-translate-y-1">
-                    {/* Header de la Card con Gradiente Mejorado */}
-                    <div className={`bg-gradient-to-br ${headerGradient} p-5 text-white relative overflow-hidden`}>
-                      {/* Decoración de fondo */}
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
-                      
-                      <div className="relative z-10">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-bold truncate mb-1 drop-shadow-sm">{product.name}</h3>
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                                <FiPackage size={12} className="text-white" />
-                              </div>
-                              <span className="text-xs text-white/90">ID: {product.id.slice(0, 8)}</span>
-                            </div>
-                          </div>
-                          <span className={`px-3 py-1.5 rounded-xl text-xs font-bold border-2 shadow-lg backdrop-blur-sm ${stockStatus.bg} ${stockStatus.text} ${stockStatus.border} flex-shrink-0 ml-2`}>
-                            {stockStatus.color === 'red' && <FiXCircle size={12} className="inline mr-1" />}
-                            {stockStatus.color === 'orange' && <FiAlertCircle size={12} className="inline mr-1" />}
-                            {stockStatus.color === 'yellow' && <FiAlertCircle size={12} className="inline mr-1" />}
-                            {stockStatus.color === 'green' && <FiCheckCircle size={12} className="inline mr-1" />}
-                            {stockStatus.label}
-                          </span>
+                  <div key={product.id} className="group bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden border border-gray-300">
+                    {/* Header de la Card con Colores Formales */}
+                    <div className={`bg-gradient-to-br ${headerGradient} p-3 text-white relative`}>
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-semibold truncate mb-0.5">{product.name}</h3>
+                          <div className="text-xs text-white/80">ID: {product.id.slice(0, 6)}</div>
                         </div>
-                        <div className="flex items-baseline gap-2 mb-2">
-                          <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                            <FiDollarSign size={16} className="text-white" />
-                          </div>
-                          <div className="text-3xl font-extrabold drop-shadow-md">
-                            S/. {product.price?.toFixed(2) || '0.00'}
-                          </div>
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${stockStatus.bg} ${stockStatus.text} ${stockStatus.border} flex-shrink-0 ml-2`}>
+                          {stockStatus.color === 'green' && <FiCheckCircle size={10} className="inline mr-0.5" />}
+                          {stockStatus.color === 'yellow' && <FiAlertCircle size={10} className="inline mr-0.5" />}
+                          {stockStatus.color === 'orange' && <FiAlertCircle size={10} className="inline mr-0.5" />}
+                          {stockStatus.color === 'red' && <FiXCircle size={10} className="inline mr-0.5" />}
+                          {stockStatus.label}
+                        </span>
+                      </div>
+                      <div className="flex items-baseline gap-1.5">
+                        <FiDollarSign size={14} className="text-white/90" />
+                        <div className="text-xl font-bold">
+                          S/. {product.price?.toFixed(2) || '0.00'}
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-white/90 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 w-fit">
-                          <FiPackage size={12} />
-                          <span className="font-semibold">Stock: {stock} unidades</span>
-                        </div>
+                      </div>
+                      <div className="text-xs text-white/80 mt-1">
+                        Stock: {stock} unidades
                       </div>
                     </div>
 
-                    {/* Imagen del Producto con Mejor Diseño */}
-                    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 p-4">
+                    {/* Imagen del Producto - Más Compacta */}
+                    <div className="relative bg-gray-50 p-2">
                       {product.image ? (
-                        <div className="relative group/image">
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-full h-40 object-cover rounded-xl border-4 border-white shadow-xl group-hover:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                              e.target.src = '/placeholder-product.png'
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-xl"></div>
-                          <div className="absolute top-2 right-2 w-8 h-8 bg-green-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
-                            <FiCheckCircle size={16} className="text-white" />
-                          </div>
-                        </div>
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-28 object-cover rounded border border-gray-200"
+                          onError={(e) => {
+                            e.target.src = '/placeholder-product.png'
+                          }}
+                        />
                       ) : (
-                        <div className="w-full h-40 bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 rounded-xl border-4 border-white shadow-xl flex items-center justify-center">
-                          <FiPackage size={48} className="text-green-600 opacity-50" />
+                        <div className="w-full h-28 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
+                          <FiPackage size={32} className="text-gray-400" />
                         </div>
                       )}
                     </div>
 
-                    {/* Contenido de la Card con Mejor Diseño */}
-                    <div className="p-5 space-y-4 bg-gradient-to-b from-white to-gray-50">
+                    {/* Contenido de la Card - Más Compacto */}
+                    <div className="p-3 space-y-2 bg-white">
                       {product.description && (
-                        <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
-                          <div className="flex items-start gap-2">
-                            <div className="w-5 h-5 bg-blue-100 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <FiInfo size={12} className="text-blue-600" />
-                            </div>
-                            <p className="text-sm text-gray-700 line-clamp-2 leading-relaxed">{product.description}</p>
-                          </div>
-                        </div>
+                        <p className="text-xs text-gray-600 line-clamp-2">{product.description}</p>
                       )}
                       
                       {product.category && (
-                        <div className="flex items-center gap-2 bg-purple-50 rounded-lg p-2 border border-purple-200">
-                          <div className="w-6 h-6 bg-purple-500 rounded-lg flex items-center justify-center">
-                            <FiTag size={12} className="text-white" />
-                          </div>
-                          <span className="text-xs font-semibold text-purple-700">Categoría:</span>
-                          <span className="text-xs text-purple-900 font-medium">{product.category}</span>
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <FiTag size={10} className="text-gray-400" />
+                          <span className="text-gray-500">{product.category}</span>
                         </div>
                       )}
                       
-                      {/* Badge de Stock Mejorado */}
-                      <div className={`inline-flex items-center justify-between w-full px-4 py-3 rounded-xl border-2 shadow-md ${stockStatus.bg} ${stockStatus.text} ${stockStatus.border} transition-all duration-200 hover:scale-105`}>
-                        <div className="flex items-center gap-2">
-                          {stockStatus.color === 'red' && <FiXCircle size={18} />}
-                          {stockStatus.color === 'orange' && <FiAlertCircle size={18} />}
-                          {stockStatus.color === 'yellow' && <FiAlertCircle size={18} />}
-                          {stockStatus.color === 'green' && <FiCheckCircle size={18} />}
-                          <span className="text-sm font-semibold">{stockStatus.label}</span>
-                        </div>
-                        <span className="text-2xl font-extrabold">{stock}</span>
+                      {/* Badge de Stock Compacto */}
+                      <div className={`inline-flex items-center justify-between w-full px-2 py-1.5 rounded border ${stockStatus.bg} ${stockStatus.text} ${stockStatus.border}`}>
+                        <span className="text-xs font-medium">{stockStatus.label}</span>
+                        <span className="text-sm font-bold">{stock}</span>
                       </div>
                     </div>
                   </div>
@@ -574,7 +652,7 @@ export default function CotizadorProductos() {
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-green-600 via-emerald-600 to-indigo-700">
+                <thead className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700">
                   <tr>
                     <th className="px-6 py-5 text-left text-xs font-bold text-white uppercase tracking-wider">
                       <div className="flex items-center gap-2">
@@ -724,6 +802,121 @@ export default function CotizadorProductos() {
             </div>
           </div>
         )}
+
+        {/* Modal de Importación */}
+        {showImportModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900">Importar Productos desde Excel</h3>
+                <button
+                  onClick={() => {
+                    setShowImportModal(false)
+                    setImportFile(null)
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <FiX size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Seleccionar archivo Excel
+                  </label>
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={handleImportFile}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                  />
+                  {importFile && (
+                    <p className="mt-2 text-xs text-gray-600">
+                      Archivo seleccionado: {importFile.name}
+                    </p>
+                  )}
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-800 mb-2">
+                    <strong>Formato requerido:</strong>
+                  </p>
+                  <ul className="text-xs text-blue-700 space-y-1 list-disc list-inside">
+                    <li><strong>Nombre</strong> (requerido)</li>
+                    <li><strong>Precio</strong> (requerido)</li>
+                    <li>Descripción (opcional)</li>
+                    <li>Stock (opcional, default: 0)</li>
+                    <li>Categoría (opcional)</li>
+                    <li>Imagen (URL, opcional)</li>
+                  </ul>
+                  <button
+                    onClick={downloadTemplate}
+                    className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Descargar template de ejemplo
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    onClick={() => {
+                      setShowImportModal(false)
+                      setImportFile(null)
+                    }}
+                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleImportProducts}
+                    disabled={!importFile || importing}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                  >
+                    {importing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Importando...
+                      </>
+                    ) : (
+                      <>
+                        <FiUpload size={16} />
+                        Importar
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Notificaciones */}
+        <div className="fixed top-4 right-4 z-50 space-y-2">
+          {notifications.map((notification) => (
+            <div
+              key={notification.id}
+              className={`px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 min-w-[300px] ${
+                notification.type === 'success'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-red-500 text-white'
+              }`}
+            >
+              {notification.type === 'success' ? (
+                <FiCheckCircle size={20} />
+              ) : (
+                <FiXCircle size={20} />
+              )}
+              <span className="flex-1 text-sm font-medium">{notification.message}</span>
+              <button
+                onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
+                className="text-white hover:text-gray-200"
+              >
+                <FiX size={18} />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </CotizadorLayout>
   )
