@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
-import { FiPackage, FiSearch, FiAlertCircle, FiCheckCircle, FiXCircle, FiFilter, FiGrid, FiList, FiDownload, FiFileText } from 'react-icons/fi'
+import { FiPackage, FiSearch, FiAlertCircle, FiCheckCircle, FiXCircle, FiFilter, FiGrid, FiList, FiDownload, FiFileText, FiDollarSign, FiTag, FiInfo } from 'react-icons/fi'
 import { checkCotizadorAuth } from '../../lib/cotizadorAuth'
 import CotizadorLayout from '../../components/cotizador/CotizadorLayout'
 import * as XLSX from 'xlsx'
@@ -449,52 +449,119 @@ export default function CotizadorProductos() {
               <p className="mt-4 text-gray-600 text-lg">No se encontraron productos</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredProducts.map((product) => {
                 const stock = product.stock || 0
                 const stockStatus = getStockStatus(stock)
                 
+                // Colores dinámicos según el estado de stock
+                const headerGradient = stockStatus.color === 'green' 
+                  ? 'from-emerald-600 via-green-600 to-teal-600'
+                  : stockStatus.color === 'yellow'
+                  ? 'from-yellow-500 via-amber-500 to-orange-500'
+                  : stockStatus.color === 'orange'
+                  ? 'from-orange-500 via-red-500 to-pink-500'
+                  : 'from-red-600 via-rose-600 to-pink-600'
+                
                 return (
-                  <div key={product.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden border border-gray-200">
-                    {/* Header de la Card */}
-                    <div className="bg-gradient-to-br from-green-600 to-green-700 p-4 text-white">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-lg font-bold truncate">{product.name}</h3>
-                        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${stockStatus.bg} ${stockStatus.text} ${stockStatus.border}`}>
-                          {stockStatus.label}
-                        </span>
-                      </div>
-                      <div className="text-2xl font-bold">
-                        S/. {product.price?.toFixed(2) || '0.00'}
-                      </div>
-                      <div className="text-xs text-green-100 mt-1">
-                        Stock: {stock} unidades
+                  <div key={product.id} className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-gray-200 hover:border-green-300 transform hover:-translate-y-1">
+                    {/* Header de la Card con Gradiente Mejorado */}
+                    <div className={`bg-gradient-to-br ${headerGradient} p-5 text-white relative overflow-hidden`}>
+                      {/* Decoración de fondo */}
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
+                      
+                      <div className="relative z-10">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-lg font-bold truncate mb-1 drop-shadow-sm">{product.name}</h3>
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                                <FiPackage size={12} className="text-white" />
+                              </div>
+                              <span className="text-xs text-white/90">ID: {product.id.slice(0, 8)}</span>
+                            </div>
+                          </div>
+                          <span className={`px-3 py-1.5 rounded-xl text-xs font-bold border-2 shadow-lg backdrop-blur-sm ${stockStatus.bg} ${stockStatus.text} ${stockStatus.border} flex-shrink-0 ml-2`}>
+                            {stockStatus.color === 'red' && <FiXCircle size={12} className="inline mr-1" />}
+                            {stockStatus.color === 'orange' && <FiAlertCircle size={12} className="inline mr-1" />}
+                            {stockStatus.color === 'yellow' && <FiAlertCircle size={12} className="inline mr-1" />}
+                            {stockStatus.color === 'green' && <FiCheckCircle size={12} className="inline mr-1" />}
+                            {stockStatus.label}
+                          </span>
+                        </div>
+                        <div className="flex items-baseline gap-2 mb-2">
+                          <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                            <FiDollarSign size={16} className="text-white" />
+                          </div>
+                          <div className="text-3xl font-extrabold drop-shadow-md">
+                            S/. {product.price?.toFixed(2) || '0.00'}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-white/90 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 w-fit">
+                          <FiPackage size={12} />
+                          <span className="font-semibold">Stock: {stock} unidades</span>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Contenido de la Card */}
-                    <div className="p-4 space-y-3">
-                      {product.image && (
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-32 object-cover rounded-lg border border-gray-200"
-                          onError={(e) => {
-                            e.target.src = '/placeholder-product.png'
-                          }}
-                        />
-                      )}
-                      {product.description && (
-                        <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
-                      )}
-                      {product.category && (
-                        <div className="text-xs text-gray-500">
-                          <span className="font-medium">Categoría:</span> {product.category}
+                    {/* Imagen del Producto con Mejor Diseño */}
+                    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 p-4">
+                      {product.image ? (
+                        <div className="relative group/image">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-full h-40 object-cover rounded-xl border-4 border-white shadow-xl group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              e.target.src = '/placeholder-product.png'
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-xl"></div>
+                          <div className="absolute top-2 right-2 w-8 h-8 bg-green-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
+                            <FiCheckCircle size={16} className="text-white" />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-full h-40 bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 rounded-xl border-4 border-white shadow-xl flex items-center justify-center">
+                          <FiPackage size={48} className="text-green-600 opacity-50" />
                         </div>
                       )}
-                      <div className={`inline-flex items-center px-3 py-1.5 rounded-lg border-2 ${stockStatus.bg} ${stockStatus.text} ${stockStatus.border} w-full justify-center`}>
-                        <span className="font-bold text-lg mr-2">{stock}</span>
-                        <span className="text-sm font-semibold">{stockStatus.label}</span>
+                    </div>
+
+                    {/* Contenido de la Card con Mejor Diseño */}
+                    <div className="p-5 space-y-4 bg-gradient-to-b from-white to-gray-50">
+                      {product.description && (
+                        <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                          <div className="flex items-start gap-2">
+                            <div className="w-5 h-5 bg-blue-100 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <FiInfo size={12} className="text-blue-600" />
+                            </div>
+                            <p className="text-sm text-gray-700 line-clamp-2 leading-relaxed">{product.description}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {product.category && (
+                        <div className="flex items-center gap-2 bg-purple-50 rounded-lg p-2 border border-purple-200">
+                          <div className="w-6 h-6 bg-purple-500 rounded-lg flex items-center justify-center">
+                            <FiTag size={12} className="text-white" />
+                          </div>
+                          <span className="text-xs font-semibold text-purple-700">Categoría:</span>
+                          <span className="text-xs text-purple-900 font-medium">{product.category}</span>
+                        </div>
+                      )}
+                      
+                      {/* Badge de Stock Mejorado */}
+                      <div className={`inline-flex items-center justify-between w-full px-4 py-3 rounded-xl border-2 shadow-md ${stockStatus.bg} ${stockStatus.text} ${stockStatus.border} transition-all duration-200 hover:scale-105`}>
+                        <div className="flex items-center gap-2">
+                          {stockStatus.color === 'red' && <FiXCircle size={18} />}
+                          {stockStatus.color === 'orange' && <FiAlertCircle size={18} />}
+                          {stockStatus.color === 'yellow' && <FiAlertCircle size={18} />}
+                          {stockStatus.color === 'green' && <FiCheckCircle size={18} />}
+                          <span className="text-sm font-semibold">{stockStatus.label}</span>
+                        </div>
+                        <span className="text-2xl font-extrabold">{stock}</span>
                       </div>
                     </div>
                   </div>
@@ -503,29 +570,51 @@ export default function CotizadorProductos() {
             </div>
           )
         ) : (
-          /* Vista de Tabla */
+          /* Vista de Tabla - Mejorada con Colores y Diseño */
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-green-600 to-indigo-700">
+                <thead className="bg-gradient-to-r from-green-600 via-emerald-600 to-indigo-700">
                   <tr>
-                    <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                    <th className="px-6 py-5 text-left text-xs font-bold text-white uppercase tracking-wider">
                       <div className="flex items-center gap-2">
-                        <FiPackage size={14} />
-                        Producto
+                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                          <FiPackage size={16} className="text-white" />
+                        </div>
+                        <span>Producto</span>
                       </div>
                     </th>
-                    <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
-                      Precio
+                    <th className="px-6 py-5 text-left text-xs font-bold text-white uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                          <FiDollarSign size={16} className="text-white" />
+                        </div>
+                        <span>Precio</span>
+                      </div>
                     </th>
-                    <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
-                      Stock
+                    <th className="px-6 py-5 text-left text-xs font-bold text-white uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                          <FiPackage size={16} className="text-white" />
+                        </div>
+                        <span>Stock</span>
+                      </div>
                     </th>
-                    <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
-                      Estado
+                    <th className="px-6 py-5 text-left text-xs font-bold text-white uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                          <FiCheckCircle size={16} className="text-white" />
+                        </div>
+                        <span>Estado</span>
+                      </div>
                     </th>
-                    <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
-                      Categoría
+                    <th className="px-6 py-5 text-left text-xs font-bold text-white uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                          <FiTag size={16} className="text-white" />
+                        </div>
+                        <span>Categoría</span>
+                      </div>
                     </th>
                   </tr>
                 </thead>
@@ -533,8 +622,13 @@ export default function CotizadorProductos() {
                   {filteredProducts.length === 0 ? (
                     <tr>
                       <td colSpan="5" className="px-6 py-12 text-center">
-                        <FiPackage className="mx-auto text-gray-400 mb-3" size={48} />
-                        <p className="text-gray-600 text-lg">No se encontraron productos</p>
+                        <div className="flex flex-col items-center">
+                          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                            <FiPackage className="text-gray-400" size={40} />
+                          </div>
+                          <p className="text-gray-600 text-lg font-semibold">No se encontraron productos</p>
+                          <p className="text-gray-400 text-sm mt-1">Intenta ajustar los filtros de búsqueda</p>
+                        </div>
                       </td>
                     </tr>
                   ) : (
@@ -545,47 +639,81 @@ export default function CotizadorProductos() {
                       return (
                         <tr 
                           key={product.id} 
-                          className={`transition-colors ${
+                          className={`transition-all duration-200 ${
                             index % 2 === 0 
-                              ? 'bg-white hover:bg-green-50' 
-                              : 'bg-gray-50 hover:bg-green-50'
+                              ? 'bg-white hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50' 
+                              : 'bg-gray-50 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50'
                           }`}
                         >
-                          <td className="px-5 py-4">
-                            <div className="flex items-center gap-3">
-                              {product.image && (
-                                <img
-                                  src={product.image}
-                                  alt={product.name}
-                                  className="w-12 h-12 object-cover rounded-lg border border-gray-200"
-                                  onError={(e) => {
-                                    e.target.src = '/placeholder-product.png'
-                                  }}
-                                />
+                          <td className="px-6 py-5">
+                            <div className="flex items-center gap-4">
+                              {product.image ? (
+                                <div className="relative">
+                                  <img
+                                    src={product.image}
+                                    alt={product.name}
+                                    className="w-16 h-16 object-cover rounded-xl border-2 border-gray-200 shadow-md hover:shadow-lg transition-shadow"
+                                    onError={(e) => {
+                                      e.target.src = '/placeholder-product.png'
+                                    }}
+                                  />
+                                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white shadow-sm"></div>
+                                </div>
+                              ) : (
+                                <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl border-2 border-green-200 flex items-center justify-center shadow-md">
+                                  <FiPackage className="text-green-600" size={24} />
+                                </div>
                               )}
-                              <div>
-                                <div className="text-sm font-semibold text-gray-900">{product.name}</div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <FiPackage className="text-blue-600" size={12} />
+                                  </div>
+                                  <div className="text-base font-bold text-gray-900 truncate">{product.name}</div>
+                                </div>
                                 {product.description && (
-                                  <div className="text-xs text-gray-500 line-clamp-1 mt-0.5">{product.description}</div>
+                                  <div className="text-xs text-gray-500 line-clamp-2 mt-0.5 pl-8">{product.description}</div>
                                 )}
                               </div>
                             </div>
                           </td>
-                          <td className="px-5 py-4 whitespace-nowrap">
-                            <div className="text-base font-bold text-green-600">
-                              S/. {product.price?.toFixed(2) || '0.00'}
+                          <td className="px-6 py-5 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                <FiDollarSign className="text-green-600" size={14} />
+                              </div>
+                              <div className="text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                                S/. {product.price?.toFixed(2) || '0.00'}
+                              </div>
                             </div>
                           </td>
-                          <td className="px-5 py-4 whitespace-nowrap">
-                            <div className="text-base font-bold text-gray-900">{stock}</div>
+                          <td className="px-6 py-5 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center border-2 border-indigo-200">
+                                <span className="text-lg font-bold text-indigo-700">{stock}</span>
+                              </div>
+                            </div>
                           </td>
-                          <td className="px-5 py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-2.5 py-1 text-xs font-bold rounded-lg border-2 ${stockStatus.bg} ${stockStatus.text} ${stockStatus.border}`}>
+                          <td className="px-6 py-5 whitespace-nowrap">
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl border-2 shadow-sm ${stockStatus.bg} ${stockStatus.text} ${stockStatus.border}`}>
+                              {stockStatus.color === 'red' && <FiXCircle size={14} />}
+                              {stockStatus.color === 'orange' && <FiAlertCircle size={14} />}
+                              {stockStatus.color === 'yellow' && <FiAlertCircle size={14} />}
+                              {stockStatus.color === 'green' && <FiCheckCircle size={14} />}
                               {stockStatus.label}
                             </span>
                           </td>
-                          <td className="px-5 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-600">{product.category || 'N/A'}</div>
+                          <td className="px-6 py-5 whitespace-nowrap">
+                            {product.category ? (
+                              <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center">
+                                  <FiTag className="text-purple-600" size={12} />
+                                </div>
+                                <span className="text-sm font-medium text-gray-700">{product.category}</span>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-gray-400 italic">N/A</span>
+                            )}
                           </td>
                         </tr>
                       )
