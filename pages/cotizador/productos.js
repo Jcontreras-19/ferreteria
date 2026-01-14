@@ -331,7 +331,24 @@ export default function CotizadorProductos() {
       const data = await res.json()
 
       if (res.ok) {
-        showNotification(`✅ ${data.success} productos importados exitosamente. ${data.errors > 0 ? `${data.errors} errores.` : ''}`, 'success')
+        if (data.success > 0) {
+          showNotification(`✅ ${data.success} productos importados exitosamente. ${data.errors > 0 ? `${data.errors} errores.` : ''}`, 'success')
+        } else {
+          showNotification(`⚠️ No se importaron productos. ${data.errors} errores encontrados.`, 'error')
+        }
+        
+        // Mostrar mensajes de error si hay
+        if (data.errorMessages && data.errorMessages.length > 0) {
+          console.error('Errores de importación:', data.errorMessages)
+          // Mostrar los primeros errores en la consola y en una notificación
+          const errorSummary = data.errorMessages.slice(0, 3).join('; ')
+          if (data.errorMessages.length > 3) {
+            showNotification(`Errores: ${errorSummary}... (ver consola para más detalles)`, 'error')
+          } else {
+            showNotification(`Errores: ${errorSummary}`, 'error')
+          }
+        }
+        
         setShowImportModal(false)
         setImportFile(null)
         fetchProducts()

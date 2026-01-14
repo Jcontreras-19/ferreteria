@@ -85,10 +85,30 @@ export default async function handler(req, res) {
     const workbook = XLSX.readFile(file.filepath)
     const sheetName = workbook.SheetNames[0]
     const worksheet = workbook.Sheets[sheetName]
-    const jsonData = XLSX.utils.sheet_to_json(worksheet)
+    
+    // Buscar la fila donde están los encabezados (buscar "Nombre*" o "Nombre")
+    let headerRow = 0
+    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1')
+    
+    for (let row = 0; row <= range.e.r; row++) {
+      const cellA = worksheet[XLSX.utils.encode_cell({ r: row, c: 0 })]
+      const cellValue = cellA ? String(cellA.v || '').trim().toLowerCase() : ''
+      
+      // Buscar fila que contenga "nombre" (puede ser "Nombre*" o "Nombre")
+      if (cellValue.includes('nombre')) {
+        headerRow = row
+        break
+      }
+    }
+    
+    // Leer datos desde la fila de encabezados encontrada
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+      range: headerRow, // Empezar desde la fila de encabezados
+      defval: null, // Valores por defecto
+    })
 
     if (jsonData.length === 0) {
-      return res.status(400).json({ error: 'El archivo Excel está vacío' })
+      return res.status(400).json({ error: 'El archivo Excel está vacío o no se encontraron productos' })
     }
 
     let success = 0
@@ -105,25 +125,35 @@ export default async function handler(req, res) {
           normalized[normalizedKey] = row[key]
         })
 
-        // Mapear nombres de columnas (soportar variaciones)
-        const name = normalized.nombre || normalized.name || normalized['nombre del producto']
-        const price = normalized.precio || normalized.price || normalized.precio_unitario
+        // Mapear nombres de columnas (soportar variaciones y asteriscos)
+        // Normalizar también nombres con asteriscos como "Nombre*" -> "nombre"
+        const name = normalized.nombre || normalized.name || normalized['nombre del producto'] || 
+                     normalized['nombre*'] || normalized['name*']
+        const price = normalized.precio || normalized.price || normalized.precio_unitario || 
+                      normalized['precio*'] || normalized['price*']
         const description = normalized.descripción || normalized.description || normalized.descripcion || null
         const stock = normalized.stock || normalized.cantidad || normalized.inventario || 0
         const category = normalized.categoría || normalized.category || normalized.categoria || null
-        const image = normalized.imagen || normalized.image || normalized['imagen (url)'] || null
+        const image = normalized.imagen || normalized.image || normalized['imagen (url)'] || 
+                      normalized['imagen (url)'] || normalized['imagen(url)'] || null
 
         // Validar datos requeridos
-        if (!name || !price) {
+        if (!name || name === '' || name === null || name === undefined) {
           errors++
-          errorMessages.push(`Fila ${jsonData.indexOf(row) + 2}: Faltan datos requeridos (nombre o precio)`)
+          errorMessages.push(`Fila ${jsonData.indexOf(row) + 2 + headerRow}: Falta el nombre del producto`)
+          continue
+        }
+        
+        if (!price || price === '' || price === null || price === undefined) {
+          errors++
+          errorMessages.push(`Fila ${jsonData.indexOf(row) + 2 + headerRow}: Falta el precio del producto "${name}"`)
           continue
         }
 
-        const priceNum = parseFloat(price)
+        const priceNum = parseFloat(String(price).replace(',', '.')) // Soporta tanto coma como punto decimal
         if (isNaN(priceNum) || priceNum <= 0) {
           errors++
-          errorMessages.push(`Fila ${jsonData.indexOf(row) + 2}: Precio inválido (${price})`)
+          errorMessages.push(`Fila ${jsonData.indexOf(row) + 2 + headerRow}: Precio inválido para "${name}" (${price})`)
           continue
         }
 
