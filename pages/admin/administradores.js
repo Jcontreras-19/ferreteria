@@ -19,7 +19,14 @@ const ROLES = [
   { value: 'cotizador', label: 'Cotizador', defaultPermissions: ['view', 'approve', 'reject'] },
   { value: 'admin', label: 'Administrador', defaultPermissions: ['view', 'create', 'edit', 'delete'] },
   { value: 'superadmin', label: 'Super Admin', defaultPermissions: ['view', 'create', 'edit', 'delete'] },
+  { value: 'customer', label: 'Cliente', defaultPermissions: ['view'] },
 ]
+
+// Función helper para obtener el label del rol
+const getRoleLabel = (role) => {
+  const roleConfig = ROLES.find((r) => r.value === role)
+  return roleConfig ? roleConfig.label : role === 'customer' ? 'Cliente' : role
+}
 
 export default function AdminAdministradores() {
   const router = useRouter()
@@ -195,7 +202,7 @@ export default function AdminAdministradores() {
   return (
     <>
       <Head>
-        <title>Administradores - Panel Administrador</title>
+        <title>Usuarios - Panel Administrador</title>
       </Head>
       <AdminLayout user={user} onLogout={handleLogout}>
         <div className="space-y-4">
@@ -203,9 +210,9 @@ export default function AdminAdministradores() {
           <div className="bg-white rounded-xl shadow-md border border-gray-200 p-3">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h1 className="text-xl font-bold text-gray-900 uppercase tracking-wide">GESTIÓN DE ADMINISTRADORES</h1>
+                <h1 className="text-xl font-bold text-gray-900 uppercase tracking-wide">GESTIÓN DE USUARIOS</h1>
                 <p className="text-gray-600 text-xs mt-0.5">
-                  {users.length} administrador{users.length !== 1 ? 'es' : ''} en total
+                  {users.length} usuario{users.length !== 1 ? 's' : ''} en total
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -321,7 +328,7 @@ export default function AdminAdministradores() {
                   !searchQuery || 
                   u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                   u.email.toLowerCase().includes(searchQuery.toLowerCase())
-                ).length} de {users.length} administradores</span>
+                ).length} de {users.length} usuarios</span>
               </div>
             </div>
           </div>
@@ -358,10 +365,12 @@ export default function AdminAdministradores() {
                               ? 'bg-orange-500/30 text-white border border-white/30'
                               : u.role === 'editor'
                               ? 'bg-green-500/30 text-white border border-white/30'
+                              : u.role === 'customer'
+                              ? 'bg-indigo-500/30 text-white border border-white/30'
                               : 'bg-gray-500/30 text-white border border-white/30'
                           }`}
                         >
-                          {ROLES.find((r) => r.value === u.role)?.label || u.role}
+                          {getRoleLabel(u.role)}
                         </span>
                       </div>
                       <div className="text-lg font-bold">{u.name}</div>
@@ -490,10 +499,12 @@ export default function AdminAdministradores() {
                                 ? 'bg-orange-100 text-orange-800'
                                 : u.role === 'editor'
                                 ? 'bg-green-100 text-green-800'
+                                : u.role === 'customer'
+                                ? 'bg-indigo-100 text-indigo-800'
                                 : 'bg-gray-100 text-gray-800'
                             }`}
                           >
-                            {ROLES.find((r) => r.value === u.role)?.label || u.role}
+                            {getRoleLabel(u.role)}
                           </span>
                         </td>
                         <td className="px-6 py-4">

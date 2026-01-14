@@ -12,6 +12,14 @@ export default function AdminProductos() {
   const [loading, setLoading] = useState(true)
   const [products, setProducts] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalProducts: 0,
+    hasNextPage: false,
+    hasPrevPage: false
+  })
   const [showModal, setShowModal] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
   const [formData, setFormData] = useState({
@@ -61,23 +69,21 @@ export default function AdminProductos() {
     }
   }
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (page = currentPage) => {
     try {
-      const url = searchQuery
-        ? `/api/productos?search=${encodeURIComponent(searchQuery)}`
-        : '/api/productos'
+      const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''
+      const url = `/api/productos?page=${page}&limit=10${searchParam}`
       const res = await fetch(url)
       if (res.ok) {
         const data = await res.json()
-        // Ordenar: productos con imagen primero
-        const sortedData = [...data].sort((a, b) => {
-          const aHasImage = a.image && a.image.trim() !== ''
-          const bHasImage = b.image && b.image.trim() !== ''
-          if (aHasImage && !bHasImage) return -1
-          if (!aHasImage && bHasImage) return 1
-          return 0
-        })
-        setProducts(sortedData)
+        // Si la respuesta tiene paginación, usar esa estructura
+        if (data.products && data.pagination) {
+          setProducts(data.products)
+          setPagination(data.pagination)
+        } else {
+          // Fallback para compatibilidad con respuestas antiguas
+          setProducts(Array.isArray(data) ? data : [])
+        }
       }
     } catch (error) {
       console.error('Error fetching products:', error)
@@ -85,8 +91,13 @@ export default function AdminProductos() {
   }
 
   useEffect(() => {
-    fetchProducts()
+    setCurrentPage(1) // Resetear a página 1 cuando cambia la búsqueda
+    fetchProducts(1)
   }, [searchQuery])
+
+  useEffect(() => {
+    fetchProducts(currentPage)
+  }, [currentPage])
 
   // Efecto para asegurar que los datos se carguen cuando se abre el modal o cambia el producto
   useEffect(() => {
@@ -134,7 +145,12 @@ export default function AdminProductos() {
     try {
       const res = await fetch(`/api/productos/${id}`, { method: 'DELETE' })
       if (res.ok) {
-        fetchProducts()
+        // Si eliminamos el último producto de la página y no es la primera página, ir a la anterior
+        if (products.length === 1 && currentPage > 1) {
+          setCurrentPage(currentPage - 1)
+        } else {
+          fetchProducts(currentPage)
+        }
       } else {
         alert('Error al eliminar producto')
       }
@@ -210,8 +226,8 @@ export default function AdminProductos() {
         setFormData(emptyData)
         setEditingProduct(null)
         setShowModal(false)
-        // Forzar actualización de la lista de productos
-        await fetchProducts()
+        // Forzar actualización de la lista de productos manteniendo la página actual
+        await fetchProducts(currentPage)
       } else {
         const data = await res.json()
         alert(data.error || 'Error al guardar producto')
@@ -490,11 +506,8 @@ export default function AdminProductos() {
     return { label: 'Stock Alto', color: 'green', bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-300' }
   }
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    return matchesSearch
-  })
+  // Los productos ya vienen filtrados desde la API, no necesitamos filtrar de nuevo
+  const filteredProducts = products
 
   // Calcular estadísticas (igual que en inventario)
   const stats = {
@@ -518,7 +531,7 @@ export default function AdminProductos() {
               <div>
                 <h1 className="text-xl font-bold text-gray-900 uppercase tracking-wide">INVENTARIO DE PRODUCTOS</h1>
                 <p className="text-gray-600 text-xs mt-0.5">
-                  {products.length} producto{products.length !== 1 ? 's' : ''} en total
+                  {pagination.totalProducts || products.length} producto{(pagination.totalProducts || products.length) !== 1 ? 's' : ''} en total
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -774,8 +787,87 @@ export default function AdminProductos() {
                   </tbody>
                 </table>
               </div>
+              
+              {/* Paginación */}
+              {pagination.totalPages > 1 && (
+                <div className="bg-gray-50 px-5 py-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-700">
+                      Página {pagination.currentPage} de {pagination.totalPages}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          if (pagination.hasPrevPage) {
+                            setCurrentPage(currentPage - 1)
+                            window.scrollTo({ top: 0, behavior: 'smooth' })
+                          }
+                        }}
+                        disabled={!pagination.hasPrevPage}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          pagination.hasPrevPage
+                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        Anterior
+                      </button>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                          .filter(page => {
+                            // Mostrar primera página, última página, página actual y páginas adyacentes
+                            return (
+                              page === 1 ||
+                              page === pagination.totalPages ||
+                              (page >= pagination.currentPage - 1 && page <= pagination.currentPage + 1)
+                            )
+                          })
+                          .map((page, index, array) => {
+                            // Agregar "..." si hay un gap
+                            const showEllipsis = index > 0 && array[index] - array[index - 1] > 1
+                            return (
+                              <div key={page} className="flex items-center gap-1">
+                                {showEllipsis && <span className="px-2 text-gray-500">...</span>}
+                                <button
+                                  onClick={() => {
+                                    setCurrentPage(page)
+                                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                                  }}
+                                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                    page === pagination.currentPage
+                                      ? 'bg-green-600 text-white'
+                                      : 'bg-white hover:bg-green-50 text-gray-700 border border-gray-300'
+                                  }`}
+                                >
+                                  {page}
+                                </button>
+                              </div>
+                            )
+                          })}
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (pagination.hasNextPage) {
+                            setCurrentPage(currentPage + 1)
+                            window.scrollTo({ top: 0, behavior: 'smooth' })
+                          }
+                        }}
+                        disabled={!pagination.hasNextPage}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          pagination.hasNextPage
+                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        Siguiente
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
+            <>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {filteredProducts.length === 0 ? (
                 <div className="col-span-full bg-white rounded-xl shadow-md border border-gray-200 p-12 text-center">
@@ -887,6 +979,81 @@ export default function AdminProductos() {
                 })
               )}
             </div>
+            {pagination?.totalPages > 1 && (
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200 px-5 py-4 mt-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-700">
+                    Página {pagination.currentPage} de {pagination.totalPages}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        if (pagination.hasPrevPage) {
+                          setCurrentPage(currentPage - 1)
+                          window.scrollTo({ top: 0, behavior: 'smooth' })
+                        }
+                      }}
+                      disabled={!pagination.hasPrevPage}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        pagination.hasPrevPage
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
+                    >
+                      Anterior
+                    </button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                        .filter(page => {
+                          return (
+                            page === 1 ||
+                            page === pagination.totalPages ||
+                            (page >= pagination.currentPage - 1 && page <= pagination.currentPage + 1)
+                          )
+                        })
+                        .map((page, index, array) => {
+                          const showEllipsis = index > 0 && array[index] - array[index - 1] > 1
+                          return (
+                            <div key={page} className="flex items-center gap-1">
+                              {showEllipsis && <span className="px-2 text-gray-500">...</span>}
+                              <button
+                                onClick={() => {
+                                  setCurrentPage(page)
+                                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                                }}
+                                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                  page === pagination.currentPage
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-white hover:bg-green-50 text-gray-700 border border-gray-300'
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            </div>
+                          )
+                        })}
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (pagination.hasNextPage) {
+                          setCurrentPage(currentPage + 1)
+                          window.scrollTo({ top: 0, behavior: 'smooth' })
+                        }
+                      }}
+                      disabled={!pagination.hasNextPage}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        pagination.hasNextPage
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            </>
           )}
         </div>
 

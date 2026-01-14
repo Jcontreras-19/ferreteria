@@ -4,7 +4,11 @@ import { getCurrentUser } from '../../../lib/auth'
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
-      const { search } = req.query
+      const { search, page = '1', limit = '10' } = req.query
+      const pageNum = parseInt(page) || 1
+      const limitNum = parseInt(limit) || 10
+      const skip = (pageNum - 1) * limitNum
+
       let where = {}
 
       if (search) {
@@ -17,6 +21,9 @@ export default async function handler(req, res) {
         }
       }
 
+      // Obtener el total de productos para la paginación
+      const totalProducts = await prisma.product.count({ where })
+
       // Obtener todos los productos ordenados por fecha de creación (más antiguos primero)
       const allProducts = await prisma.product.findMany({
         where,
@@ -25,7 +32,7 @@ export default async function handler(req, res) {
 
       // Ordenar: productos con imagen primero, pero manteniendo el orden cronológico dentro de cada grupo
       // Los productos nuevos se agregan al final (createdAt más reciente = último)
-      const products = allProducts.sort((a, b) => {
+      const sortedProducts = allProducts.sort((a, b) => {
         const aHasImage = a.image && a.image.trim() !== ''
         const bHasImage = b.image && b.image.trim() !== ''
         
@@ -40,7 +47,21 @@ export default async function handler(req, res) {
         return dateA - dateB
       })
 
-      return res.status(200).json(products)
+      // Aplicar paginación
+      const products = sortedProducts.slice(skip, skip + limitNum)
+      const totalPages = Math.ceil(totalProducts / limitNum)
+
+      return res.status(200).json({
+        products,
+        pagination: {
+          currentPage: pageNum,
+          totalPages,
+          totalProducts,
+          limit: limitNum,
+          hasNextPage: pageNum < totalPages,
+          hasPrevPage: pageNum > 1
+        }
+      })
     } catch (error) {
       console.error('Error fetching products:', error)
       return res.status(500).json({ error: 'Error al obtener productos' })

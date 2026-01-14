@@ -5,7 +5,7 @@ import AdminLayout from '../../components/admin/AdminLayout'
 import { 
   FiUser, FiMail, FiCalendar, FiFileText, FiSearch, FiChevronDown, FiChevronUp, 
   FiPhone, FiEdit2, FiSave, FiX, FiDollarSign, FiTrendingUp, FiUsers, FiDownload,
-  FiGrid, FiList, FiEye, FiFilter
+  FiGrid, FiList, FiEye, FiFilter, FiLock, FiTrash2
 } from 'react-icons/fi'
 import * as XLSX from 'xlsx'
 
@@ -21,6 +21,13 @@ export default function AdminClientes() {
   const [saving, setSaving] = useState(false)
   const [viewMode, setViewMode] = useState('table') // 'cards' or 'table'
   const [sortBy, setSortBy] = useState('name') // 'name', 'totalSpent', 'totalQuotes', 'date'
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState(null)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     checkAuth()
@@ -592,8 +599,22 @@ export default function AdminClientes() {
                             <span>EDITAR CONTACTO</span>
                           </button>
                           <button
-                            onClick={() => setExpandedCustomer(expandedCustomer === customer.id ? null : customer.id)}
+                            onClick={() => handleChangePassword(customer)}
                             className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm transition-colors font-medium"
+                          >
+                            <FiLock size={16} />
+                            <span>CAMBIAR CONTRASEÑA</span>
+                          </button>
+                          <button
+                            onClick={() => handleDelete(customer)}
+                            className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm transition-colors font-medium"
+                          >
+                            <FiTrash2 size={16} />
+                            <span>ELIMINAR CLIENTE</span>
+                          </button>
+                          <button
+                            onClick={() => setExpandedCustomer(expandedCustomer === customer.id ? null : customer.id)}
+                            className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm transition-colors font-medium"
                           >
                             {expandedCustomer === customer.id ? (
                               <>
@@ -810,13 +831,29 @@ export default function AdminClientes() {
                         <td className="px-6 py-5 whitespace-nowrap text-center">
                           <div className="flex items-center justify-center gap-2">
                             {editingCustomer !== customer.id && (
-                              <button
-                                onClick={() => handleEdit(customer)}
-                                className="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-all"
-                                title="Editar contacto"
-                              >
-                                <FiEdit2 size={18} />
-                              </button>
+                              <>
+                                <button
+                                  onClick={() => handleEdit(customer)}
+                                  className="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-all"
+                                  title="Editar contacto"
+                                >
+                                  <FiEdit2 size={18} />
+                                </button>
+                                <button
+                                  onClick={() => handleChangePassword(customer)}
+                                  className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all"
+                                  title="Cambiar contraseña"
+                                >
+                                  <FiLock size={18} />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(customer)}
+                                  className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all"
+                                  title="Eliminar cliente"
+                                >
+                                  <FiTrash2 size={18} />
+                                </button>
+                              </>
                             )}
                             <button
                               onClick={() => setExpandedCustomer(expandedCustomer === customer.id ? null : customer.id)}
@@ -885,6 +922,165 @@ export default function AdminClientes() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Modal de Cambiar Contraseña */}
+          {showPasswordModal && selectedCustomer && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <FiLock size={20} className="text-blue-600" />
+                    Cambiar Contraseña
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setShowPasswordModal(false)
+                      setSelectedCustomer(null)
+                      setNewPassword('')
+                      setConfirmPassword('')
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <FiX size={20} />
+                  </button>
+                </div>
+
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 mb-2">
+                    Cliente: <span className="font-semibold text-gray-900">{selectedCustomer.name}</span>
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {selectedCustomer.email}
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nueva Contraseña *
+                    </label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                      placeholder="Mínimo 6 caracteres"
+                      style={{ color: '#111827' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Confirmar Contraseña *
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                      placeholder="Repite la contraseña"
+                      style={{ color: '#111827' }}
+                    />
+                  </div>
+
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p className="text-xs text-yellow-800">
+                      <strong>Nota:</strong> El cliente deberá usar esta nueva contraseña para iniciar sesión.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      onClick={() => {
+                        setShowPasswordModal(false)
+                        setSelectedCustomer(null)
+                        setNewPassword('')
+                        setConfirmPassword('')
+                      }}
+                      className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleSavePassword}
+                      disabled={changingPassword || !newPassword || !confirmPassword}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      {changingPassword ? 'Cambiando...' : 'Cambiar Contraseña'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal de Eliminar Cliente */}
+          {showDeleteModal && selectedCustomer && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-red-600 flex items-center gap-2">
+                    <FiTrash2 size={20} />
+                    Eliminar Cliente
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setShowDeleteModal(false)
+                      setSelectedCustomer(null)
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <FiX size={20} />
+                  </button>
+                </div>
+
+                <div className="mb-4">
+                  <p className="text-sm text-gray-700 mb-2">
+                    ¿Estás seguro de que deseas eliminar al cliente:
+                  </p>
+                  <p className="text-base font-bold text-gray-900 mb-1">
+                    {selectedCustomer.name}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {selectedCustomer.email}
+                  </p>
+                </div>
+
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                  <p className="text-xs text-red-800">
+                    <strong>Advertencia:</strong> Esta acción no se puede deshacer. Se eliminarán todos los datos del cliente, incluyendo sus cotizaciones asociadas.
+                  </p>
+                </div>
+
+                {selectedCustomer.totalQuotes > 0 && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                    <p className="text-xs text-yellow-800">
+                      <strong>Atención:</strong> Este cliente tiene {selectedCustomer.totalQuotes} cotización{selectedCustomer.totalQuotes !== 1 ? 'es' : ''} asociada{selectedCustomer.totalQuotes !== 1 ? 's' : ''}.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    onClick={() => {
+                      setShowDeleteModal(false)
+                      setSelectedCustomer(null)
+                    }}
+                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleConfirmDelete}
+                    disabled={deleting}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    {deleting ? 'Eliminando...' : 'Eliminar Cliente'}
+                  </button>
+                </div>
               </div>
             </div>
           )}

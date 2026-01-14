@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import { useState, useRef, useEffect } from 'react'
 import { useCart } from '../contexts/CartContext'
 import { useAuth } from '../contexts/AuthContext'
-import { FiUser, FiSettings, FiLogOut, FiChevronDown, FiPackage, FiFileText } from 'react-icons/fi'
+import { FiUser, FiSettings, FiLogOut, FiChevronDown, FiPackage, FiFileText, FiList } from 'react-icons/fi'
 
 export default function Header() {
   const router = useRouter()
@@ -129,6 +129,14 @@ export default function Header() {
                       <FiPackage size={16} />
                       <span>Ver Productos</span>
                     </Link>
+                    <Link
+                      href="/mis-cotizaciones"
+                      className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <FiList size={16} />
+                      <span>Mis Cotizaciones</span>
+                    </Link>
                     {isCotizador && (
                       <Link
                         href="/cotizador"
@@ -243,6 +251,13 @@ export default function Header() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Ver Productos
+                  </Link>
+                  <Link
+                    href="/mis-cotizaciones"
+                    className="py-2 hover:text-blue-400 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Mis Cotizaciones
                   </Link>
                   {isCotizador && (
                     <Link

@@ -127,29 +127,99 @@ export default function AdminCotizaciones() {
     }
   }
 
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'completed':
+        return 'Completada'
+      case 'sent':
+        return 'Enviada'
+      case 'approved':
+        return 'Aprobada'
+      case 'authorized':
+        return 'Autorizada'
+      case 'rejected':
+        return 'Rechazada'
+      case 'pending':
+        return 'Pendiente'
+      default:
+        return status || 'Sin estado'
+    }
+  }
+
   const exportToExcel = () => {
-    const data = filteredQuotes.map(quote => {
+    // Crear una fila por cada producto de cada cotización
+    const data = []
+    
+    filteredQuotes.forEach(quote => {
       let products = []
       try {
         const parsed = typeof quote.products === 'string' ? JSON.parse(quote.products) : quote.products
         products = parsed.items || parsed
+        if (!Array.isArray(products)) products = []
       } catch (e) {
         products = []
       }
-      return {
-        'N° Cotización': quote.quoteNumber || 'N/A',
-        'Cliente': quote.name,
-        'Email': quote.email,
-        'WhatsApp': quote.whatsapp,
-        'Total': quote.total,
-        'Estado': getStatusLabel(quote.status),
-        'Productos': products.map(p => `${p.name} (x${p.quantity || 1})`).join(', '),
-        'Fecha': new Date(quote.createdAt).toLocaleDateString('es-PE'),
+
+      // Formatear fecha como DD/MM/YYYY
+      const formatDate = (dateString) => {
+        const date = new Date(dateString)
+        const day = String(date.getDate()).padStart(2, '0')
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const year = date.getFullYear()
+        return `${day}/${month}/${year}`
+      }
+
+      // Si no hay productos, crear una fila con datos de la cotización
+      if (products.length === 0) {
+        data.push({
+          'N° Cotización': quote.quoteNumber || 'N/A',
+          'Fecha': formatDate(quote.createdAt),
+          'Email': quote.email || 'N/A',
+          'Total': quote.total || 0,
+          'Cantidad': 0,
+          'P. Unitario': 0,
+          'Estado': getStatusLabel(quote.status),
+          'Productos': 'Sin productos',
+          'Número de celular o whtsp': quote.whatsapp || quote.phone || 'N/A',
+        })
+      } else {
+        // Crear una fila por cada producto
+        products.forEach(product => {
+          const quantity = product.quantity || 1
+          const unitPrice = product.price || (product.total ? product.total / quantity : 0)
+          
+          data.push({
+            'N° Cotización': quote.quoteNumber || 'N/A',
+            'Fecha': formatDate(quote.createdAt),
+            'Email': quote.email || 'N/A',
+            'Total': quote.total || 0,
+            'Cantidad': quantity,
+            'P. Unitario': parseFloat(unitPrice.toFixed(2)),
+            'Estado': getStatusLabel(quote.status),
+            'Productos': product.name || 'N/A',
+            'Número de celular o whtsp': quote.whatsapp || quote.phone || 'N/A',
+          })
+        })
       }
     })
 
     const wb = XLSX.utils.book_new()
     const ws = XLSX.utils.json_to_sheet(data)
+    
+    // Ajustar ancho de columnas
+    const colWidths = [
+      { wch: 15 }, // N° Cotización
+      { wch: 12 }, // Fecha
+      { wch: 30 }, // Email
+      { wch: 12 }, // Total
+      { wch: 10 }, // Cantidad
+      { wch: 12 }, // P. Unitario
+      { wch: 12 }, // Estado
+      { wch: 40 }, // Productos
+      { wch: 20 }, // Número de celular o whtsp
+    ]
+    ws['!cols'] = colWidths
+    
     XLSX.utils.book_append_sheet(wb, ws, 'Cotizaciones')
     XLSX.writeFile(wb, `cotizaciones-${new Date().toISOString().split('T')[0]}.xlsx`)
   }
@@ -364,23 +434,6 @@ export default function AdminCotizaciones() {
         return <FiX size={14} className="inline mr-1" />
       default:
         return <FiClock size={14} className="inline mr-1" />
-    }
-  }
-
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'completed':
-        return 'Completada'
-      case 'sent':
-        return 'Enviada'
-      case 'approved':
-        return 'Aprobada'
-      case 'authorized':
-        return 'Autorizada'
-      case 'rejected':
-        return 'Rechazada'
-      default:
-        return 'Pendiente'
     }
   }
 
