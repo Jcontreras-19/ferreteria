@@ -23,6 +23,7 @@ export default function AdminClientes() {
   const [sortBy, setSortBy] = useState('name') // 'name', 'totalSpent', 'totalQuotes', 'date'
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showActionsModal, setShowActionsModal] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -124,6 +125,7 @@ export default function AdminClientes() {
   const handleCancelEdit = () => {
     setEditingCustomer(null)
     setEditFormData({ email: '', phone: '' })
+    setShowActionsModal(false)
   }
 
   const handleSaveEdit = async (customerId) => {
@@ -139,6 +141,7 @@ export default function AdminClientes() {
         await fetchCustomers()
         setEditingCustomer(null)
         setEditFormData({ email: '', phone: '' })
+        setShowActionsModal(false)
       } else {
         const data = await res.json()
         alert(data.error || 'Error al actualizar cliente')
@@ -148,6 +151,107 @@ export default function AdminClientes() {
       alert('Error al actualizar cliente')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleOpenActionsModal = (customer) => {
+    setSelectedCustomer(customer)
+    setShowActionsModal(true)
+  }
+
+  const handleCloseActionsModal = () => {
+    setShowActionsModal(false)
+    setSelectedCustomer(null)
+  }
+
+  const handleChangePassword = (customer) => {
+    setShowActionsModal(false)
+    setSelectedCustomer(customer)
+    setShowPasswordModal(true)
+    setNewPassword('')
+    setConfirmPassword('')
+  }
+
+  const handleDelete = (customer) => {
+    setShowActionsModal(false)
+    setSelectedCustomer(customer)
+    setShowDeleteModal(true)
+  }
+
+  const handleEditFromModal = (customer) => {
+    setShowActionsModal(false)
+    setEditingCustomer(customer.id)
+    setEditFormData({
+      email: customer.email || '',
+      phone: customer.phone || '',
+    })
+  }
+
+  const handleSavePassword = async () => {
+    if (!newPassword || !confirmPassword) {
+      alert('Por favor completa todos los campos')
+      return
+    }
+
+    if (newPassword.length < 6) {
+      alert('La contraseña debe tener al menos 6 caracteres')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      alert('Las contraseñas no coinciden')
+      return
+    }
+
+    setChangingPassword(true)
+    try {
+      const res = await fetch(`/api/clientes/${selectedCustomer.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword }),
+      })
+
+      if (res.ok) {
+        alert('Contraseña actualizada exitosamente')
+        setShowPasswordModal(false)
+        setSelectedCustomer(null)
+        setNewPassword('')
+        setConfirmPassword('')
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Error al cambiar contraseña')
+      }
+    } catch (error) {
+      console.error('Error changing password:', error)
+      alert('Error al cambiar contraseña')
+    } finally {
+      setChangingPassword(false)
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!selectedCustomer) return
+
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/clientes/${selectedCustomer.id}`, {
+        method: 'DELETE',
+      })
+
+      if (res.ok) {
+        await fetchCustomers()
+        setShowDeleteModal(false)
+        setSelectedCustomer(null)
+        alert('Cliente eliminado exitosamente')
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Error al eliminar cliente')
+      }
+    } catch (error) {
+      console.error('Error deleting customer:', error)
+      alert('Error al eliminar cliente')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -742,14 +846,17 @@ export default function AdminClientes() {
                       }`}>
                         <td className="px-5 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mr-3 shadow-md ring-2 ring-purple-200">
+                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mr-3 shadow-lg ring-2 ring-purple-200 hover:ring-purple-300 transition-all">
                               <span className="text-white font-bold text-lg">
                                 {customer.name.charAt(0).toUpperCase()}
                               </span>
                             </div>
                             <div>
-                              <div className="text-sm font-bold text-gray-900">{customer.name}</div>
-                              <div className="text-xs text-gray-500 font-mono">ID: {customer.id.slice(0, 8)}</div>
+                              <div className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                                <FiUser size={14} className="text-purple-600" />
+                                {customer.name}
+                              </div>
+                              <div className="text-xs text-gray-500 font-mono mt-0.5">ID: {customer.id.slice(0, 8)}</div>
                             </div>
                           </div>
                         </td>
@@ -760,7 +867,7 @@ export default function AdminClientes() {
                                 type="email"
                                 value={editFormData.email}
                                 onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                                className="text-sm px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
+                                className="text-sm px-3 py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white w-full"
                                 placeholder="Email"
                                 style={{ color: '#111827' }}
                               />
@@ -768,7 +875,7 @@ export default function AdminClientes() {
                                 type="tel"
                                 value={editFormData.phone}
                                 onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                                className="text-sm px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
+                                className="text-sm px-3 py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white w-full"
                                 placeholder="Teléfono"
                                 style={{ color: '#111827' }}
                               />
@@ -776,88 +883,95 @@ export default function AdminClientes() {
                                 <button
                                   onClick={() => handleSaveEdit(customer.id)}
                                   disabled={saving}
-                                  className="text-green-600 hover:text-green-800 text-xs flex items-center gap-1"
+                                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-lg transition-colors"
                                 >
-                                  <FiSave size={12} />
+                                  <FiSave size={14} />
                                   Guardar
                                 </button>
                                 <button
                                   onClick={handleCancelEdit}
-                                  className="text-red-600 hover:text-red-800 text-xs flex items-center gap-1"
+                                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-gray-300 hover:bg-gray-400 text-gray-800 text-xs font-medium rounded-lg transition-colors"
                                 >
-                                  <FiX size={12} />
+                                  <FiX size={14} />
                                   Cancelar
                                 </button>
                               </div>
                             </div>
                           ) : (
-                            <div className="space-y-1">
-                              <div className="text-sm text-gray-900 flex items-center gap-2">
-                                <FiMail size={14} className="text-gray-400" />
-                                {customer.email}
+                            <div className="space-y-2">
+                              <div className="text-sm text-gray-900 flex items-center gap-2 group">
+                                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                                  <FiMail size={16} className="text-blue-600" />
+                                </div>
+                                <span className="font-medium">{customer.email}</span>
                               </div>
-                              {customer.phone && (
-                                <div className="text-sm text-gray-600 flex items-center gap-2">
-                                  <FiPhone size={14} className="text-gray-400" />
-                                  {customer.phone}
+                              {customer.phone ? (
+                                <div className="text-sm text-gray-600 flex items-center gap-2 group">
+                                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                                    <FiPhone size={16} className="text-green-600" />
+                                  </div>
+                                  <span>{customer.phone}</span>
+                                </div>
+                              ) : (
+                                <div className="text-xs text-gray-400 italic flex items-center gap-2">
+                                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                    <FiPhone size={14} className="text-gray-400" />
+                                  </div>
+                                  Sin teléfono registrado
                                 </div>
                               )}
                             </div>
                           )}
                         </td>
                         <td className="px-5 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 flex items-center gap-2">
-                            <FiCalendar size={14} className="text-gray-400" />
-                            {formatDate(customer.createdAt)}
+                          <div className="text-sm text-gray-900 flex items-center gap-2 group">
+                            <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                              <FiCalendar size={16} className="text-purple-600" />
+                            </div>
+                            <span className="font-medium">{formatDate(customer.createdAt)}</span>
                           </div>
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap text-center">
-                          <span className={`inline-flex items-center px-3 py-1.5 text-sm font-bold rounded-full ${
+                          <span className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg shadow-sm transition-all ${
                             customer.totalQuotes > 0
-                              ? 'bg-green-100 text-green-800 border border-green-300'
-                              : 'bg-gray-100 text-gray-600 border border-gray-300'
+                              ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-2 border-green-300 hover:border-green-400'
+                              : 'bg-gray-100 text-gray-600 border-2 border-gray-300'
                           }`}>
-                            <FiFileText size={14} className="mr-1.5" />
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                              customer.totalQuotes > 0 ? 'bg-green-500' : 'bg-gray-400'
+                            }`}>
+                              <FiFileText size={12} className="text-white" />
+                            </div>
                             {customer.totalQuotes || 0}
                           </span>
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap text-right">
-                          <div className={`text-base font-bold ${
+                          <div className={`flex items-center justify-end gap-2 ${
                             customer.totalSpent > 0 ? 'text-green-600' : 'text-gray-500'
                           }`}>
-                            {formatCurrency(customer.totalSpent || 0)}
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                              customer.totalSpent > 0 ? 'bg-green-100' : 'bg-gray-100'
+                            }`}>
+                              <FiDollarSign size={16} className={customer.totalSpent > 0 ? 'text-green-600' : 'text-gray-400'} />
+                            </div>
+                            <span className="text-base font-bold">{formatCurrency(customer.totalSpent || 0)}</span>
                           </div>
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap text-center">
                           <div className="flex items-center justify-center gap-2">
                             {editingCustomer !== customer.id && (
-                              <>
-                                <button
-                                  onClick={() => handleEdit(customer)}
-                                  className="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-all"
-                                  title="Editar contacto"
-                                >
-                                  <FiEdit2 size={18} />
-                                </button>
-                                <button
-                                  onClick={() => handleChangePassword(customer)}
-                                  className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all"
-                                  title="Cambiar contraseña"
-                                >
-                                  <FiLock size={18} />
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(customer)}
-                                  className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all"
-                                  title="Eliminar cliente"
-                                >
-                                  <FiTrash2 size={18} />
-                                </button>
-                              </>
+                              <button
+                                onClick={() => handleOpenActionsModal(customer)}
+                                className="group relative flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 font-medium text-sm"
+                                title="Gestionar cliente"
+                              >
+                                <FiEdit2 size={18} className="group-hover:rotate-12 transition-transform" />
+                                <span>Gestionar</span>
+                              </button>
                             )}
                             <button
                               onClick={() => setExpandedCustomer(expandedCustomer === customer.id ? null : customer.id)}
-                              className="px-3 py-1.5 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-all flex items-center gap-1.5 font-medium"
+                              className="px-3 py-1.5 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-all flex items-center gap-1.5 font-medium border border-purple-200 hover:border-purple-300"
                             >
                               {expandedCustomer === customer.id ? (
                                 <>
@@ -1012,6 +1126,100 @@ export default function AdminClientes() {
                       {changingPassword ? 'Cambiando...' : 'Cambiar Contraseña'}
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal de Acciones Unificado */}
+          {showActionsModal && selectedCustomer && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={handleCloseActionsModal}>
+              <div className="bg-white rounded-xl max-w-md w-full shadow-2xl transform transition-all" onClick={(e) => e.stopPropagation()}>
+                {/* Header del Modal */}
+                <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 rounded-t-xl">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center ring-2 ring-white/30">
+                        <span className="text-white font-bold text-xl">
+                          {selectedCustomer.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-white">Gestionar Cliente</h3>
+                        <p className="text-sm text-purple-100">{selectedCustomer.name}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleCloseActionsModal}
+                      className="text-white hover:text-gray-200 transition-colors p-2 hover:bg-white/10 rounded-lg"
+                    >
+                      <FiX size={24} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Contenido del Modal */}
+                <div className="p-6 space-y-3">
+                  {/* Opción 1: Editar Datos */}
+                  <button
+                    onClick={() => handleEditFromModal(selectedCustomer)}
+                    className="w-full flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-2 border-blue-200 hover:border-blue-300 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md group"
+                  >
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                      <FiEdit2 size={24} className="text-white" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h4 className="font-bold text-gray-900 text-base">Editar Datos</h4>
+                      <p className="text-sm text-gray-600">Modificar email y teléfono del cliente</p>
+                    </div>
+                    <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+
+                  {/* Opción 2: Cambiar Contraseña */}
+                  <button
+                    onClick={() => handleChangePassword(selectedCustomer)}
+                    className="w-full flex items-center gap-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-2 border-green-200 hover:border-green-300 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md group"
+                  >
+                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                      <FiLock size={24} className="text-white" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h4 className="font-bold text-gray-900 text-base">Cambiar Contraseña</h4>
+                      <p className="text-sm text-gray-600">Establecer una nueva contraseña para el cliente</p>
+                    </div>
+                    <svg className="w-5 h-5 text-gray-400 group-hover:text-green-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+
+                  {/* Opción 3: Eliminar Cliente */}
+                  <button
+                    onClick={() => handleDelete(selectedCustomer)}
+                    className="w-full flex items-center gap-4 p-4 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-100 hover:to-rose-100 border-2 border-red-200 hover:border-red-300 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md group"
+                  >
+                    <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-600 rounded-lg flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                      <FiTrash2 size={24} className="text-white" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h4 className="font-bold text-gray-900 text-base">Eliminar Cliente</h4>
+                      <p className="text-sm text-gray-600">Eliminar permanentemente este cliente</p>
+                    </div>
+                    <svg className="w-5 h-5 text-gray-400 group-hover:text-red-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Footer del Modal */}
+                <div className="bg-gray-50 px-6 py-4 rounded-b-xl border-t border-gray-200">
+                  <button
+                    onClick={handleCloseActionsModal}
+                    className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Cancelar
+                  </button>
                 </div>
               </div>
             </div>

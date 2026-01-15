@@ -15,7 +15,7 @@ export default function Home() {
   const fetchProducts = async () => {
     try {
       // Agregar timestamp para evitar caché
-      const res = await fetch(`/api/productos?t=${Date.now()}`, {
+      const res = await fetch(`/api/productos?limit=1000&t=${Date.now()}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache',
@@ -23,8 +23,12 @@ export default function Home() {
       })
       const data = await res.json()
       console.log('Productos recibidos:', data)
+      
+      // La API ahora devuelve { products, pagination }
+      const productsArray = data.products || (Array.isArray(data) ? data : [])
+      
       // Ordenar: productos con imagen primero, pero manteniendo orden cronológico
-      const sortedData = [...data].sort((a, b) => {
+      const sortedData = [...productsArray].sort((a, b) => {
         const aHasImage = a.image && a.image.trim() !== ''
         const bHasImage = b.image && b.image.trim() !== ''
         if (aHasImage && !bHasImage) return -1
@@ -44,7 +48,7 @@ export default function Home() {
     <>
       <Head>
         <title>Corporación GRC - Ferretería</title>
-        <meta name="description" content="Corporación GRC - Tu ferretería de confianza. ISO 9001:2015" />
+        <meta name="description" content="Corporación GRC - SERVICIOS DE APOYO A LAS EMPRESAS. ISO 9001:2015" />
       </Head>
       <div className="min-h-screen flex flex-col">
         <Header />
@@ -66,7 +70,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-base md:text-lg mb-4 text-green-100">
-                Tu ferretería de confianza
+                SERVICIOS DE APOYO A LAS EMPRESAS
               </p>
               <a
                 href="/productos"

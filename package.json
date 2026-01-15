@@ -16,7 +16,8 @@
     "subir-todas": "node scripts/subir-todas-imagenes.js",
     "create-cotizador": "node scripts/create-cotizador.js",
     "deploy": "vercel --prod --yes",
-    "deploy:auto": "npm run build && vercel --prod --yes"
+    "deploy:auto": "npm run build && vercel --prod --yes",
+    "auto": "node scripts/ejecutar-automatico.js"
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",

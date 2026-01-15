@@ -79,9 +79,7 @@ textarea {
 }select option {
   color: #111827 !important;
   background-color: #ffffff !important;
-}
-
-/* Asegurar que los inputs deshabilitados también tengan color visible */
+}/* Asegurar que los inputs deshabilitados también tengan color visible */
 input:disabled,
 select:disabled {
   color: #6b7280 !important;
