@@ -42,13 +42,15 @@ export default function CotizadorProductos() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch('/api/productos', {
+      const res = await fetch('/api/productos?limit=1000', {
         credentials: 'include',
       })
       if (res.ok) {
         const data = await res.json()
+        // La API ahora devuelve { products, pagination }
+        const productsArray = data.products || (Array.isArray(data) ? data : [])
         // Ordenar: productos con imagen primero
-        const sortedData = [...data].sort((a, b) => {
+        const sortedData = [...productsArray].sort((a, b) => {
           const aHasImage = a.image && a.image.trim() !== ''
           const bHasImage = b.image && b.image.trim() !== ''
           if (aHasImage && !bHasImage) return -1

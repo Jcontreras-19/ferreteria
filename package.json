@@ -16,6 +16,7 @@
     "subir-todas": "node scripts/subir-todas-imagenes.js",
     "create-cotizador": "node scripts/create-cotizador.js",
     "categorizar": "node scripts/categorizar-productos-verbose.js",
+    "agregar-category": "node scripts/agregar-category-directo.js",
     "deploy": "vercel --prod --yes",
     "deploy:auto": "npm run build && vercel --prod --yes",
     "auto:deploy": "node scripts/auto-build-deploy.js",

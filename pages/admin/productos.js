@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import AdminLayout from '../../components/admin/AdminLayout'
-import { FiEdit, FiTrash2, FiPlus, FiDownload, FiSearch, FiFilter, FiGrid, FiList, FiEye, FiPackage, FiDollarSign, FiTrendingUp, FiAlertCircle, FiUpload, FiX, FiCheckCircle, FiXCircle, FiInfo } from 'react-icons/fi'
+import { FiEdit, FiTrash2, FiPlus, FiDownload, FiSearch, FiFilter, FiGrid, FiList, FiEye, FiPackage, FiDollarSign, FiTrendingUp, FiAlertCircle, FiUpload, FiX, FiCheckCircle, FiXCircle, FiInfo, FiTag } from 'react-icons/fi'
 import Image from 'next/image'
 import ExcelJS from 'exceljs'
 
@@ -698,6 +698,12 @@ export default function AdminProductos() {
                       <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                         Stock
                       </th>
+                      <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                        <div className="flex items-center gap-2">
+                          <FiTag size={14} />
+                          Categoría
+                        </div>
+                      </th>
                       <th className="px-5 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">
                         Acciones
                       </th>
@@ -706,7 +712,7 @@ export default function AdminProductos() {
                   <tbody className="bg-white divide-y divide-gray-100">
                     {filteredProducts.length === 0 ? (
                       <tr>
-                        <td colSpan="5" className="px-6 py-12 text-center">
+                        <td colSpan="6" className="px-6 py-12 text-center">
                           <FiPackage className="mx-auto text-gray-400 mb-3" size={48} />
                           <p className="text-gray-600 text-lg">No hay productos disponibles</p>
                         </td>
@@ -765,6 +771,18 @@ export default function AdminProductos() {
                             >
                               {product.stock || 0}
                             </span>
+                          </td>
+                          <td className="px-5 py-4 whitespace-nowrap">
+                            {product.category ? (
+                              <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center">
+                                  <FiTag className="text-purple-600" size={12} />
+                                </div>
+                                <span className="text-sm font-medium text-gray-700">{product.category}</span>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-gray-400 italic">N/A</span>
+                            )}
                           </td>
                           <td className="px-5 py-4 whitespace-nowrap">
                             <div className="flex justify-end gap-2">
