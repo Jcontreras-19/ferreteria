@@ -367,7 +367,7 @@ export default function AutorizarDespachos() {
 
           // Formato numérico para columnas específicas
           if (colNumber === 5) { // Total
-            cell.numFmt = '#,##0.00'
+            cell.numFmt = '"S/ "#,##0.00' // Formato de moneda con símbolo de soles
           }
 
           if (index % 2 === 0) {

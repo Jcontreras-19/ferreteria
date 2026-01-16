@@ -323,7 +323,7 @@ export default function AdminClientes() {
       // Agregar logo/icono de la empresa en la parte superior
       // Insertar fila para el logo
       worksheet.insertRow(1, [''])
-      worksheet.mergeCells('A1:G1')
+      worksheet.mergeCells('A1:F1')
       const logoCell = worksheet.getCell('A1')
       logoCell.value = 'CORPORACIÓN GRC'
       logoCell.font = {
@@ -352,7 +352,7 @@ export default function AdminClientes() {
 
       // Agregar información de la empresa
       worksheet.insertRow(2, [''])
-      worksheet.mergeCells('A2:G2')
+      worksheet.mergeCells('A2:F2')
       const companyCell = worksheet.getCell('A2')
       companyCell.value = 'SERVICIOS DE APOYO A LAS EMPRESAS - ISO 9001:2015'
       companyCell.font = {
@@ -369,7 +369,7 @@ export default function AdminClientes() {
 
       // Fecha de exportación
       worksheet.insertRow(3, [''])
-      worksheet.mergeCells('A3:G3')
+      worksheet.mergeCells('A3:F3')
       const dateCell = worksheet.getCell('A3')
       dateCell.value = `Fecha de exportación: ${new Date().toLocaleDateString('es-PE', {
         year: 'numeric',
@@ -394,8 +394,8 @@ export default function AdminClientes() {
       worksheet.insertRow(4, [''])
       worksheet.getRow(4).height = 5
 
-      // Encabezados de la tabla
-      const headers = ['ID', 'Nombre', 'Email', 'Teléfono', 'Fecha Registro', 'Total Cotizaciones', 'Total Gastado']
+      // Encabezados de la tabla (sin ID)
+      const headers = ['Nombre', 'Email', 'Teléfono', 'Fecha Registro', 'Total Cotizaciones', 'Total Gastado']
       const headerRow = worksheet.addRow(headers)
       
       // Formatear encabezados con bordes negros
@@ -418,10 +418,9 @@ export default function AdminClientes() {
       })
       headerRow.height = 25
 
-      // Agregar datos
+      // Agregar datos (sin ID)
       filteredCustomers.forEach((customer, index) => {
         const row = worksheet.addRow([
-          customer.id.slice(0, 8),
           customer.name,
           customer.email,
           customer.phone || 'N/A',
@@ -449,8 +448,8 @@ export default function AdminClientes() {
           }
 
           // Formato numérico para columnas específicas
-          if (colNumber === 7) { // Total Gastado
-            cell.numFmt = '#,##0.00'
+          if (colNumber === 6) { // Total Gastado
+            cell.numFmt = '"S/ "#,##0.00' // Formato de moneda con símbolo de soles
           }
 
           // Color alternado de filas
@@ -472,33 +471,18 @@ export default function AdminClientes() {
         row.height = 35
       })
 
-      // Ajustar ancho de columnas automáticamente
-      worksheet.columns.forEach((column, index) => {
-        let maxLength = 0
-        column.eachCell({ includeEmpty: false }, (cell) => {
-          const columnLength = cell.value ? cell.value.toString().length : 10
-          if (columnLength > maxLength) {
-            maxLength = columnLength
-          }
-        })
-        // Establecer ancho mínimo y máximo razonable
-        const columnWidth = Math.min(Math.max(maxLength + 2, 10), 50)
-        worksheet.getColumn(index + 1).width = columnWidth
-      })
-
-      // Ajustes específicos de ancho para algunas columnas
-      worksheet.getColumn(1).width = 12 // ID
-      worksheet.getColumn(2).width = 25 // Nombre
-      worksheet.getColumn(3).width = 30 // Email
-      worksheet.getColumn(4).width = 15 // Teléfono
-      worksheet.getColumn(5).width = 25 // Fecha Registro
-      worksheet.getColumn(6).width = 18 // Total Cotizaciones
-      worksheet.getColumn(7).width = 15 // Total Gastado
+      // Ajustes específicos de ancho para columnas (sin ID)
+      worksheet.getColumn(1).width = 25 // Nombre
+      worksheet.getColumn(2).width = 30 // Email
+      worksheet.getColumn(3).width = 15 // Teléfono
+      worksheet.getColumn(4).width = 25 // Fecha Registro
+      worksheet.getColumn(5).width = 18 // Total Cotizaciones
+      worksheet.getColumn(6).width = 15 // Total Gastado
 
       // Asegurar que todas las celdas de la tabla tengan bordes negros
       const headerRowNumber = 5 // Fila de encabezados (después de las 4 filas iniciales)
       const lastRow = worksheet.rowCount
-      const lastCol = headers.length
+      const lastCol = headers.length // 6 columnas (sin ID)
       
       // Aplicar bordes negros a todas las celdas de la tabla (encabezados y datos)
       worksheet.eachRow((row, rowNumber) => {

@@ -327,7 +327,7 @@ export default function AdminCotizaciones() {
 
           // Formato numérico para columnas específicas
           if (colNumber === 4 || colNumber === 6) { // Total, P. Unitario
-            cell.numFmt = '#,##0.00'
+            cell.numFmt = '"S/ "#,##0.00' // Formato de moneda con símbolo de soles
           } else if (colNumber === 5) { // Cantidad
             cell.numFmt = '0'
           }

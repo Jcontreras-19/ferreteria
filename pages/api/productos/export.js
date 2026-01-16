@@ -170,7 +170,7 @@ export default async function handler(req, res) {
 
           // Formato numérico para columnas específicas
           if (colNumber === 3) { // Precio Unitario
-            cell.numFmt = '#,##0.00'
+            cell.numFmt = '"S/ "#,##0.00' // Formato de moneda con símbolo de soles
           } else if (colNumber === 4) { // Stock
             cell.numFmt = '0'
           }
