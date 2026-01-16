@@ -4,10 +4,11 @@ import Head from 'next/head'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { 
   FiUser, FiMail, FiCalendar, FiFileText, FiSearch, FiChevronDown, FiChevronUp, 
-  FiPhone, FiEdit2, FiSave, FiX, FiDollarSign, FiTrendingUp, FiUsers, FiDownload,
+  FiPhone, FiEdit2, FiSave, FiX, FiTrendingUp, FiUsers, FiDownload,
   FiGrid, FiList, FiEye, FiFilter, FiLock, FiTrash2
 } from 'react-icons/fi'
 import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 export default function AdminClientes() {
   const router = useRouter()
@@ -29,6 +30,7 @@ export default function AdminClientes() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [changingPassword, setChangingPassword] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [notifications, setNotifications] = useState([])
 
   useEffect(() => {
     checkAuth()
@@ -88,6 +90,19 @@ export default function AdminClientes() {
     }).format(amount)
   }
 
+  // Sistema de notificaciones
+  const showNotification = (message, type = 'success') => {
+    const id = Date.now() + Math.random()
+    const notification = { id, message, type }
+    
+    setNotifications(prev => [...prev, notification])
+    
+    // Auto-eliminar después de 5 segundos
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id))
+    }, 5000)
+  }
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'completed':
@@ -142,13 +157,14 @@ export default function AdminClientes() {
         setEditingCustomer(null)
         setEditFormData({ email: '', phone: '' })
         setShowActionsModal(false)
+        showNotification('Datos del cliente actualizados exitosamente', 'success')
       } else {
         const data = await res.json()
-        alert(data.error || 'Error al actualizar cliente')
+        showNotification(data.error || 'Error al actualizar cliente', 'error')
       }
     } catch (error) {
       console.error('Error updating customer:', error)
-      alert('Error al actualizar cliente')
+      showNotification('Error al actualizar cliente', 'error')
     } finally {
       setSaving(false)
     }
@@ -189,17 +205,17 @@ export default function AdminClientes() {
 
   const handleSavePassword = async () => {
     if (!newPassword || !confirmPassword) {
-      alert('Por favor completa todos los campos')
+      showNotification('Por favor completa todos los campos', 'warning')
       return
     }
 
     if (newPassword.length < 6) {
-      alert('La contraseña debe tener al menos 6 caracteres')
+      showNotification('La contraseña debe tener al menos 6 caracteres', 'warning')
       return
     }
 
     if (newPassword !== confirmPassword) {
-      alert('Las contraseñas no coinciden')
+      showNotification('Las contraseñas no coinciden', 'warning')
       return
     }
 
@@ -212,18 +228,18 @@ export default function AdminClientes() {
       })
 
       if (res.ok) {
-        alert('Contraseña actualizada exitosamente')
+        showNotification('Contraseña actualizada exitosamente', 'success')
         setShowPasswordModal(false)
         setSelectedCustomer(null)
         setNewPassword('')
         setConfirmPassword('')
       } else {
         const data = await res.json()
-        alert(data.error || 'Error al cambiar contraseña')
+        showNotification(data.error || 'Error al cambiar contraseña', 'error')
       }
     } catch (error) {
       console.error('Error changing password:', error)
-      alert('Error al cambiar contraseña')
+      showNotification('Error al cambiar contraseña', 'error')
     } finally {
       setChangingPassword(false)
     }
@@ -242,14 +258,14 @@ export default function AdminClientes() {
         await fetchCustomers()
         setShowDeleteModal(false)
         setSelectedCustomer(null)
-        alert('Cliente eliminado exitosamente')
+        showNotification('Cliente eliminado exitosamente', 'success')
       } else {
         const data = await res.json()
-        alert(data.error || 'Error al eliminar cliente')
+        showNotification(data.error || 'Error al eliminar cliente', 'error')
       }
     } catch (error) {
       console.error('Error deleting customer:', error)
-      alert('Error al eliminar cliente')
+      showNotification('Error al eliminar cliente', 'error')
     } finally {
       setDeleting(false)
     }
@@ -284,21 +300,235 @@ export default function AdminClientes() {
       : 0,
   }
 
-  const exportToExcel = () => {
-    const data = filteredCustomers.map(customer => ({
-      'ID': customer.id.slice(0, 8),
-      'Nombre': customer.name,
-      'Email': customer.email,
-      'Teléfono': customer.phone || 'N/A',
-      'Fecha Registro': formatDate(customer.createdAt),
-      'Total Cotizaciones': customer.totalQuotes || 0,
-      'Total Gastado': customer.totalSpent || 0,
-    }))
+  const exportToExcel = async () => {
+    try {
+      // Crear nuevo workbook
+      const workbook = new ExcelJS.Workbook()
+      const worksheet = workbook.addWorksheet('Clientes')
 
-    const wb = XLSX.utils.book_new()
-    const ws = XLSX.utils.json_to_sheet(data)
-    XLSX.utils.book_append_sheet(wb, ws, 'Clientes')
-    XLSX.writeFile(wb, `clientes-${new Date().toISOString().split('T')[0]}.xlsx`)
+      // Colores corporativos GRC (verde)
+      const headerFill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF16A34A' } // green-600
+      }
+
+      const headerFont = {
+        name: 'Arial',
+        size: 11,
+        bold: true,
+        color: { argb: 'FFFFFFFF' } // Blanco
+      }
+
+      // Agregar logo/icono de la empresa en la parte superior
+      // Insertar fila para el logo
+      worksheet.insertRow(1, [''])
+      worksheet.mergeCells('A1:G1')
+      const logoCell = worksheet.getCell('A1')
+      logoCell.value = 'CORPORACIÓN GRC'
+      logoCell.font = {
+        name: 'Arial',
+        size: 16,
+        bold: true,
+        color: { argb: 'FF16A34A' } // Verde corporativo
+      }
+      logoCell.alignment = { 
+        vertical: 'middle', 
+        horizontal: 'center' 
+      }
+      logoCell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFF0FDF4' } // Verde muy claro de fondo
+      }
+      worksheet.getRow(1).height = 30
+
+      // Agregar información de la empresa
+      worksheet.insertRow(2, [''])
+      worksheet.mergeCells('A2:G2')
+      const companyCell = worksheet.getCell('A2')
+      companyCell.value = 'SERVICIOS DE APOYO A LAS EMPRESAS - ISO 9001:2015'
+      companyCell.font = {
+        name: 'Arial',
+        size: 10,
+        italic: true,
+        color: { argb: 'FF6B7280' } // Gris
+      }
+      companyCell.alignment = { 
+        vertical: 'middle', 
+        horizontal: 'center' 
+      }
+      worksheet.getRow(2).height = 20
+
+      // Fecha de exportación
+      worksheet.insertRow(3, [''])
+      worksheet.mergeCells('A3:G3')
+      const dateCell = worksheet.getCell('A3')
+      dateCell.value = `Fecha de exportación: ${new Date().toLocaleDateString('es-PE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })}`
+      dateCell.font = {
+        name: 'Arial',
+        size: 9,
+        color: { argb: 'FF6B7280' }
+      }
+      dateCell.alignment = { 
+        vertical: 'middle', 
+        horizontal: 'center' 
+      }
+      worksheet.getRow(3).height = 18
+
+      // Fila vacía
+      worksheet.insertRow(4, [''])
+      worksheet.getRow(4).height = 5
+
+      // Encabezados de la tabla
+      const headers = ['ID', 'Nombre', 'Email', 'Teléfono', 'Fecha Registro', 'Total Cotizaciones', 'Total Gastado']
+      const headerRow = worksheet.addRow(headers)
+      
+      // Formatear encabezados
+      headerRow.eachCell((cell, colNumber) => {
+        cell.fill = headerFill
+        cell.font = headerFont
+        cell.alignment = { 
+          vertical: 'middle', 
+          horizontal: 'center',
+          wrapText: true
+        }
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+          left: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+          bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+          right: { style: 'thin', color: { argb: 'FFFFFFFF' } }
+        }
+      })
+      headerRow.height = 25
+
+      // Agregar datos
+      filteredCustomers.forEach((customer, index) => {
+        const row = worksheet.addRow([
+          customer.id.slice(0, 8),
+          customer.name,
+          customer.email,
+          customer.phone || 'N/A',
+          formatDate(customer.createdAt),
+          customer.totalQuotes || 0,
+          customer.totalSpent || 0
+        ])
+
+        // Formatear filas de datos
+        row.eachCell((cell, colNumber) => {
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+            left: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+            bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+            right: { style: 'thin', color: { argb: 'FFE5E7EB' } }
+          }
+          cell.alignment = { 
+            vertical: 'middle',
+            wrapText: true
+          }
+          cell.font = {
+            name: 'Arial',
+            size: 10
+          }
+
+          // Alineación específica por columna
+          if (colNumber === 1) { // ID
+            cell.alignment.horizontal = 'center'
+          } else if (colNumber === 5) { // Fecha
+            cell.alignment.horizontal = 'center'
+          } else if (colNumber === 6) { // Cotizaciones
+            cell.alignment.horizontal = 'center'
+          } else if (colNumber === 7) { // Total Gastado
+            cell.alignment.horizontal = 'right'
+            cell.numFmt = '#,##0.00'
+          } else {
+            cell.alignment.horizontal = 'left'
+          }
+
+          // Color alternado de filas
+          if (index % 2 === 0) {
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFFFFFFF' } // Blanco
+            }
+          } else {
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFF9FAFB' } // Gris muy claro
+            }
+          }
+        })
+        row.height = 20
+      })
+
+      // Ajustar ancho de columnas automáticamente
+      worksheet.columns.forEach((column, index) => {
+        let maxLength = 0
+        column.eachCell({ includeEmpty: false }, (cell) => {
+          const columnLength = cell.value ? cell.value.toString().length : 10
+          if (columnLength > maxLength) {
+            maxLength = columnLength
+          }
+        })
+        // Establecer ancho mínimo y máximo razonable
+        const columnWidth = Math.min(Math.max(maxLength + 2, 10), 50)
+        worksheet.getColumn(index + 1).width = columnWidth
+      })
+
+      // Ajustes específicos de ancho para algunas columnas
+      worksheet.getColumn(1).width = 12 // ID
+      worksheet.getColumn(2).width = 25 // Nombre
+      worksheet.getColumn(3).width = 30 // Email
+      worksheet.getColumn(4).width = 15 // Teléfono
+      worksheet.getColumn(5).width = 25 // Fecha Registro
+      worksheet.getColumn(6).width = 18 // Total Cotizaciones
+      worksheet.getColumn(7).width = 15 // Total Gastado
+
+      // Agregar borde a toda la tabla
+      const lastRow = worksheet.rowCount
+      const lastCol = headers.length
+      
+      // Crear tabla con estilo
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber >= 5 && rowNumber <= lastRow) { // Desde encabezados hasta el final
+          row.eachCell((cell, colNumber) => {
+            if (colNumber <= lastCol) {
+              if (!cell.border) {
+                cell.border = {
+                  top: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+                  left: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+                  bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+                  right: { style: 'thin', color: { argb: 'FFE5E7EB' } }
+                }
+              }
+            }
+          })
+        }
+      })
+
+      // Generar archivo
+      const buffer = await workbook.xlsx.writeBuffer()
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `clientes-${new Date().toISOString().split('T')[0]}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error al exportar a Excel:', error)
+      alert('Error al generar el archivo Excel. Por favor intenta de nuevo.')
+    }
   }
 
   const exportToPDF = async () => {
@@ -491,7 +721,7 @@ export default function AdminClientes() {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-green-800 text-xs font-semibold">Total Ventas</span>
                   <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-md">
-                    <FiDollarSign className="text-white" size={16} />
+                    <FiTrendingUp className="text-white" size={16} />
                   </div>
                 </div>
                 <p className="text-lg font-bold text-green-900">S/. {stats.totalSpent.toFixed(2)}</p>
@@ -970,7 +1200,7 @@ export default function AdminClientes() {
                                 <div className={`w-6 h-6 md:w-8 md:h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                                   customer.totalSpent > 0 ? 'bg-green-100' : 'bg-gray-100'
                                 }`}>
-                                  <FiDollarSign size={12} className={`md:w-4 md:h-4 ${customer.totalSpent > 0 ? 'text-green-600' : 'text-gray-400'}`} />
+                                  <FiTrendingUp size={12} className={`md:w-4 md:h-4 ${customer.totalSpent > 0 ? 'text-green-600' : 'text-gray-400'}`} />
                                 </div>
                                 <span className="text-xs md:text-sm font-bold break-words">{formatCurrency(customer.totalSpent || 0)}</span>
                               </div>
@@ -1313,8 +1543,73 @@ export default function AdminClientes() {
               </div>
             </div>
           )}
+
+          {/* Sistema de Notificaciones */}
+          <div className="fixed top-4 right-4 z-[9999] space-y-3 pointer-events-none">
+            {notifications.map((notification) => {
+              const bgColor = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-yellow-500',
+                info: 'bg-blue-500'
+              }[notification.type] || 'bg-gray-500'
+
+              const borderColor = {
+                success: 'border-green-600',
+                error: 'border-red-600',
+                warning: 'border-yellow-600',
+                info: 'border-blue-600'
+              }[notification.type] || 'border-gray-600'
+
+              const icon = {
+                success: '✓',
+                error: '✕',
+                warning: '⚠',
+                info: 'ℹ'
+              }[notification.type] || '•'
+
+              return (
+                <div
+                  key={notification.id}
+                  className={`${bgColor} ${borderColor} border-l-4 text-white px-5 py-4 rounded-lg shadow-2xl flex items-center gap-3 min-w-[320px] max-w-[420px] pointer-events-auto transform transition-all duration-300 ease-out animate-slide-in`}
+                  style={{
+                    animation: 'slideInRight 0.4s ease-out forwards'
+                  }}
+                >
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/30 flex items-center justify-center font-bold text-base">
+                    {icon}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm leading-tight">{notification.message}</p>
+                  </div>
+                  <button
+                    onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
+                    className="flex-shrink-0 text-white/80 hover:text-white transition-colors p-1 hover:bg-white/20 rounded"
+                    aria-label="Cerrar notificación"
+                  >
+                    <FiX size={18} />
+                  </button>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </AdminLayout>
+      <style jsx global>{`
+        @keyframes slideInRight {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-in {
+          animation: slideInRight 0.4s ease-out forwards;
+        }
+      `}</style>
     </>
   )
 }
