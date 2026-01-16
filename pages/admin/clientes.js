@@ -518,6 +518,225 @@ export default function AdminClientes() {
     }
   }
 
+  const exportCustomerHistoryPDF = async (customer) => {
+    try {
+      if (!customer.quotes || customer.quotes.length === 0) {
+        showNotification('Este cliente no tiene cotizaciones para generar el reporte', 'warning')
+        return
+      }
+
+      // Obtener todas las cotizaciones completas del cliente
+      const quotesRes = await fetch('/api/cotizaciones')
+      if (!quotesRes.ok) {
+        throw new Error('Error al obtener cotizaciones')
+      }
+      const allQuotes = await quotesRes.json()
+      const customerQuotes = allQuotes.filter(q => q.email === customer.email)
+
+      const { jsPDF } = await import('jspdf')
+      const doc = new jsPDF()
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
+      const margin = 15
+      let yPos = margin
+
+      // ========== ENCABEZADO CORPORATIVO GRC ==========
+      const GRC_DARK = [22, 163, 74]  // green-600 #16a34a
+      const GRC_DARKER = [20, 83, 45]  // green-800 #14532d
+      
+      doc.setFillColor(GRC_DARKER[0], GRC_DARKER[1], GRC_DARKER[2])
+      doc.rect(0, 0, pageWidth, 12, 'F')
+      doc.setFillColor(GRC_DARK[0], GRC_DARK[1], GRC_DARK[2])
+      doc.rect(0, 12, pageWidth, 25, 'F')
+      
+      // Logo GRC
+      const logoX = margin + 5
+      const logoY = 20
+      const logoRadius = 8
+      doc.setFillColor(255, 255, 255)
+      doc.setDrawColor(255, 255, 255)
+      doc.setLineWidth(1.5)
+      doc.circle(logoX + logoRadius, logoY, logoRadius + 1, 'FD')
+      doc.setFillColor(GRC_DARKER[0], GRC_DARKER[1], GRC_DARKER[2])
+      doc.circle(logoX + logoRadius, logoY, logoRadius - 0.5, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'bold')
+      doc.text('GRC', logoX + logoRadius, logoY + 1.5, { align: 'center' })
+      
+      // Información de la empresa
+      doc.setFontSize(18)
+      doc.setFont('helvetica', 'bold')
+      doc.text('CORPORACIÓN GRC', pageWidth / 2, 20, { align: 'center' })
+      doc.setFontSize(14)
+      doc.text('Historial de Cotizaciones', pageWidth / 2, 27, { align: 'center' })
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      doc.text('SERVICIOS DE APOYO A LAS EMPRESAS - ISO 9001:2015', pageWidth / 2, 33, { align: 'center' })
+
+      doc.setTextColor(0, 0, 0)
+      yPos = 45
+
+      // Información del cliente
+      doc.setFontSize(12)
+      doc.setFont('helvetica', 'bold')
+      doc.text(`Cliente: ${customer.name || 'N/A'}`, margin, yPos)
+      yPos += 6
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      doc.text(`Email: ${customer.email || 'N/A'}`, margin, yPos)
+      yPos += 5
+      if (customer.phone) {
+        doc.text(`Teléfono: ${customer.phone}`, margin, yPos)
+        yPos += 5
+      }
+      doc.setFont('helvetica', 'bold')
+      doc.text(`Fecha de exportación: ${new Date().toLocaleDateString('es-PE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })}`, margin, yPos)
+      yPos += 6
+      doc.text(`Total de cotizaciones: ${customerQuotes.length}`, margin, yPos)
+      yPos += 6
+      const totalSpent = customerQuotes.reduce((sum, q) => sum + (q.total || 0), 0)
+      doc.text(`Total gastado: S/. ${totalSpent.toFixed(2)}`, margin, yPos)
+      yPos += 10
+
+      // Tabla
+      const colWidths = [12, 50, 35, 30, 35]
+      const colHeaders = ['N°', 'Fecha', 'Total', 'Estado', 'N° Cotización']
+      const colX = [
+        margin,
+        margin + colWidths[0],
+        margin + colWidths[0] + colWidths[1],
+        margin + colWidths[0] + colWidths[1] + colWidths[2],
+        margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3],
+      ]
+      const tableWidth = pageWidth - (margin * 2)
+      const rowHeight = 8
+
+      // Encabezado de tabla
+      doc.setFillColor(GRC_DARK[0], GRC_DARK[1], GRC_DARK[2])
+      doc.rect(margin, yPos - rowHeight, tableWidth, rowHeight, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9)
+      
+      colHeaders.forEach((header, idx) => {
+        const cellCenterX = colX[idx] + colWidths[idx] / 2
+        doc.text(header, cellCenterX, yPos - 3, { align: 'center' })
+      })
+      
+      doc.setDrawColor(255, 255, 255)
+      doc.setLineWidth(0.3)
+      for (let i = 1; i < colX.length; i++) {
+        doc.line(colX[i], yPos - rowHeight, colX[i], yPos)
+      }
+      
+      doc.setTextColor(0, 0, 0)
+      yPos += 2
+
+      // Filas
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      customerQuotes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach((quote, index) => {
+        if (yPos > pageHeight - 30) {
+          doc.addPage()
+          yPos = margin + 20
+          doc.setFillColor(GRC_DARK[0], GRC_DARK[1], GRC_DARK[2])
+          doc.rect(margin, yPos - rowHeight, tableWidth, rowHeight, 'F')
+          doc.setTextColor(255, 255, 255)
+          doc.setFont('helvetica', 'bold')
+          doc.setFontSize(9)
+          colHeaders.forEach((header, idx) => {
+            const cellCenterX = colX[idx] + colWidths[idx] / 2
+            doc.text(header, cellCenterX, yPos - 3, { align: 'center' })
+          })
+          doc.setDrawColor(255, 255, 255)
+          doc.setLineWidth(0.3)
+          for (let i = 1; i < colX.length; i++) {
+            doc.line(colX[i], yPos - rowHeight, colX[i], yPos)
+          }
+          doc.setTextColor(0, 0, 0)
+          doc.setFont('helvetica', 'normal')
+          doc.setFontSize(8)
+          yPos += 2
+        }
+
+        const rowStartY = yPos - 5
+        const rowEndY = yPos + 1
+
+        if (index % 2 === 0) {
+          doc.setFillColor(245, 245, 245)
+          doc.rect(margin, rowStartY, tableWidth, rowHeight, 'F')
+        }
+
+        doc.setDrawColor(0, 0, 0)
+        doc.setLineWidth(0.2)
+        doc.line(margin, rowEndY, pageWidth - margin, rowEndY)
+        for (let i = 1; i < colX.length; i++) {
+          doc.line(colX[i], rowStartY, colX[i], rowEndY)
+        }
+        doc.line(margin, rowStartY, margin, rowEndY)
+        doc.line(pageWidth - margin, rowStartY, pageWidth - margin, rowEndY)
+
+        const cellCenterY = rowStartY + rowHeight / 2 + 2
+        
+        // N° - Centrado
+        doc.text(String(index + 1), colX[0] + colWidths[0] / 2, cellCenterY, { align: 'center' })
+        
+        // Fecha - Centrado
+        const dateText = new Date(quote.createdAt).toLocaleDateString('es-PE', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
+        doc.text(dateText, colX[1] + colWidths[1] / 2, cellCenterY, { align: 'center' })
+        
+        // Total - Centrado
+        doc.setFont('helvetica', 'bold')
+        doc.text(`S/. ${(quote.total || 0).toFixed(2)}`, colX[2] + colWidths[2] / 2, cellCenterY, { align: 'center' })
+        
+        // Estado - Centrado
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(7.5)
+        doc.text(getStatusLabel(quote.status), colX[3] + colWidths[3] / 2, cellCenterY, { align: 'center' })
+        
+        // N° Cotización - Centrado
+        doc.setFontSize(8)
+        const quoteNumber = quote.quoteNumber ? String(quote.quoteNumber).padStart(7, '0') : quote.id.slice(0, 8).toUpperCase()
+        doc.text(quoteNumber, colX[4] + colWidths[4] / 2, cellCenterY, { align: 'center' })
+        
+        yPos += rowHeight + 1
+      })
+
+      // Pie de página
+      const footerY = pageHeight - 20
+      doc.setFontSize(8)
+      doc.setTextColor(100, 100, 100)
+      doc.text('Corporación GRC - Av. José Gálvez 1322 Dpto. 302 La Perla - Callao', margin, footerY)
+      doc.text('Email: corporaciongrc@gmail.com | WhatsApp: (511) 957 216 908', margin, footerY + 5)
+      doc.text(`Página ${doc.internal.getNumberOfPages()}`, pageWidth - margin, footerY + 5, { align: 'right' })
+
+      const pdfBlob = doc.output('blob')
+      const url = URL.createObjectURL(pdfBlob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `historial-cotizaciones-${customer.name?.replace(/\s+/g, '-') || 'cliente'}-${new Date().toISOString().split('T')[0]}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      showNotification('Reporte PDF generado exitosamente', 'success')
+    } catch (error) {
+      console.error('Error generating customer history PDF:', error)
+      showNotification('Error al generar el reporte PDF', 'error')
+    }
+  }
+
   const exportToPDF = async () => {
     try {
       const { jsPDF } = await import('jspdf')
@@ -956,13 +1175,24 @@ export default function AdminClientes() {
                     {/* Historial Expandido */}
                     {expandedCustomer === customer.id && customer.quotes && customer.quotes.length > 0 && (
                       <div className="border-t bg-gradient-to-br from-purple-50 to-indigo-50 p-5">
-                        <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                          <FiFileText size={16} className="text-purple-600" />
-                          Historial de Cotizaciones
-                          <span className="px-2 py-0.5 bg-purple-600 text-white text-xs font-bold rounded-full">
-                            {customer.quotes.length}
-                          </span>
-                        </h4>
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                            <FiFileText size={16} className="text-purple-600" />
+                            Historial de Cotizaciones
+                            <span className="px-2 py-0.5 bg-purple-600 text-white text-xs font-bold rounded-full">
+                              {customer.quotes.length}
+                            </span>
+                          </h4>
+                          <button
+                            onClick={() => exportCustomerHistoryPDF(customer)}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white text-xs font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
+                            title="Generar reporte PDF del historial"
+                          >
+                            <FiDownload size={14} />
+                            <span className="hidden sm:inline">Reporte PDF</span>
+                            <span className="sm:hidden">PDF</span>
+                          </button>
+                        </div>
                         <div className="space-y-2 max-h-64 overflow-y-auto">
                           {customer.quotes.map((quote) => (
                             <div
@@ -1236,10 +1466,23 @@ export default function AdminClientes() {
           {/* Historial Expandido en Vista de Tabla */}
           {viewMode === 'table' && expandedCustomer && filteredCustomers.find(c => c.id === expandedCustomer)?.quotes && (
             <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <FiFileText size={20} className="text-purple-600" />
-                Historial de Cotizaciones - {filteredCustomers.find(c => c.id === expandedCustomer)?.name}
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <FiFileText size={20} className="text-purple-600" />
+                  Historial de Cotizaciones - {filteredCustomers.find(c => c.id === expandedCustomer)?.name}
+                  <span className="px-2 py-0.5 bg-purple-600 text-white text-xs font-bold rounded-full">
+                    {filteredCustomers.find(c => c.id === expandedCustomer)?.quotes.length}
+                  </span>
+                </h3>
+                <button
+                  onClick={() => exportCustomerHistoryPDF(filteredCustomers.find(c => c.id === expandedCustomer))}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
+                  title="Generar reporte PDF del historial"
+                >
+                  <FiDownload size={16} />
+                  Reporte PDF
+                </button>
+              </div>
               <div className="grid gap-3">
                 {filteredCustomers.find(c => c.id === expandedCustomer)?.quotes.map((quote) => (
                   <div

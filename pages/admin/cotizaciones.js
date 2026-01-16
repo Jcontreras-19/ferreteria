@@ -379,25 +379,48 @@ export default function AdminCotizaciones() {
       const margin = 15
       let yPos = margin
 
-      // Encabezado
-      doc.setFillColor(37, 99, 235) // blue-600
-      doc.rect(0, 0, pageWidth, 30, 'F')
+      // ========== ENCABEZADO CORPORATIVO GRC ==========
+      // Colores corporativos GRC (verde)
+      const GRC_DARK = [22, 163, 74]  // green-600 #16a34a
+      const GRC_DARKER = [20, 83, 45]  // green-800 #14532d
       
+      // Fondo verde corporativo en dos secciones
+      doc.setFillColor(GRC_DARKER[0], GRC_DARKER[1], GRC_DARKER[2])
+      doc.rect(0, 0, pageWidth, 12, 'F')
+      doc.setFillColor(GRC_DARK[0], GRC_DARK[1], GRC_DARK[2])
+      doc.rect(0, 12, pageWidth, 25, 'F')
+      
+      // Logo GRC (círculo con texto)
+      const logoX = margin + 5
+      const logoY = 20
+      const logoRadius = 8
+      doc.setFillColor(255, 255, 255)
+      doc.setDrawColor(255, 255, 255)
+      doc.setLineWidth(1.5)
+      doc.circle(logoX + logoRadius, logoY, logoRadius + 1, 'FD')
+      doc.setFillColor(GRC_DARKER[0], GRC_DARKER[1], GRC_DARKER[2])
+      doc.circle(logoX + logoRadius, logoY, logoRadius - 0.5, 'F')
       doc.setTextColor(255, 255, 255)
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'bold')
+      doc.text('GRC', logoX + logoRadius, logoY + 1.5, { align: 'center' })
+      
+      // Información de la empresa
       doc.setFontSize(18)
       doc.setFont('helvetica', 'bold')
-      doc.text('CORPORACIÓN GRC', pageWidth - margin, 12, { align: 'right' })
+      doc.text('CORPORACIÓN GRC', pageWidth / 2, 20, { align: 'center' })
       doc.setFontSize(14)
-      doc.text('Reporte de Cotizaciones', pageWidth - margin, 20, { align: 'right' })
+      doc.text('Reporte de Cotizaciones', pageWidth / 2, 27, { align: 'center' })
       doc.setFontSize(10)
-      doc.text('ISO 9001:2015', pageWidth - margin, 26, { align: 'right' })
+      doc.setFont('helvetica', 'normal')
+      doc.text('SERVICIOS DE APOYO A LAS EMPRESAS - ISO 9001:2015', pageWidth / 2, 33, { align: 'center' })
 
       doc.setTextColor(0, 0, 0)
-      yPos = 40
+      yPos = 45
 
       // Información del reporte
       doc.setFontSize(10)
-      doc.setFont('helvetica', 'normal')
+      doc.setFont('helvetica', 'bold')
       doc.text(`Fecha de exportación: ${new Date().toLocaleDateString('es-PE', {
         year: 'numeric',
         month: 'long',
@@ -422,8 +445,8 @@ export default function AdminCotizaciones() {
       const tableWidth = pageWidth - (margin * 2)
       const rowHeight = 8
 
-      // Encabezado de tabla
-      doc.setFillColor(59, 130, 246) // blue-500
+      // Encabezado de tabla con color corporativo
+      doc.setFillColor(GRC_DARK[0], GRC_DARK[1], GRC_DARK[2])
       doc.rect(margin, yPos - rowHeight, tableWidth, rowHeight, 'F')
       doc.setTextColor(255, 255, 255)
       doc.setFont('helvetica', 'bold')
@@ -453,7 +476,7 @@ export default function AdminCotizaciones() {
           doc.addPage()
           yPos = margin + 20
           // Redibujar encabezado
-          doc.setFillColor(59, 130, 246)
+          doc.setFillColor(GRC_DARK[0], GRC_DARK[1], GRC_DARK[2])
           doc.rect(margin, yPos - rowHeight, tableWidth, rowHeight, 'F')
           doc.setTextColor(255, 255, 255)
           doc.setFont('helvetica', 'bold')
@@ -483,7 +506,7 @@ export default function AdminCotizaciones() {
         }
 
         // Dibujar bordes de la fila
-        doc.setDrawColor(220, 220, 220)
+        doc.setDrawColor(0, 0, 0)
         doc.setLineWidth(0.2)
         // Línea inferior
         doc.line(margin, rowEndY, pageWidth - margin, rowEndY)
@@ -495,7 +518,7 @@ export default function AdminCotizaciones() {
         doc.line(margin, rowStartY, margin, rowEndY)
         doc.line(pageWidth - margin, rowStartY, pageWidth - margin, rowEndY)
 
-        // Texto centrado y alineado
+        // Texto centrado en todas las celdas
         const cellCenterY = rowStartY + rowHeight / 2 + 2
         
         // N° - Centrado
@@ -503,20 +526,23 @@ export default function AdminCotizaciones() {
         doc.setFontSize(8)
         doc.text(String(index + 1), colX[0] + colWidths[0] / 2, cellCenterY, { align: 'center' })
         
-        // Cliente - Alineado a la izquierda con padding
-        doc.text(quote.name || 'N/A', colX[1] + 3, cellCenterY)
+        // Cliente - Centrado
+        const nameText = (quote.name || 'N/A').length > 20 
+          ? (quote.name || 'N/A').substring(0, 17) + '...' 
+          : (quote.name || 'N/A')
+        doc.text(nameText, colX[1] + colWidths[1] / 2, cellCenterY, { align: 'center' })
         
-        // Email - Alineado a la izquierda con padding, tamaño más pequeño
+        // Email - Centrado
         doc.setFontSize(7.5)
         const emailText = (quote.email || 'N/A').length > 25 
           ? (quote.email || 'N/A').substring(0, 22) + '...' 
           : (quote.email || 'N/A')
-        doc.text(emailText, colX[2] + 3, cellCenterY)
+        doc.text(emailText, colX[2] + colWidths[2] / 2, cellCenterY, { align: 'center' })
         
-        // Total - Alineado a la derecha
+        // Total - Centrado
         doc.setFontSize(8)
         doc.setFont('helvetica', 'bold')
-        doc.text(`S/. ${(quote.total || 0).toFixed(2)}`, colX[3] + colWidths[3] - 3, cellCenterY, { align: 'right' })
+        doc.text(`S/. ${(quote.total || 0).toFixed(2)}`, colX[3] + colWidths[3] / 2, cellCenterY, { align: 'center' })
         
         // Estado - Centrado
         doc.setFont('helvetica', 'normal')
