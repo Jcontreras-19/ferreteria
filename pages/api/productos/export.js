@@ -1,6 +1,6 @@
 import { prisma } from '../../../lib/prisma'
 import { getCurrentUser } from '../../../lib/auth'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -17,39 +17,206 @@ export default async function handler(req, res) {
       orderBy: { createdAt: 'desc' },
     })
 
-    // Preparar datos para Excel
-    const excelData = products.map((product) => ({
-      ID: product.id,
-      Nombre: product.name,
-      Descripción: product.description || '',
-      Precio: product.price,
-      Stock: product.stock || 0,
-      Categoría: product.category || '',
-      Imagen: product.image || '',
-      'Fecha Creación': new Date(product.createdAt).toLocaleDateString(),
-    }))
+    // Crear nuevo workbook
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Productos')
 
-    // Crear workbook
-    const wb = XLSX.utils.book_new()
-    const ws = XLSX.utils.json_to_sheet(excelData)
+    // Colores corporativos GRC (verde)
+    const headerFill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF16A34A' } // green-600
+    }
+
+    const headerFont = {
+      name: 'Arial',
+      size: 11,
+      bold: true,
+      color: { argb: 'FFFFFFFF' } // Blanco
+    }
+
+    // Bordes negros
+    const blackBorder = {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
+    }
+
+    // Agregar logo/icono de la empresa en la parte superior
+    worksheet.insertRow(1, [''])
+    worksheet.mergeCells('A1:G1')
+    const logoCell = worksheet.getCell('A1')
+    logoCell.value = 'CORPORACIÓN GRC'
+    logoCell.font = {
+      name: 'Arial',
+      size: 16,
+      bold: true,
+      color: { argb: 'FF16A34A' } // Verde corporativo
+    }
+    logoCell.alignment = { 
+      vertical: 'middle', 
+      horizontal: 'center' 
+    }
+    logoCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFF0FDF4' } // Verde muy claro de fondo
+    }
+    worksheet.getRow(1).height = 30
+
+    // Agregar información de la empresa
+    worksheet.insertRow(2, [''])
+    worksheet.mergeCells('A2:G2')
+    const companyCell = worksheet.getCell('A2')
+    companyCell.value = 'SERVICIOS DE APOYO A LAS EMPRESAS - ISO 9001:2015'
+    companyCell.font = {
+      name: 'Arial',
+      size: 10,
+      italic: true,
+      color: { argb: 'FF6B7280' } // Gris
+    }
+    companyCell.alignment = { 
+      vertical: 'middle', 
+      horizontal: 'center' 
+    }
+    worksheet.getRow(2).height = 20
+
+    // Fecha de exportación
+    worksheet.insertRow(3, [''])
+    worksheet.mergeCells('A3:G3')
+    const dateCell = worksheet.getCell('A3')
+    dateCell.value = `Fecha de exportación: ${new Date().toLocaleDateString('es-PE', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })}`
+    dateCell.font = {
+      name: 'Arial',
+      size: 9,
+      color: { argb: 'FF6B7280' }
+    }
+    dateCell.alignment = { 
+      vertical: 'middle', 
+      horizontal: 'center' 
+    }
+    worksheet.getRow(3).height = 18
+
+    // Fila vacía
+    worksheet.insertRow(4, [''])
+    worksheet.getRow(4).height = 5
+
+    // Encabezados de la tabla (sin ID)
+    const headers = ['Nombre', 'Descripción', 'Precio Unitario', 'Stock', 'Categoría', 'Imagen', 'Fecha de Creación']
+    const headerRow = worksheet.addRow(headers)
+    
+    // Formatear encabezados
+    headerRow.eachCell((cell, colNumber) => {
+      cell.fill = headerFill
+      cell.font = headerFont
+      cell.alignment = { 
+        vertical: 'middle', 
+        horizontal: 'center',
+        wrapText: true
+      }
+      cell.border = blackBorder
+    })
+    headerRow.height = 25
+
+    // Función para formatear fecha
+    const formatDate = (dateString) => {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('es-PE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    }
+
+    // Agregar datos
+    products.forEach((product, index) => {
+      const row = worksheet.addRow([
+        product.name,
+        product.description || '',
+        product.price || 0,
+        product.stock || 0,
+        product.category || '',
+        product.image || '',
+        formatDate(product.createdAt)
+      ])
+
+      // Formatear filas de datos
+      row.eachCell((cell, colNumber) => {
+        cell.border = blackBorder
+        cell.alignment = { 
+          vertical: 'middle',
+          wrapText: true
+        }
+        cell.font = {
+          name: 'Arial',
+          size: 10
+        }
+
+        // Alineación específica por columna
+        if (colNumber === 3) { // Precio Unitario
+          cell.alignment.horizontal = 'right'
+          cell.numFmt = '#,##0.00'
+        } else if (colNumber === 4) { // Stock
+          cell.alignment.horizontal = 'center'
+          cell.numFmt = '0'
+        } else if (colNumber === 7) { // Fecha de Creación
+          cell.alignment.horizontal = 'center'
+        } else {
+          cell.alignment.horizontal = 'left'
+        }
+
+        // Color alternado de filas
+        if (index % 2 === 0) {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFFFFFFF' } // Blanco
+          }
+        } else {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFF9FAFB' } // Gris muy claro
+          }
+        }
+      })
+      row.height = 20
+    })
 
     // Ajustar ancho de columnas
-    const colWidths = [
-      { wch: 30 }, // ID
-      { wch: 30 }, // Nombre
-      { wch: 50 }, // Descripción
-      { wch: 15 }, // Precio
-      { wch: 10 }, // Stock
-      { wch: 20 }, // Categoría
-      { wch: 40 }, // Imagen
-      { wch: 20 }, // Fecha
-    ]
-    ws['!cols'] = colWidths
+    worksheet.getColumn(1).width = 30 // Nombre
+    worksheet.getColumn(2).width = 50 // Descripción
+    worksheet.getColumn(3).width = 15 // Precio Unitario
+    worksheet.getColumn(4).width = 12 // Stock
+    worksheet.getColumn(5).width = 25 // Categoría
+    worksheet.getColumn(6).width = 50 // Imagen
+    worksheet.getColumn(7).width = 25 // Fecha de Creación
 
-    XLSX.utils.book_append_sheet(wb, ws, 'Productos')
+    // Asegurar que todas las celdas de la tabla tengan bordes negros
+    const headerRowNumber = 5 // Fila de encabezados (después de las 4 filas iniciales)
+    const lastRow = worksheet.rowCount
+    const lastCol = headers.length
+    
+    // Aplicar bordes negros a todas las celdas de la tabla (encabezados y datos)
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber >= headerRowNumber && rowNumber <= lastRow) {
+        row.eachCell((cell, colNumber) => {
+          if (colNumber <= lastCol) {
+            cell.border = blackBorder
+          }
+        })
+      }
+    })
 
     // Generar buffer
-    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+    const buffer = await workbook.xlsx.writeBuffer()
 
     res.setHeader(
       'Content-Type',

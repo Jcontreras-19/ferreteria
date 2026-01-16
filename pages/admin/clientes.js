@@ -390,7 +390,14 @@ export default function AdminClientes() {
       const headers = ['ID', 'Nombre', 'Email', 'Teléfono', 'Fecha Registro', 'Total Cotizaciones', 'Total Gastado']
       const headerRow = worksheet.addRow(headers)
       
-      // Formatear encabezados
+      // Formatear encabezados con bordes negros
+      const blackBorder = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      }
+
       headerRow.eachCell((cell, colNumber) => {
         cell.fill = headerFill
         cell.font = headerFont
@@ -399,12 +406,7 @@ export default function AdminClientes() {
           horizontal: 'center',
           wrapText: true
         }
-        cell.border = {
-          top: { style: 'thin', color: { argb: 'FFFFFFFF' } },
-          left: { style: 'thin', color: { argb: 'FFFFFFFF' } },
-          bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
-          right: { style: 'thin', color: { argb: 'FFFFFFFF' } }
-        }
+        cell.border = blackBorder
       })
       headerRow.height = 25
 
@@ -420,13 +422,13 @@ export default function AdminClientes() {
           customer.totalSpent || 0
         ])
 
-        // Formatear filas de datos
+        // Formatear filas de datos con bordes negros
         row.eachCell((cell, colNumber) => {
           cell.border = {
-            top: { style: 'thin', color: { argb: 'FFE5E7EB' } },
-            left: { style: 'thin', color: { argb: 'FFE5E7EB' } },
-            bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
-            right: { style: 'thin', color: { argb: 'FFE5E7EB' } }
+            top: { style: 'thin', color: { argb: 'FF000000' } },
+            left: { style: 'thin', color: { argb: 'FF000000' } },
+            bottom: { style: 'thin', color: { argb: 'FF000000' } },
+            right: { style: 'thin', color: { argb: 'FF000000' } }
           }
           cell.alignment = { 
             vertical: 'middle',
@@ -492,22 +494,22 @@ export default function AdminClientes() {
       worksheet.getColumn(6).width = 18 // Total Cotizaciones
       worksheet.getColumn(7).width = 15 // Total Gastado
 
-      // Agregar borde a toda la tabla
+      // Asegurar que todas las celdas de la tabla tengan bordes negros
+      const headerRowNumber = 5 // Fila de encabezados (después de las 4 filas iniciales)
       const lastRow = worksheet.rowCount
       const lastCol = headers.length
       
-      // Crear tabla con estilo
+      // Aplicar bordes negros a todas las celdas de la tabla (encabezados y datos)
       worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber >= 5 && rowNumber <= lastRow) { // Desde encabezados hasta el final
+        if (rowNumber >= headerRowNumber && rowNumber <= lastRow) {
           row.eachCell((cell, colNumber) => {
             if (colNumber <= lastCol) {
-              if (!cell.border) {
-                cell.border = {
-                  top: { style: 'thin', color: { argb: 'FFE5E7EB' } },
-                  left: { style: 'thin', color: { argb: 'FFE5E7EB' } },
-                  bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
-                  right: { style: 'thin', color: { argb: 'FFE5E7EB' } }
-                }
+              // Asegurar bordes negros en todas las celdas
+              cell.border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } }
               }
             }
           })
