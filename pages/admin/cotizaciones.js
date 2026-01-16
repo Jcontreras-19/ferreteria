@@ -441,15 +441,16 @@ export default function AdminCotizaciones() {
       doc.text(`Total de cotizaciones: ${filteredQuotes.length}`, margin, yPos)
       yPos += 10
 
-      // Tabla con anchos mejorados
-      const colWidths = [12, 55, 40, 28, 35]
-      const colHeaders = ['N°', 'Cliente', 'Email', 'Total', 'Estado']
+      // Tabla con anchos mejorados (incluyendo Fecha)
+      const colWidths = [10, 35, 30, 25, 20, 30]
+      const colHeaders = ['N°', 'Cliente', 'Email', 'Fecha', 'Total', 'Estado']
       const colX = [
         margin,
         margin + colWidths[0],
         margin + colWidths[0] + colWidths[1],
         margin + colWidths[0] + colWidths[1] + colWidths[2],
         margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3],
+        margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4],
       ]
       const tableWidth = pageWidth - (margin * 2)
       const rowHeight = 8
@@ -541,27 +542,36 @@ export default function AdminCotizaciones() {
         doc.text(String(index + 1), colX[0] + colWidths[0] / 2, cellCenterY, { align: 'center' })
         
         // Cliente - Centrado horizontal y vertical
-        const nameText = (quote.name || 'N/A').length > 20 
-          ? (quote.name || 'N/A').substring(0, 17) + '...' 
+        const nameText = (quote.name || 'N/A').length > 18 
+          ? (quote.name || 'N/A').substring(0, 15) + '...' 
           : (quote.name || 'N/A')
         doc.text(nameText, colX[1] + colWidths[1] / 2, cellCenterY, { align: 'center' })
         
         // Email - Centrado horizontal y vertical
         doc.setFontSize(7.5)
-        const emailText = (quote.email || 'N/A').length > 25 
-          ? (quote.email || 'N/A').substring(0, 22) + '...' 
+        const emailText = (quote.email || 'N/A').length > 20 
+          ? (quote.email || 'N/A').substring(0, 17) + '...' 
           : (quote.email || 'N/A')
         doc.text(emailText, colX[2] + colWidths[2] / 2, cellCenterY, { align: 'center' })
+        
+        // Fecha - Centrado horizontal y vertical
+        doc.setFontSize(7.5)
+        const dateText = new Date(quote.createdAt).toLocaleDateString('es-PE', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
+        doc.text(dateText, colX[3] + colWidths[3] / 2, cellCenterY, { align: 'center' })
         
         // Total - Centrado horizontal y vertical
         doc.setFontSize(8)
         doc.setFont('helvetica', 'bold')
-        doc.text(`S/. ${(quote.total || 0).toFixed(2)}`, colX[3] + colWidths[3] / 2, cellCenterY, { align: 'center' })
+        doc.text(`S/. ${(quote.total || 0).toFixed(2)}`, colX[4] + colWidths[4] / 2, cellCenterY, { align: 'center' })
         
         // Estado - Centrado horizontal y vertical
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(7.5)
-        doc.text(getStatusLabel(quote.status), colX[4] + colWidths[4] / 2, cellCenterY, { align: 'center' })
+        doc.text(getStatusLabel(quote.status), colX[5] + colWidths[5] / 2, cellCenterY, { align: 'center' })
         
         yPos += rowHeight + 1
       })
