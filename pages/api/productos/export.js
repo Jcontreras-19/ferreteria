@@ -156,60 +156,42 @@ export default async function handler(req, res) {
       ])
 
       // Formatear filas de datos
-      let maxRowHeight = 20 // Altura mínima
-      row.eachCell((cell, colNumber) => {
-        cell.border = blackBorder
-        cell.alignment = { 
-          vertical: 'top', // Cambiar a 'top' para mejor ajuste
-          wrapText: true
-        }
-        cell.font = {
-          name: 'Arial',
-          size: 10
-        }
-
-        // Alineación específica por columna
-        if (colNumber === 3) { // Precio Unitario
-          cell.alignment.horizontal = 'right'
-          cell.numFmt = '#,##0.00'
-        } else if (colNumber === 4) { // Stock
-          cell.alignment.horizontal = 'center'
-          cell.numFmt = '0'
-        } else if (colNumber === 7) { // Fecha de Creación
-          cell.alignment.horizontal = 'center'
-        } else {
-          cell.alignment.horizontal = 'left'
-        }
-
-        // Color alternado de filas
-        if (index % 2 === 0) {
-          cell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FFFFFFFF' } // Blanco
+        row.eachCell((cell, colNumber) => {
+          cell.border = blackBorder
+          cell.alignment = { 
+            vertical: 'middle',
+            horizontal: 'center',
+            wrapText: true
           }
-        } else {
-          cell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FFF9FAFB' } // Gris muy claro
+          cell.font = {
+            name: 'Arial',
+            size: 10
           }
-        }
 
-        // Calcular altura necesaria para el contenido
-        const cellValue = cell.value ? cell.value.toString() : ''
-        if (cellValue) {
-          // Estimar líneas necesarias basado en el ancho de la columna
-          const columnWidth = worksheet.getColumn(colNumber).width || 10
-          const estimatedLines = Math.ceil(cellValue.length / (columnWidth * 1.2)) || 1
-          const cellHeight = Math.max(estimatedLines * 15, 20) // Mínimo 20, 15 por línea
-          if (cellHeight > maxRowHeight) {
-            maxRowHeight = cellHeight
+          // Formato numérico para columnas específicas
+          if (colNumber === 3) { // Precio Unitario
+            cell.numFmt = '#,##0.00'
+          } else if (colNumber === 4) { // Stock
+            cell.numFmt = '0'
           }
-        }
-      })
-      // Establecer altura de fila basada en el contenido más alto
-      row.height = maxRowHeight
+
+          // Color alternado de filas
+          if (index % 2 === 0) {
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFFFFFFF' } // Blanco
+            }
+          } else {
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFF9FAFB' } // Gris muy claro
+            }
+          }
+        })
+        // Altura fija de 35 para todas las filas
+        row.height = 35
     })
 
     // Ajustar ancho de columnas

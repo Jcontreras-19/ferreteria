@@ -307,17 +307,18 @@ export default function BoletasFacturas() {
           rowData['Fecha Cotización']
         ])
 
-        let maxRowHeight = 20
         row.eachCell((cell, colNumber) => {
           cell.border = blackBorder
-          cell.alignment = { vertical: 'top', wrapText: true }
+          cell.alignment = { 
+            vertical: 'middle',
+            horizontal: 'center',
+            wrapText: true 
+          }
           cell.font = { name: 'Arial', size: 10 }
 
+          // Formato numérico para columnas específicas
           if (colNumber === 7) { // Total
-            cell.alignment.horizontal = 'right'
             cell.numFmt = '#,##0.00'
-          } else {
-            cell.alignment.horizontal = 'left'
           }
 
           if (index % 2 === 0) {
@@ -325,18 +326,9 @@ export default function BoletasFacturas() {
           } else {
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } }
           }
-
-          const cellValue = cell.value ? cell.value.toString() : ''
-          if (cellValue) {
-            const columnWidth = worksheet.getColumn(colNumber).width || 10
-            const estimatedLines = Math.ceil(cellValue.length / (columnWidth * 1.2)) || 1
-            const cellHeight = Math.max(estimatedLines * 15, 20)
-            if (cellHeight > maxRowHeight) {
-              maxRowHeight = cellHeight
-            }
-          }
         })
-        row.height = maxRowHeight
+        // Altura fija de 35 para todas las filas
+        row.height = 35
       })
 
       // Ajustar ancho de columnas

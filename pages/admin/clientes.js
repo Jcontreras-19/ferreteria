@@ -431,7 +431,6 @@ export default function AdminClientes() {
         ])
 
         // Formatear filas de datos con bordes negros
-        let maxRowHeight = 20 // Altura mínima
         row.eachCell((cell, colNumber) => {
           cell.border = {
             top: { style: 'thin', color: { argb: 'FF000000' } },
@@ -440,7 +439,8 @@ export default function AdminClientes() {
             right: { style: 'thin', color: { argb: 'FF000000' } }
           }
           cell.alignment = { 
-            vertical: 'top', // Cambiar a 'top' para mejor ajuste
+            vertical: 'middle',
+            horizontal: 'center',
             wrapText: true
           }
           cell.font = {
@@ -448,18 +448,9 @@ export default function AdminClientes() {
             size: 10
           }
 
-          // Alineación específica por columna
-          if (colNumber === 1) { // ID
-            cell.alignment.horizontal = 'center'
-          } else if (colNumber === 5) { // Fecha
-            cell.alignment.horizontal = 'center'
-          } else if (colNumber === 6) { // Cotizaciones
-            cell.alignment.horizontal = 'center'
-          } else if (colNumber === 7) { // Total Gastado
-            cell.alignment.horizontal = 'right'
+          // Formato numérico para columnas específicas
+          if (colNumber === 7) { // Total Gastado
             cell.numFmt = '#,##0.00'
-          } else {
-            cell.alignment.horizontal = 'left'
           }
 
           // Color alternado de filas
@@ -476,21 +467,9 @@ export default function AdminClientes() {
               fgColor: { argb: 'FFF9FAFB' } // Gris muy claro
             }
           }
-
-          // Calcular altura necesaria para el contenido
-          const cellValue = cell.value ? cell.value.toString() : ''
-          if (cellValue) {
-            // Estimar líneas necesarias basado en el ancho de la columna
-            const columnWidth = worksheet.getColumn(colNumber).width || 10
-            const estimatedLines = Math.ceil(cellValue.length / (columnWidth * 1.2)) || 1
-            const cellHeight = Math.max(estimatedLines * 15, 20) // Mínimo 20, 15 por línea
-            if (cellHeight > maxRowHeight) {
-              maxRowHeight = cellHeight
-            }
-          }
         })
-        // Establecer altura de fila basada en el contenido más alto
-        row.height = maxRowHeight
+        // Altura fija de 35 para todas las filas
+        row.height = 35
       })
 
       // Ajustar ancho de columnas automáticamente

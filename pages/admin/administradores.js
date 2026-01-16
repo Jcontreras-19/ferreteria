@@ -265,35 +265,23 @@ export default function AdminAdministradores() {
           formatDate(user.createdAt)
         ])
 
-        let maxRowHeight = 20
         row.eachCell((cell, colNumber) => {
           cell.border = blackBorder
-          cell.alignment = { vertical: 'top', wrapText: true }
-          cell.font = { name: 'Arial', size: 10 }
-
-          if (colNumber === 6) { // Fecha de Creación
-            cell.alignment.horizontal = 'center'
-          } else {
-            cell.alignment.horizontal = 'left'
+          cell.alignment = { 
+            vertical: 'middle',
+            horizontal: 'center',
+            wrapText: true 
           }
+          cell.font = { name: 'Arial', size: 10 }
 
           if (index % 2 === 0) {
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
           } else {
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } }
           }
-
-          const cellValue = cell.value ? cell.value.toString() : ''
-          if (cellValue) {
-            const columnWidth = worksheet.getColumn(colNumber).width || 10
-            const estimatedLines = Math.ceil(cellValue.length / (columnWidth * 1.2)) || 1
-            const cellHeight = Math.max(estimatedLines * 15, 20)
-            if (cellHeight > maxRowHeight) {
-              maxRowHeight = cellHeight
-            }
-          }
         })
-        row.height = maxRowHeight
+        // Altura fija de 35 para todas las filas
+        row.height = 35
       })
 
       // Ajustar ancho de columnas
