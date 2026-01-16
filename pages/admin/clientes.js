@@ -518,6 +518,212 @@ export default function AdminClientes() {
     }
   }
 
+  const exportCustomerHistoryExcel = async (customer) => {
+    try {
+      if (!customer.quotes || customer.quotes.length === 0) {
+        showNotification('Este cliente no tiene cotizaciones para generar el reporte', 'warning')
+        return
+      }
+
+      // Obtener todas las cotizaciones completas del cliente
+      const quotesRes = await fetch('/api/cotizaciones')
+      if (!quotesRes.ok) {
+        throw new Error('Error al obtener cotizaciones')
+      }
+      const allQuotes = await quotesRes.json()
+      const customerQuotes = allQuotes.filter(q => q.email === customer.email).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+
+      const workbook = new ExcelJS.Workbook()
+      const worksheet = workbook.addWorksheet('Historial de Cotizaciones')
+
+      // Colores corporativos GRC (verde)
+      const headerFill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF16A34A' } // green-600
+      }
+
+      const headerFont = {
+        name: 'Arial',
+        size: 11,
+        bold: true,
+        color: { argb: 'FFFFFFFF' } // Blanco
+      }
+
+      const blackBorder = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      }
+
+      // Título
+      worksheet.insertRow(1, [''])
+      worksheet.mergeCells('A1:E1')
+      const titleCell = worksheet.getCell('A1')
+      titleCell.value = 'CORPORACIÓN GRC'
+      titleCell.font = {
+        name: 'Arial',
+        size: 18,
+        bold: true,
+        color: { argb: 'FF16A34A' }
+      }
+      titleCell.alignment = { vertical: 'middle', horizontal: 'center' }
+      titleCell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFF0FDF4' }
+      }
+      titleCell.border = blackBorder
+      worksheet.getRow(1).height = 35
+
+      // Información de la empresa
+      worksheet.insertRow(2, [''])
+      worksheet.mergeCells('A2:E2')
+      const companyCell = worksheet.getCell('A2')
+      companyCell.value = 'SERVICIOS DE APOYO A LAS EMPRESAS - ISO 9001:2015'
+      companyCell.font = {
+        name: 'Arial',
+        size: 10,
+        bold: true,
+        color: { argb: 'FF6B7280' }
+      }
+      companyCell.alignment = { vertical: 'middle', horizontal: 'center' }
+      worksheet.getRow(2).height = 20
+
+      // Fecha de exportación
+      worksheet.insertRow(3, [''])
+      worksheet.mergeCells('A3:E3')
+      const dateCell = worksheet.getCell('A3')
+      dateCell.value = `Fecha de exportación: ${new Date().toLocaleDateString('es-PE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })}`
+      dateCell.font = {
+        name: 'Arial',
+        size: 9,
+        bold: true,
+        color: { argb: 'FF6B7280' }
+      }
+      dateCell.alignment = { vertical: 'middle', horizontal: 'center' }
+      worksheet.getRow(3).height = 18
+
+      // Información del cliente
+      worksheet.insertRow(4, ['Cliente:', customer.name || 'N/A'])
+      worksheet.mergeCells('A4:B4')
+      worksheet.getRow(4).height = 20
+      worksheet.getCell('A4').font = { name: 'Arial', size: 10, bold: true }
+      worksheet.getCell('B4').font = { name: 'Arial', size: 10 }
+
+      worksheet.insertRow(5, ['Email:', customer.email || 'N/A'])
+      worksheet.mergeCells('A5:B5')
+      worksheet.getRow(5).height = 18
+      worksheet.getCell('A5').font = { name: 'Arial', size: 10, bold: true }
+      worksheet.getCell('B5').font = { name: 'Arial', size: 10 }
+
+      if (customer.phone) {
+        worksheet.insertRow(6, ['Teléfono:', customer.phone])
+        worksheet.mergeCells('A6:B6')
+        worksheet.getRow(6).height = 18
+        worksheet.getCell('A6').font = { name: 'Arial', size: 10, bold: true }
+        worksheet.getCell('B6').font = { name: 'Arial', size: 10 }
+      }
+
+      const totalSpent = customerQuotes.reduce((sum, q) => sum + (q.total || 0), 0)
+      const infoRow = customer.phone ? 7 : 6
+      worksheet.insertRow(infoRow, [
+        `Total de cotizaciones: ${customerQuotes.length}`,
+        `Total gastado: S/. ${totalSpent.toFixed(2)}`
+      ])
+      worksheet.mergeCells(`A${infoRow}:B${infoRow}`)
+      worksheet.mergeCells(`C${infoRow}:E${infoRow}`)
+      worksheet.getRow(infoRow).height = 18
+      worksheet.getCell(`A${infoRow}`).font = { name: 'Arial', size: 10, bold: true }
+      worksheet.getCell(`C${infoRow}`).font = { name: 'Arial', size: 10, bold: true }
+
+      // Fila vacía
+      const emptyRow = infoRow + 1
+      worksheet.insertRow(emptyRow, [''])
+      worksheet.getRow(emptyRow).height = 5
+
+      // Encabezados
+      const headers = ['N°', 'Fecha', 'Total', 'Estado', 'N° Cotización']
+      const headerRow = worksheet.addRow(headers)
+      
+      headerRow.eachCell((cell) => {
+        cell.fill = headerFill
+        cell.font = headerFont
+        cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+        cell.border = blackBorder
+      })
+      headerRow.height = 25
+
+      // Agregar datos
+      customerQuotes.forEach((quote, index) => {
+        const row = worksheet.addRow([
+          index + 1,
+          new Date(quote.createdAt).toLocaleDateString('es-PE', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          quote.total || 0,
+          getStatusLabel(quote.status),
+          quote.quoteNumber ? String(quote.quoteNumber).padStart(7, '0') : quote.id.slice(0, 8).toUpperCase()
+        ])
+
+        row.eachCell((cell, colNumber) => {
+          cell.border = blackBorder
+          cell.alignment = { 
+            vertical: 'middle',
+            horizontal: 'center',
+            wrapText: true 
+          }
+          cell.font = { name: 'Arial', size: 10 }
+
+          // Formato numérico para Total
+          if (colNumber === 3) {
+            cell.numFmt = '"S/ "#,##0.00'
+          }
+
+          // Fondo alternado
+          if (index % 2 === 0) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
+          } else {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } }
+          }
+        })
+        row.height = 35
+      })
+
+      // Ajustar ancho de columnas
+      worksheet.getColumn(1).width = 10 // N°
+      worksheet.getColumn(2).width = 25 // Fecha
+      worksheet.getColumn(3).width = 15 // Total
+      worksheet.getColumn(4).width = 15 // Estado
+      worksheet.getColumn(5).width = 18 // N° Cotización
+
+      // Generar archivo
+      const buffer = await workbook.xlsx.writeBuffer()
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `historial-cotizaciones-${customer.name?.replace(/\s+/g, '-') || 'cliente'}-${new Date().toISOString().split('T')[0]}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      URL.revokeObjectURL(url)
+      document.body.removeChild(link)
+      showNotification('Reporte Excel generado exitosamente', 'success')
+    } catch (error) {
+      console.error('Error generating customer history Excel:', error)
+      showNotification('Error al generar el reporte Excel', 'error')
+    }
+  }
+
   const exportCustomerHistoryPDF = async (customer) => {
     try {
       if (!customer.quotes || customer.quotes.length === 0) {
@@ -1183,15 +1389,26 @@ export default function AdminClientes() {
                               {customer.quotes.length}
                             </span>
                           </h4>
-                          <button
-                            onClick={() => exportCustomerHistoryPDF(customer)}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white text-xs font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
-                            title="Generar reporte PDF del historial"
-                          >
-                            <FiDownload size={14} />
-                            <span className="hidden sm:inline">Reporte PDF</span>
-                            <span className="sm:hidden">PDF</span>
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => exportCustomerHistoryExcel(customer)}
+                              className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white text-xs font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
+                              title="Generar reporte Excel del historial"
+                            >
+                              <FiDownload size={14} />
+                              <span className="hidden sm:inline">Excel</span>
+                              <span className="sm:hidden">Excel</span>
+                            </button>
+                            <button
+                              onClick={() => exportCustomerHistoryPDF(customer)}
+                              className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white text-xs font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
+                              title="Generar reporte PDF del historial"
+                            >
+                              <FiDownload size={14} />
+                              <span className="hidden sm:inline">PDF</span>
+                              <span className="sm:hidden">PDF</span>
+                            </button>
+                          </div>
                         </div>
                         <div className="space-y-2 max-h-64 overflow-y-auto">
                           {customer.quotes.map((quote) => (
@@ -1474,14 +1691,24 @@ export default function AdminClientes() {
                     {filteredCustomers.find(c => c.id === expandedCustomer)?.quotes.length}
                   </span>
                 </h3>
-                <button
-                  onClick={() => exportCustomerHistoryPDF(filteredCustomers.find(c => c.id === expandedCustomer))}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
-                  title="Generar reporte PDF del historial"
-                >
-                  <FiDownload size={16} />
-                  Reporte PDF
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => exportCustomerHistoryExcel(filteredCustomers.find(c => c.id === expandedCustomer))}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
+                    title="Generar reporte Excel del historial"
+                  >
+                    <FiDownload size={16} />
+                    Excel
+                  </button>
+                  <button
+                    onClick={() => exportCustomerHistoryPDF(filteredCustomers.find(c => c.id === expandedCustomer))}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
+                    title="Generar reporte PDF del historial"
+                  >
+                    <FiDownload size={16} />
+                    PDF
+                  </button>
+                </div>
               </div>
               <div className="grid gap-3">
                 {filteredCustomers.find(c => c.id === expandedCustomer)?.quotes.map((quote) => (

@@ -316,29 +316,38 @@ export default function AdminCotizaciones() {
           rowData['Número de celular o whtsp']
         ])
 
+        // Aplicar formato y alineación a cada celda
         row.eachCell((cell, colNumber) => {
-          cell.border = blackBorder
-          cell.alignment = { 
-            vertical: 'middle',
-            horizontal: 'center',
-            wrapText: true 
-          }
-          cell.font = { name: 'Arial', size: 10 }
-
-          // Formato numérico para columnas específicas
+          // Aplicar formato numérico PRIMERO si es necesario
           if (colNumber === 4 || colNumber === 6) { // Total, P. Unitario
             cell.numFmt = '"S/ "#,##0.00' // Formato de moneda con símbolo de soles
           } else if (colNumber === 5) { // Cantidad
             cell.numFmt = '0'
           }
 
+          // Aplicar fuente
+          cell.font = { name: 'Arial', size: 10 }
+
+          // Aplicar bordes negros
+          cell.border = blackBorder
+
+          // Fondo alternado
           if (index % 2 === 0) {
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
           } else {
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } }
           }
+
+          // Aplicar alineación CENTRADA AL FINAL (asegura que se aplique correctamente)
+          // Esto es crítico: la alineación debe aplicarse después de todos los demás formatos
+          cell.alignment = { 
+            vertical: 'middle',
+            horizontal: 'center',
+            wrapText: true 
+          }
         })
-        // Altura fija de 35 para todas las filas
+        
+        // Altura fija de 35 para todas las filas (asegura espacio vertical para centrado)
         row.height = 35
       })
 
@@ -452,10 +461,11 @@ export default function AdminCotizaciones() {
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(9)
       
-      // Centrar encabezados
+      // Centrar encabezados (horizontal y vertical)
+      const headerCenterY = yPos - rowHeight + (rowHeight / 2) + 1.5
       colHeaders.forEach((header, idx) => {
         const cellCenterX = colX[idx] + colWidths[idx] / 2
-        doc.text(header, cellCenterX, yPos - 3, { align: 'center' })
+        doc.text(header, cellCenterX, headerCenterY, { align: 'center' })
       })
       
       // Dibujar líneas verticales del encabezado
@@ -466,7 +476,7 @@ export default function AdminCotizaciones() {
       }
       
       doc.setTextColor(0, 0, 0)
-      yPos += 2
+      yPos = yPos + rowHeight // Ajustar posición inicial para primera fila
 
       // Filas
       doc.setFont('helvetica', 'normal')
@@ -474,16 +484,17 @@ export default function AdminCotizaciones() {
       filteredQuotes.forEach((quote, index) => {
         if (yPos > pageHeight - 30) {
           doc.addPage()
-          yPos = margin + 20
+          yPos = margin + rowHeight
           // Redibujar encabezado
           doc.setFillColor(GRC_DARK[0], GRC_DARK[1], GRC_DARK[2])
           doc.rect(margin, yPos - rowHeight, tableWidth, rowHeight, 'F')
           doc.setTextColor(255, 255, 255)
           doc.setFont('helvetica', 'bold')
           doc.setFontSize(9)
+          const headerCenterY = yPos - rowHeight + (rowHeight / 2) + 1.5
           colHeaders.forEach((header, idx) => {
             const cellCenterX = colX[idx] + colWidths[idx] / 2
-            doc.text(header, cellCenterX, yPos - 3, { align: 'center' })
+            doc.text(header, cellCenterX, headerCenterY, { align: 'center' })
           })
           doc.setDrawColor(255, 255, 255)
           doc.setLineWidth(0.3)
@@ -493,11 +504,12 @@ export default function AdminCotizaciones() {
           doc.setTextColor(0, 0, 0)
           doc.setFont('helvetica', 'normal')
           doc.setFontSize(8)
-          yPos += 2
+          yPos = yPos + rowHeight
         }
 
-        const rowStartY = yPos - 5
-        const rowEndY = yPos + 1
+        // Calcular posición de la fila de manera consistente
+        const rowStartY = yPos - rowHeight
+        const rowEndY = yPos
 
         // Fondo alternado
         if (index % 2 === 0) {
@@ -518,33 +530,35 @@ export default function AdminCotizaciones() {
         doc.line(margin, rowStartY, margin, rowEndY)
         doc.line(pageWidth - margin, rowStartY, pageWidth - margin, rowEndY)
 
-        // Texto centrado en todas las celdas
-        const cellCenterY = rowStartY + rowHeight / 2 + 2
+        // Calcular posición Y centrada verticalmente
+        // En jsPDF, el parámetro Y es la línea base del texto
+        // Para centrar verticalmente, necesitamos: centro de la celda + (altura de fuente / 2)
+        const cellCenterY = rowStartY + (rowHeight / 2) + 1.5 // +1.5 para ajuste fino
         
-        // N° - Centrado
+        // N° - Centrado horizontal y vertical
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(8)
         doc.text(String(index + 1), colX[0] + colWidths[0] / 2, cellCenterY, { align: 'center' })
         
-        // Cliente - Centrado
+        // Cliente - Centrado horizontal y vertical
         const nameText = (quote.name || 'N/A').length > 20 
           ? (quote.name || 'N/A').substring(0, 17) + '...' 
           : (quote.name || 'N/A')
         doc.text(nameText, colX[1] + colWidths[1] / 2, cellCenterY, { align: 'center' })
         
-        // Email - Centrado
+        // Email - Centrado horizontal y vertical
         doc.setFontSize(7.5)
         const emailText = (quote.email || 'N/A').length > 25 
           ? (quote.email || 'N/A').substring(0, 22) + '...' 
           : (quote.email || 'N/A')
         doc.text(emailText, colX[2] + colWidths[2] / 2, cellCenterY, { align: 'center' })
         
-        // Total - Centrado
+        // Total - Centrado horizontal y vertical
         doc.setFontSize(8)
         doc.setFont('helvetica', 'bold')
         doc.text(`S/. ${(quote.total || 0).toFixed(2)}`, colX[3] + colWidths[3] / 2, cellCenterY, { align: 'center' })
         
-        // Estado - Centrado
+        // Estado - Centrado horizontal y vertical
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(7.5)
         doc.text(getStatusLabel(quote.status), colX[4] + colWidths[4] / 2, cellCenterY, { align: 'center' })
