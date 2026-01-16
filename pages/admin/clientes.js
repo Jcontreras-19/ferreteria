@@ -799,196 +799,217 @@ export default function AdminClientes() {
               )}
             </div>
           ) : (
-            /* Vista de Tabla */
+            /* Vista de Tabla - Responsive sin scroll horizontal */
             <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="overflow-hidden">
+                <table className="w-full table-fixed">
                   <thead className="bg-gradient-to-r from-blue-600 to-indigo-700">
                     <tr>
-                      <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                      <th className="w-[20%] px-3 md:px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                         <div className="flex items-center gap-2">
                           <FiUser size={14} />
-                          Cliente
+                          <span>Cliente</span>
                         </div>
                       </th>
-                      <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                      <th className="w-[25%] px-3 md:px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                         <div className="flex items-center gap-2">
                           <FiMail size={14} />
-                          Contacto
+                          <span>Contacto</span>
                         </div>
                       </th>
-                      <th className="px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                      <th className="w-[15%] px-3 md:px-5 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">
                         <div className="flex items-center gap-2">
                           <FiCalendar size={14} />
-                          Fecha Registro
+                          <span>Fecha Registro</span>
                         </div>
                       </th>
-                      <th className="px-5 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
+                      <th className="w-[12%] px-3 md:px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
                         <div className="flex items-center justify-center gap-2">
                           <FiFileText size={14} />
-                          Cotizaciones
+                          <span className="hidden sm:inline">Cotizaciones</span>
+                          <span className="sm:hidden">Cot.</span>
                         </div>
                       </th>
-                      <th className="px-5 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">
-                        Total Gastado
+                      <th className="w-[13%] px-3 md:px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">
+                        <span className="hidden sm:inline">Total Gastado</span>
+                        <span className="sm:hidden">Total</span>
                       </th>
-                      <th className="px-5 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
+                      <th className="w-[15%] px-3 md:px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
                         Acciones
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredCustomers.map((customer, index) => (
-                      <tr key={customer.id} className={`transition-colors ${
-                        index % 2 === 0 
-                          ? 'bg-white hover:bg-blue-50' 
-                          : 'bg-gray-50 hover:bg-blue-50'
-                      }`}>
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mr-3 shadow-lg ring-2 ring-purple-200 hover:ring-purple-300 transition-all">
-                              <span className="text-white font-bold text-lg">
-                                {customer.name.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            <div>
-                              <div className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                                <FiUser size={14} className="text-purple-600" />
-                                {customer.name}
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredCustomers.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" className="px-6 py-12 text-center">
+                            <FiUsers className="mx-auto text-gray-400" size={48} />
+                            <p className="mt-4 text-gray-600 text-lg">
+                              {searchQuery ? 'No se encontraron clientes' : 'No hay clientes registrados'}
+                            </p>
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredCustomers.map((customer, index) => (
+                          <tr key={customer.id} className={`transition-colors ${
+                            index % 2 === 0 
+                              ? 'bg-white hover:bg-blue-50' 
+                              : 'bg-gray-50 hover:bg-blue-50'
+                          }`}>
+                            <td className="px-3 md:px-5 py-4">
+                              <div className="flex items-center">
+                                <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mr-2 md:mr-3 shadow-lg ring-2 ring-purple-200 hover:ring-purple-300 transition-all flex-shrink-0">
+                                  <span className="text-white font-bold text-base md:text-lg">
+                                    {customer.name.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-xs md:text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                                    <FiUser size={12} className="text-purple-600 flex-shrink-0 hidden sm:inline" />
+                                    <span className="break-words">{customer.name}</span>
+                                  </div>
+                                  <div className="text-xs text-gray-500 font-mono mt-0.5">ID: {customer.id.slice(0, 8)}</div>
+                                  {/* Fecha en móviles y tablets */}
+                                  <div className="text-xs text-gray-500 flex items-center gap-1 mt-1 lg:hidden">
+                                    <FiCalendar size={10} />
+                                    <span className="break-words">{formatDate(customer.createdAt)}</span>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="text-xs text-gray-500 font-mono mt-0.5">ID: {customer.id.slice(0, 8)}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          {editingCustomer === customer.id ? (
-                            <div className="space-y-2">
-                              <input
-                                type="email"
-                                value={editFormData.email}
-                                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                                className="text-sm px-3 py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white w-full"
-                                placeholder="Email"
-                                style={{ color: '#111827' }}
-                              />
-                              <input
-                                type="tel"
-                                value={editFormData.phone}
-                                onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                                className="text-sm px-3 py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white w-full"
-                                placeholder="Teléfono"
-                                style={{ color: '#111827' }}
-                              />
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => handleSaveEdit(customer.id)}
-                                  disabled={saving}
-                                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-lg transition-colors"
-                                >
-                                  <FiSave size={14} />
-                                  Guardar
-                                </button>
-                                <button
-                                  onClick={handleCancelEdit}
-                                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-gray-300 hover:bg-gray-400 text-gray-800 text-xs font-medium rounded-lg transition-colors"
-                                >
-                                  <FiX size={14} />
-                                  Cancelar
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="space-y-2">
+                            </td>
+                            <td className="px-3 md:px-5 py-4">
+                              {editingCustomer === customer.id ? (
+                                <div className="space-y-2">
+                                  <input
+                                    type="email"
+                                    value={editFormData.email}
+                                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                                    className="text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white w-full"
+                                    placeholder="Email"
+                                    style={{ color: '#111827' }}
+                                  />
+                                  <input
+                                    type="tel"
+                                    value={editFormData.phone}
+                                    onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                                    className="text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white w-full"
+                                    placeholder="Teléfono"
+                                    style={{ color: '#111827' }}
+                                  />
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => handleSaveEdit(customer.id)}
+                                      disabled={saving}
+                                      className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-lg transition-colors"
+                                    >
+                                      <FiSave size={12} />
+                                      <span className="hidden sm:inline">Guardar</span>
+                                    </button>
+                                    <button
+                                      onClick={handleCancelEdit}
+                                      className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-gray-300 hover:bg-gray-400 text-gray-800 text-xs font-medium rounded-lg transition-colors"
+                                    >
+                                      <FiX size={12} />
+                                      <span className="hidden sm:inline">Cancelar</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="space-y-1.5 md:space-y-2">
+                                  <div className="text-xs md:text-sm text-gray-900 flex items-start gap-2 group">
+                                    <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors flex-shrink-0 mt-0.5">
+                                      <FiMail size={12} className="md:w-4 md:h-4 text-blue-600" />
+                                    </div>
+                                    <span className="font-medium break-words">{customer.email}</span>
+                                  </div>
+                                  {customer.phone ? (
+                                    <div className="text-xs md:text-sm text-gray-600 flex items-start gap-2 group">
+                                      <div className="w-6 h-6 md:w-8 md:h-8 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors flex-shrink-0 mt-0.5">
+                                        <FiPhone size={12} className="md:w-4 md:h-4 text-green-600" />
+                                      </div>
+                                      <span className="break-words">{customer.phone}</span>
+                                    </div>
+                                  ) : (
+                                    <div className="text-xs text-gray-400 italic flex items-center gap-2">
+                                      <div className="w-6 h-6 md:w-8 md:h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <FiPhone size={10} className="md:w-3.5 md:h-3.5 text-gray-400" />
+                                      </div>
+                                      <span className="hidden sm:inline">Sin teléfono</span>
+                                      <span className="sm:hidden">Sin tel.</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-3 md:px-5 py-4 hidden lg:table-cell">
                               <div className="text-sm text-gray-900 flex items-center gap-2 group">
-                                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                                  <FiMail size={16} className="text-blue-600" />
+                                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors flex-shrink-0">
+                                  <FiCalendar size={16} className="text-purple-600" />
                                 </div>
-                                <span className="font-medium">{customer.email}</span>
+                                <span className="font-medium break-words">{formatDate(customer.createdAt)}</span>
                               </div>
-                              {customer.phone ? (
-                                <div className="text-sm text-gray-600 flex items-center gap-2 group">
-                                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                                    <FiPhone size={16} className="text-green-600" />
-                                  </div>
-                                  <span>{customer.phone}</span>
+                            </td>
+                            <td className="px-3 md:px-6 py-4 text-center">
+                              <span className={`inline-flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-bold rounded-lg shadow-sm transition-all ${
+                                customer.totalQuotes > 0
+                                  ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-2 border-green-300 hover:border-green-400'
+                                  : 'bg-gray-100 text-gray-600 border-2 border-gray-300'
+                              }`}>
+                                <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                  customer.totalQuotes > 0 ? 'bg-green-500' : 'bg-gray-400'
+                                }`}>
+                                  <FiFileText size={10} className="md:w-3 md:h-3 text-white" />
                                 </div>
-                              ) : (
-                                <div className="text-xs text-gray-400 italic flex items-center gap-2">
-                                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                    <FiPhone size={14} className="text-gray-400" />
-                                  </div>
-                                  Sin teléfono registrado
+                                {customer.totalQuotes || 0}
+                              </span>
+                            </td>
+                            <td className="px-3 md:px-6 py-4 text-right">
+                              <div className={`flex items-center justify-end gap-1.5 md:gap-2 ${
+                                customer.totalSpent > 0 ? 'text-green-600' : 'text-gray-500'
+                              }`}>
+                                <div className={`w-6 h-6 md:w-8 md:h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                  customer.totalSpent > 0 ? 'bg-green-100' : 'bg-gray-100'
+                                }`}>
+                                  <FiDollarSign size={12} className={`md:w-4 md:h-4 ${customer.totalSpent > 0 ? 'text-green-600' : 'text-gray-400'}`} />
                                 </div>
-                              )}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 flex items-center gap-2 group">
-                            <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                              <FiCalendar size={16} className="text-purple-600" />
-                            </div>
-                            <span className="font-medium">{formatDate(customer.createdAt)}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-5 whitespace-nowrap text-center">
-                          <span className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg shadow-sm transition-all ${
-                            customer.totalQuotes > 0
-                              ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-2 border-green-300 hover:border-green-400'
-                              : 'bg-gray-100 text-gray-600 border-2 border-gray-300'
-                          }`}>
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                              customer.totalQuotes > 0 ? 'bg-green-500' : 'bg-gray-400'
-                            }`}>
-                              <FiFileText size={12} className="text-white" />
-                            </div>
-                            {customer.totalQuotes || 0}
-                          </span>
-                        </td>
-                        <td className="px-6 py-5 whitespace-nowrap text-right">
-                          <div className={`flex items-center justify-end gap-2 ${
-                            customer.totalSpent > 0 ? 'text-green-600' : 'text-gray-500'
-                          }`}>
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                              customer.totalSpent > 0 ? 'bg-green-100' : 'bg-gray-100'
-                            }`}>
-                              <FiDollarSign size={16} className={customer.totalSpent > 0 ? 'text-green-600' : 'text-gray-400'} />
-                            </div>
-                            <span className="text-base font-bold">{formatCurrency(customer.totalSpent || 0)}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-5 whitespace-nowrap text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            {editingCustomer !== customer.id && (
-                              <button
-                                onClick={() => handleOpenActionsModal(customer)}
-                                className="group relative flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 font-medium text-sm"
-                                title="Gestionar cliente"
-                              >
-                                <FiEdit2 size={18} className="group-hover:rotate-12 transition-transform" />
-                                <span>Gestionar</span>
-                              </button>
-                            )}
-                            <button
-                              onClick={() => setExpandedCustomer(expandedCustomer === customer.id ? null : customer.id)}
-                              className="px-3 py-1.5 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-all flex items-center gap-1.5 font-medium border border-purple-200 hover:border-purple-300"
-                            >
-                              {expandedCustomer === customer.id ? (
-                                <>
-                                  <FiChevronUp size={18} />
-                                  <span className="text-sm">Ocultar</span>
-                                </>
-                              ) : (
-                                <>
-                                  <FiChevronDown size={18} />
-                                  <span className="text-sm">Ver más</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                                <span className="text-xs md:text-sm font-bold break-words">{formatCurrency(customer.totalSpent || 0)}</span>
+                              </div>
+                            </td>
+                            <td className="px-3 md:px-6 py-4 text-center">
+                              <div className="flex items-center justify-center gap-1.5 md:gap-2 flex-wrap">
+                                {editingCustomer !== customer.id && (
+                                  <button
+                                    onClick={() => handleOpenActionsModal(customer)}
+                                    className="group relative flex items-center justify-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 font-medium text-xs md:text-sm"
+                                    title="Gestionar cliente"
+                                  >
+                                    <FiEdit2 size={14} className="md:w-4 md:h-4 group-hover:rotate-12 transition-transform" />
+                                    <span className="hidden sm:inline">Gestionar</span>
+                                    <span className="sm:hidden">Gest.</span>
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => setExpandedCustomer(expandedCustomer === customer.id ? null : customer.id)}
+                                  className="px-2 md:px-3 py-1 md:py-1.5 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-all flex items-center gap-1 font-medium border border-purple-200 hover:border-purple-300 text-xs md:text-sm"
+                                >
+                                  {expandedCustomer === customer.id ? (
+                                    <>
+                                      <FiChevronUp size={14} className="md:w-4 md:h-4" />
+                                      <span className="hidden sm:inline">Ocultar</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <FiChevronDown size={14} className="md:w-4 md:h-4" />
+                                      <span className="hidden sm:inline">Ver más</span>
+                                      <span className="sm:hidden">+</span>
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                   </tbody>
                 </table>
               </div>
