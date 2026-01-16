@@ -8,6 +8,7 @@ import {
   FiGrid, FiList, FiTag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiExternalLink
 } from 'react-icons/fi'
 import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 export default function AutorizarDespachos() {
   const router = useRouter()
@@ -218,55 +219,205 @@ export default function AutorizarDespachos() {
     setShowActionModal(true)
   }
 
-  const exportToExcel = () => {
-    const data = filteredQuotes.map(quote => {
-      let products = []
-      try {
-        products = quote.productsParsed || JSON.parse(quote.products || '[]')
-      } catch (e) {
-        products = []
-      }
-      return {
-        'N° Cotización': quote.quoteNumber || 'N/A',
-        'Cliente': quote.name,
-        'Email': quote.email,
-        'WhatsApp': quote.whatsapp,
-        'Total': quote.total,
-        'Productos': products.map(p => `${p.name} (x${p.quantity || 1})`).join(', '),
-        'Stock Disponible': quote.allInStock ? 'Sí' : quote.someInStock ? 'Parcial' : 'No',
-        'Tiempo Entrega (días)': quote.estimatedDelivery || 'N/A',
-        'Notas': quote.notes || '',
-        'Fecha Aprobación': new Date(quote.updatedAt).toLocaleDateString('es-PE'),
-      }
-    })
+  const exportToExcel = async () => {
+    try {
+      const data = filteredQuotes.map(quote => {
+        let products = []
+        try {
+          products = quote.productsParsed || JSON.parse(quote.products || '[]')
+        } catch (e) {
+          products = []
+        }
+        return {
+          'N° Cotización': quote.quoteNumber || 'N/A',
+          'Cliente': quote.name,
+          'Email': quote.email,
+          'WhatsApp': quote.whatsapp,
+          'Total': quote.total,
+          'Productos': products.map(p => `${p.name} (x${p.quantity || 1})`).join(', '),
+          'Stock Disponible': quote.allInStock ? 'Sí' : quote.someInStock ? 'Parcial' : 'No',
+          'Tiempo Entrega (días)': quote.estimatedDelivery || 'N/A',
+          'Notas': quote.notes || '',
+          'Fecha Aprobación': new Date(quote.updatedAt).toLocaleDateString('es-PE', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }),
+        }
+      })
 
-    const wb = XLSX.utils.book_new()
-    const newWs = XLSX.utils.aoa_to_sheet([
-      ['CORPORACIÓN GRC - REPORTE DE AUTORIZACIÓN DE DESPACHOS'],
-      ['ISO 9001:2015'],
-      [`Fecha de exportación: ${new Date().toLocaleDateString('es-PE', {
+      // Crear nuevo workbook
+      const workbook = new ExcelJS.Workbook()
+      const worksheet = workbook.addWorksheet('Autorizaciones')
+
+      // Colores corporativos GRC (verde)
+      const headerFill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF16A34A' }
+      }
+
+      const headerFont = {
+        name: 'Arial',
+        size: 11,
+        bold: true,
+        color: { argb: 'FFFFFFFF' }
+      }
+
+      const blackBorder = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      }
+
+      // Agregar logo/icono de la empresa
+      worksheet.insertRow(1, [''])
+      worksheet.mergeCells('A1:J1')
+      const logoCell = worksheet.getCell('A1')
+      logoCell.value = 'CORPORACIÓN GRC'
+      logoCell.font = {
+        name: 'Arial',
+        size: 18,
+        bold: true,
+        color: { argb: 'FF16A34A' }
+      }
+      logoCell.alignment = { vertical: 'middle', horizontal: 'center' }
+      logoCell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFF0FDF4' }
+      }
+      logoCell.border = blackBorder
+      worksheet.getRow(1).height = 35
+
+      // Información de la empresa
+      worksheet.insertRow(2, [''])
+      worksheet.mergeCells('A2:J2')
+      const companyCell = worksheet.getCell('A2')
+      companyCell.value = 'SERVICIOS DE APOYO A LAS EMPRESAS - ISO 9001:2015'
+      companyCell.font = {
+        name: 'Arial',
+        size: 10,
+        bold: true,
+        color: { argb: 'FF6B7280' }
+      }
+      companyCell.alignment = { vertical: 'middle', horizontal: 'center' }
+      worksheet.getRow(2).height = 20
+
+      // Fecha de exportación
+      worksheet.insertRow(3, [''])
+      worksheet.mergeCells('A3:J3')
+      const dateCell = worksheet.getCell('A3')
+      dateCell.value = `Fecha de exportación: ${new Date().toLocaleDateString('es-PE', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      })}`],
-      (dateFrom || dateTo) ? [`Período: ${dateFrom ? new Date(dateFrom).toLocaleDateString('es-PE') : 'Inicio'} - ${dateTo ? new Date(dateTo).toLocaleDateString('es-PE') : 'Hoy'}`] : [''],
-      [`Total de cotizaciones: ${filteredQuotes.length}`],
-      [''],
-      Object.keys(data[0] || {}),
-      ...data.map(row => Object.values(row))
-    ])
+      })}`
+      dateCell.font = {
+        name: 'Arial',
+        size: 9,
+        bold: true,
+        color: { argb: 'FF6B7280' }
+      }
+      dateCell.alignment = { vertical: 'middle', horizontal: 'center' }
+      worksheet.getRow(3).height = 18
 
-    const colWidths = [
-      { wch: 15 }, { wch: 25 }, { wch: 30 }, { wch: 30 }, { wch: 20 }, { wch: 40 }, { wch: 20 }, { wch: 20 }, { wch: 30 }, { wch: 15 }
-    ]
-    newWs['!cols'] = colWidths
+      // Fila vacía
+      worksheet.insertRow(4, [''])
+      worksheet.getRow(4).height = 5
 
-    XLSX.utils.book_append_sheet(wb, newWs, 'Autorizaciones')
-    const fileName = `autorizaciones-${dateFrom ? dateFrom.split('T')[0] : 'todas'}-${dateTo ? dateTo.split('T')[0] : new Date().toISOString().split('T')[0]}.xlsx`
-    XLSX.writeFile(wb, fileName)
-    showNotification('Excel exportado exitosamente', 'success')
+      // Encabezados
+      const headers = ['N° Cotización', 'Cliente', 'Email', 'WhatsApp', 'Total', 'Productos', 'Stock Disponible', 'Tiempo Entrega (días)', 'Notas', 'Fecha Aprobación']
+      const headerRow = worksheet.addRow(headers)
+      
+      headerRow.eachCell((cell) => {
+        cell.fill = headerFill
+        cell.font = headerFont
+        cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+        cell.border = blackBorder
+      })
+      headerRow.height = 25
+
+      // Agregar datos
+      data.forEach((rowData, index) => {
+        const row = worksheet.addRow([
+          rowData['N° Cotización'],
+          rowData['Cliente'],
+          rowData['Email'],
+          rowData['WhatsApp'],
+          rowData['Total'],
+          rowData['Productos'],
+          rowData['Stock Disponible'],
+          rowData['Tiempo Entrega (días)'],
+          rowData['Notas'],
+          rowData['Fecha Aprobación']
+        ])
+
+        let maxRowHeight = 20
+        row.eachCell((cell, colNumber) => {
+          cell.border = blackBorder
+          cell.alignment = { vertical: 'top', wrapText: true }
+          cell.font = { name: 'Arial', size: 10 }
+
+          if (colNumber === 5) { // Total
+            cell.alignment.horizontal = 'right'
+            cell.numFmt = '#,##0.00'
+          } else if (colNumber === 8) { // Tiempo Entrega
+            cell.alignment.horizontal = 'center'
+          } else {
+            cell.alignment.horizontal = 'left'
+          }
+
+          if (index % 2 === 0) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
+          } else {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } }
+          }
+
+          const cellValue = cell.value ? cell.value.toString() : ''
+          if (cellValue) {
+            const columnWidth = worksheet.getColumn(colNumber).width || 10
+            const estimatedLines = Math.ceil(cellValue.length / (columnWidth * 1.2)) || 1
+            const cellHeight = Math.max(estimatedLines * 15, 20)
+            if (cellHeight > maxRowHeight) {
+              maxRowHeight = cellHeight
+            }
+          }
+        })
+        row.height = maxRowHeight
+      })
+
+      // Ajustar ancho de columnas
+      worksheet.getColumn(1).width = 15 // N° Cotización
+      worksheet.getColumn(2).width = 25 // Cliente
+      worksheet.getColumn(3).width = 30 // Email
+      worksheet.getColumn(4).width = 15 // WhatsApp
+      worksheet.getColumn(5).width = 15 // Total
+      worksheet.getColumn(6).width = 40 // Productos
+      worksheet.getColumn(7).width = 18 // Stock Disponible
+      worksheet.getColumn(8).width = 18 // Tiempo Entrega
+      worksheet.getColumn(9).width = 30 // Notas
+      worksheet.getColumn(10).width = 20 // Fecha Aprobación
+
+      // Generar archivo
+      const buffer = await workbook.xlsx.writeBuffer()
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `autorizaciones-${dateFrom ? dateFrom.split('T')[0] : 'todas'}-${dateTo ? dateTo.split('T')[0] : new Date().toISOString().split('T')[0]}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      showNotification('Excel exportado exitosamente', 'success')
+    } catch (error) {
+      console.error('Error al exportar a Excel:', error)
+      showNotification('Error al generar el archivo Excel', 'error')
+    }
   }
 
   const exportToPDF = async () => {

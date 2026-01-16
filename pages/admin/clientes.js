@@ -328,7 +328,7 @@ export default function AdminClientes() {
       logoCell.value = 'CORPORACIÓN GRC'
       logoCell.font = {
         name: 'Arial',
-        size: 16,
+        size: 18,
         bold: true,
         color: { argb: 'FF16A34A' } // Verde corporativo
       }
@@ -341,7 +341,14 @@ export default function AdminClientes() {
         pattern: 'solid',
         fgColor: { argb: 'FFF0FDF4' } // Verde muy claro de fondo
       }
-      worksheet.getRow(1).height = 30
+      // Agregar borde al título
+      logoCell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      }
+      worksheet.getRow(1).height = 35
 
       // Agregar información de la empresa
       worksheet.insertRow(2, [''])
@@ -351,7 +358,7 @@ export default function AdminClientes() {
       companyCell.font = {
         name: 'Arial',
         size: 10,
-        italic: true,
+        bold: true, // Negrita
         color: { argb: 'FF6B7280' } // Gris
       }
       companyCell.alignment = { 
@@ -374,6 +381,7 @@ export default function AdminClientes() {
       dateCell.font = {
         name: 'Arial',
         size: 9,
+        bold: true, // Negrita
         color: { argb: 'FF6B7280' }
       }
       dateCell.alignment = { 
@@ -423,6 +431,7 @@ export default function AdminClientes() {
         ])
 
         // Formatear filas de datos con bordes negros
+        let maxRowHeight = 20 // Altura mínima
         row.eachCell((cell, colNumber) => {
           cell.border = {
             top: { style: 'thin', color: { argb: 'FF000000' } },
@@ -431,7 +440,7 @@ export default function AdminClientes() {
             right: { style: 'thin', color: { argb: 'FF000000' } }
           }
           cell.alignment = { 
-            vertical: 'middle',
+            vertical: 'top', // Cambiar a 'top' para mejor ajuste
             wrapText: true
           }
           cell.font = {
@@ -467,8 +476,21 @@ export default function AdminClientes() {
               fgColor: { argb: 'FFF9FAFB' } // Gris muy claro
             }
           }
+
+          // Calcular altura necesaria para el contenido
+          const cellValue = cell.value ? cell.value.toString() : ''
+          if (cellValue) {
+            // Estimar líneas necesarias basado en el ancho de la columna
+            const columnWidth = worksheet.getColumn(colNumber).width || 10
+            const estimatedLines = Math.ceil(cellValue.length / (columnWidth * 1.2)) || 1
+            const cellHeight = Math.max(estimatedLines * 15, 20) // Mínimo 20, 15 por línea
+            if (cellHeight > maxRowHeight) {
+              maxRowHeight = cellHeight
+            }
+          }
         })
-        row.height = 20
+        // Establecer altura de fila basada en el contenido más alto
+        row.height = maxRowHeight
       })
 
       // Ajustar ancho de columnas automáticamente

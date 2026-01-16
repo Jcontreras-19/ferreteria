@@ -9,6 +9,7 @@ import {
   FiTag, FiExternalLink, FiXCircle
 } from 'react-icons/fi'
 import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 export default function AdminCotizaciones() {
   const router = useRouter()
@@ -146,82 +147,236 @@ export default function AdminCotizaciones() {
     }
   }
 
-  const exportToExcel = () => {
-    // Crear una fila por cada producto de cada cotización
-    const data = []
-    
-    filteredQuotes.forEach(quote => {
-      let products = []
-      try {
-        const parsed = typeof quote.products === 'string' ? JSON.parse(quote.products) : quote.products
-        products = parsed.items || parsed
-        if (!Array.isArray(products)) products = []
-      } catch (e) {
-        products = []
-      }
+  const exportToExcel = async () => {
+    try {
+      // Crear una fila por cada producto de cada cotización
+      const data = []
+      
+      filteredQuotes.forEach(quote => {
+        let products = []
+        try {
+          const parsed = typeof quote.products === 'string' ? JSON.parse(quote.products) : quote.products
+          products = parsed.items || parsed
+          if (!Array.isArray(products)) products = []
+        } catch (e) {
+          products = []
+        }
 
-      // Formatear fecha como DD/MM/YYYY
-      const formatDate = (dateString) => {
-        const date = new Date(dateString)
-        const day = String(date.getDate()).padStart(2, '0')
-        const month = String(date.getMonth() + 1).padStart(2, '0')
-        const year = date.getFullYear()
-        return `${day}/${month}/${year}`
-      }
+        // Formatear fecha
+        const formatDate = (dateString) => {
+          const date = new Date(dateString)
+          return date.toLocaleDateString('es-PE', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })
+        }
 
-      // Si no hay productos, crear una fila con datos de la cotización
-      if (products.length === 0) {
-        data.push({
-          'N° Cotización': quote.quoteNumber || 'N/A',
-          'Fecha': formatDate(quote.createdAt),
-          'Email': quote.email || 'N/A',
-          'Total': quote.total || 0,
-          'Cantidad': 0,
-          'P. Unitario': 0,
-          'Estado': getStatusLabel(quote.status),
-          'Productos': 'Sin productos',
-          'Número de celular o whtsp': quote.whatsapp || quote.phone || 'N/A',
-        })
-      } else {
-        // Crear una fila por cada producto
-        products.forEach(product => {
-          const quantity = product.quantity || 1
-          const unitPrice = product.price || (product.total ? product.total / quantity : 0)
-          
+        // Si no hay productos, crear una fila con datos de la cotización
+        if (products.length === 0) {
           data.push({
             'N° Cotización': quote.quoteNumber || 'N/A',
             'Fecha': formatDate(quote.createdAt),
             'Email': quote.email || 'N/A',
             'Total': quote.total || 0,
-            'Cantidad': quantity,
-            'P. Unitario': parseFloat(unitPrice.toFixed(2)),
+            'Cantidad': 0,
+            'P. Unitario': 0,
             'Estado': getStatusLabel(quote.status),
-            'Productos': product.name || 'N/A',
+            'Productos': 'Sin productos',
             'Número de celular o whtsp': quote.whatsapp || quote.phone || 'N/A',
           })
-        })
-      }
-    })
+        } else {
+          // Crear una fila por cada producto
+          products.forEach(product => {
+            const quantity = product.quantity || 1
+            const unitPrice = product.price || (product.total ? product.total / quantity : 0)
+            
+            data.push({
+              'N° Cotización': quote.quoteNumber || 'N/A',
+              'Fecha': formatDate(quote.createdAt),
+              'Email': quote.email || 'N/A',
+              'Total': quote.total || 0,
+              'Cantidad': quantity,
+              'P. Unitario': parseFloat(unitPrice.toFixed(2)),
+              'Estado': getStatusLabel(quote.status),
+              'Productos': product.name || 'N/A',
+              'Número de celular o whtsp': quote.whatsapp || quote.phone || 'N/A',
+            })
+          })
+        }
+      })
 
-    const wb = XLSX.utils.book_new()
-    const ws = XLSX.utils.json_to_sheet(data)
-    
-    // Ajustar ancho de columnas
-    const colWidths = [
-      { wch: 15 }, // N° Cotización
-      { wch: 12 }, // Fecha
-      { wch: 30 }, // Email
-      { wch: 12 }, // Total
-      { wch: 10 }, // Cantidad
-      { wch: 12 }, // P. Unitario
-      { wch: 12 }, // Estado
-      { wch: 40 }, // Productos
-      { wch: 20 }, // Número de celular o whtsp
-    ]
-    ws['!cols'] = colWidths
-    
-    XLSX.utils.book_append_sheet(wb, ws, 'Cotizaciones')
-    XLSX.writeFile(wb, `cotizaciones-${new Date().toISOString().split('T')[0]}.xlsx`)
+      // Crear nuevo workbook
+      const workbook = new ExcelJS.Workbook()
+      const worksheet = workbook.addWorksheet('Cotizaciones')
+
+      // Colores corporativos GRC (verde)
+      const headerFill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF16A34A' } // green-600
+      }
+
+      const headerFont = {
+        name: 'Arial',
+        size: 11,
+        bold: true,
+        color: { argb: 'FFFFFFFF' } // Blanco
+      }
+
+      // Bordes negros
+      const blackBorder = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      }
+
+      // Agregar logo/icono de la empresa
+      worksheet.insertRow(1, [''])
+      worksheet.mergeCells('A1:I1')
+      const logoCell = worksheet.getCell('A1')
+      logoCell.value = 'CORPORACIÓN GRC'
+      logoCell.font = {
+        name: 'Arial',
+        size: 18,
+        bold: true,
+        color: { argb: 'FF16A34A' }
+      }
+      logoCell.alignment = { vertical: 'middle', horizontal: 'center' }
+      logoCell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFF0FDF4' }
+      }
+      logoCell.border = blackBorder
+      worksheet.getRow(1).height = 35
+
+      // Información de la empresa
+      worksheet.insertRow(2, [''])
+      worksheet.mergeCells('A2:I2')
+      const companyCell = worksheet.getCell('A2')
+      companyCell.value = 'SERVICIOS DE APOYO A LAS EMPRESAS - ISO 9001:2015'
+      companyCell.font = {
+        name: 'Arial',
+        size: 10,
+        bold: true,
+        color: { argb: 'FF6B7280' }
+      }
+      companyCell.alignment = { vertical: 'middle', horizontal: 'center' }
+      worksheet.getRow(2).height = 20
+
+      // Fecha de exportación
+      worksheet.insertRow(3, [''])
+      worksheet.mergeCells('A3:I3')
+      const dateCell = worksheet.getCell('A3')
+      dateCell.value = `Fecha de exportación: ${new Date().toLocaleDateString('es-PE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })}`
+      dateCell.font = {
+        name: 'Arial',
+        size: 9,
+        bold: true,
+        color: { argb: 'FF6B7280' }
+      }
+      dateCell.alignment = { vertical: 'middle', horizontal: 'center' }
+      worksheet.getRow(3).height = 18
+
+      // Fila vacía
+      worksheet.insertRow(4, [''])
+      worksheet.getRow(4).height = 5
+
+      // Encabezados
+      const headers = ['N° Cotización', 'Fecha', 'Email', 'Total', 'Cantidad', 'P. Unitario', 'Estado', 'Productos', 'Número de celular o whtsp']
+      const headerRow = worksheet.addRow(headers)
+      
+      headerRow.eachCell((cell) => {
+        cell.fill = headerFill
+        cell.font = headerFont
+        cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+        cell.border = blackBorder
+      })
+      headerRow.height = 25
+
+      // Agregar datos
+      data.forEach((rowData, index) => {
+        const row = worksheet.addRow([
+          rowData['N° Cotización'],
+          rowData['Fecha'],
+          rowData['Email'],
+          rowData['Total'],
+          rowData['Cantidad'],
+          rowData['P. Unitario'],
+          rowData['Estado'],
+          rowData['Productos'],
+          rowData['Número de celular o whtsp']
+        ])
+
+        let maxRowHeight = 20
+        row.eachCell((cell, colNumber) => {
+          cell.border = blackBorder
+          cell.alignment = { vertical: 'top', wrapText: true }
+          cell.font = { name: 'Arial', size: 10 }
+
+          if (colNumber === 4 || colNumber === 6) { // Total, P. Unitario
+            cell.alignment.horizontal = 'right'
+            cell.numFmt = '#,##0.00'
+          } else if (colNumber === 5) { // Cantidad
+            cell.alignment.horizontal = 'center'
+            cell.numFmt = '0'
+          } else {
+            cell.alignment.horizontal = 'left'
+          }
+
+          if (index % 2 === 0) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
+          } else {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } }
+          }
+
+          const cellValue = cell.value ? cell.value.toString() : ''
+          if (cellValue) {
+            const columnWidth = worksheet.getColumn(colNumber).width || 10
+            const estimatedLines = Math.ceil(cellValue.length / (columnWidth * 1.2)) || 1
+            const cellHeight = Math.max(estimatedLines * 15, 20)
+            if (cellHeight > maxRowHeight) {
+              maxRowHeight = cellHeight
+            }
+          }
+        })
+        row.height = maxRowHeight
+      })
+
+      // Ajustar ancho de columnas
+      worksheet.getColumn(1).width = 15 // N° Cotización
+      worksheet.getColumn(2).width = 20 // Fecha
+      worksheet.getColumn(3).width = 30 // Email
+      worksheet.getColumn(4).width = 12 // Total
+      worksheet.getColumn(5).width = 10 // Cantidad
+      worksheet.getColumn(6).width = 12 // P. Unitario
+      worksheet.getColumn(7).width = 15 // Estado
+      worksheet.getColumn(8).width = 40 // Productos
+      worksheet.getColumn(9).width = 25 // Número de celular
+
+      // Generar archivo
+      const buffer = await workbook.xlsx.writeBuffer()
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `cotizaciones-${new Date().toISOString().split('T')[0]}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error al exportar a Excel:', error)
+      alert('Error al generar el archivo Excel. Por favor intenta de nuevo.')
+    }
   }
 
   const exportToPDF = async () => {

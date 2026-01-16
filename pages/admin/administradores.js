@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import AdminLayout from '../../components/admin/AdminLayout'
-import { FiPlus, FiEdit, FiTrash2, FiShield, FiUsers, FiSearch, FiFilter, FiEye, FiGrid, FiList } from 'react-icons/fi'
+import { FiPlus, FiEdit, FiTrash2, FiShield, FiUsers, FiSearch, FiFilter, FiEye, FiGrid, FiList, FiDownload } from 'react-icons/fi'
+import ExcelJS from 'exceljs'
 
 const PERMISSIONS = [
   { id: 'view', label: 'Ver' },
@@ -134,6 +135,189 @@ export default function AdminAdministradores() {
     } catch (error) {
       console.error('Error:', error)
       alert('Error al eliminar administrador')
+    }
+  }
+
+  const exportToExcel = async () => {
+    try {
+      const filteredUsers = users.filter(u => 
+        !searchQuery || 
+        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+
+      // Crear nuevo workbook
+      const workbook = new ExcelJS.Workbook()
+      const worksheet = workbook.addWorksheet('Administradores')
+
+      // Colores corporativos GRC (verde)
+      const headerFill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF16A34A' }
+      }
+
+      const headerFont = {
+        name: 'Arial',
+        size: 11,
+        bold: true,
+        color: { argb: 'FFFFFFFF' }
+      }
+
+      const blackBorder = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      }
+
+      // Agregar logo/icono de la empresa
+      worksheet.insertRow(1, [''])
+      worksheet.mergeCells('A1:F1')
+      const logoCell = worksheet.getCell('A1')
+      logoCell.value = 'CORPORACIÓN GRC'
+      logoCell.font = {
+        name: 'Arial',
+        size: 18,
+        bold: true,
+        color: { argb: 'FF16A34A' }
+      }
+      logoCell.alignment = { vertical: 'middle', horizontal: 'center' }
+      logoCell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFF0FDF4' }
+      }
+      logoCell.border = blackBorder
+      worksheet.getRow(1).height = 35
+
+      // Información de la empresa
+      worksheet.insertRow(2, [''])
+      worksheet.mergeCells('A2:F2')
+      const companyCell = worksheet.getCell('A2')
+      companyCell.value = 'SERVICIOS DE APOYO A LAS EMPRESAS - ISO 9001:2015'
+      companyCell.font = {
+        name: 'Arial',
+        size: 10,
+        bold: true,
+        color: { argb: 'FF6B7280' }
+      }
+      companyCell.alignment = { vertical: 'middle', horizontal: 'center' }
+      worksheet.getRow(2).height = 20
+
+      // Fecha de exportación
+      worksheet.insertRow(3, [''])
+      worksheet.mergeCells('A3:F3')
+      const dateCell = worksheet.getCell('A3')
+      dateCell.value = `Fecha de exportación: ${new Date().toLocaleDateString('es-PE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })}`
+      dateCell.font = {
+        name: 'Arial',
+        size: 9,
+        bold: true,
+        color: { argb: 'FF6B7280' }
+      }
+      dateCell.alignment = { vertical: 'middle', horizontal: 'center' }
+      worksheet.getRow(3).height = 18
+
+      // Fila vacía
+      worksheet.insertRow(4, [''])
+      worksheet.getRow(4).height = 5
+
+      // Encabezados
+      const headers = ['Nombre', 'Email', 'Teléfono', 'Rol', 'Permisos', 'Fecha de Creación']
+      const headerRow = worksheet.addRow(headers)
+      
+      headerRow.eachCell((cell) => {
+        cell.fill = headerFill
+        cell.font = headerFont
+        cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+        cell.border = blackBorder
+      })
+      headerRow.height = 25
+
+      // Función para formatear fecha
+      const formatDate = (dateString) => {
+        const date = new Date(dateString)
+        return date.toLocaleDateString('es-PE', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
+      }
+
+      // Agregar datos
+      filteredUsers.forEach((user, index) => {
+        const permissions = user.permissions ? JSON.parse(user.permissions) : []
+        const permissionsText = permissions.length > 0 ? permissions.join(', ') : 'Sin permisos'
+        
+        const row = worksheet.addRow([
+          user.name,
+          user.email,
+          user.phone || 'N/A',
+          getRoleLabel(user.role),
+          permissionsText,
+          formatDate(user.createdAt)
+        ])
+
+        let maxRowHeight = 20
+        row.eachCell((cell, colNumber) => {
+          cell.border = blackBorder
+          cell.alignment = { vertical: 'top', wrapText: true }
+          cell.font = { name: 'Arial', size: 10 }
+
+          if (colNumber === 6) { // Fecha de Creación
+            cell.alignment.horizontal = 'center'
+          } else {
+            cell.alignment.horizontal = 'left'
+          }
+
+          if (index % 2 === 0) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
+          } else {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } }
+          }
+
+          const cellValue = cell.value ? cell.value.toString() : ''
+          if (cellValue) {
+            const columnWidth = worksheet.getColumn(colNumber).width || 10
+            const estimatedLines = Math.ceil(cellValue.length / (columnWidth * 1.2)) || 1
+            const cellHeight = Math.max(estimatedLines * 15, 20)
+            if (cellHeight > maxRowHeight) {
+              maxRowHeight = cellHeight
+            }
+          }
+        })
+        row.height = maxRowHeight
+      })
+
+      // Ajustar ancho de columnas
+      worksheet.getColumn(1).width = 30 // Nombre
+      worksheet.getColumn(2).width = 30 // Email
+      worksheet.getColumn(3).width = 15 // Teléfono
+      worksheet.getColumn(4).width = 20 // Rol
+      worksheet.getColumn(5).width = 40 // Permisos
+      worksheet.getColumn(6).width = 25 // Fecha de Creación
+
+      // Generar archivo
+      const buffer = await workbook.xlsx.writeBuffer()
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `administradores-${new Date().toISOString().split('T')[0]}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error al exportar a Excel:', error)
+      alert('Error al generar el archivo Excel. Por favor intenta de nuevo.')
     }
   }
 
@@ -301,6 +485,15 @@ export default function AdminAdministradores() {
                     style={{ color: '#111827' }}
                   />
                 </div>
+
+                {/* Botón de Exportar */}
+                <button
+                  onClick={exportToExcel}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
+                >
+                  <FiDownload size={14} />
+                  <span>Excel</span>
+                </button>
 
                 {/* Botón de Nuevo */}
                 <button
