@@ -60,8 +60,15 @@ export default async function handler(req, res) {
     // Enviar a N8N webhook
     const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL
 
-    if (n8nWebhookUrl) {
+    if (!n8nWebhookUrl) {
+      console.warn('⚠️ N8N_WEBHOOK_URL no está configurada. El webhook no se enviará.')
+    } else {
       try {
+        console.log('📤 Enviando cotización a N8N webhook...')
+        console.log(`   URL: ${n8nWebhookUrl}`)
+        console.log(`   Cliente: ${name} (${email})`)
+        console.log(`   Cotización #${nextQuoteNumber}`)
+
         // Formatear productos para el carrito (formato que espera N8N)
         const carritoFormato = products.map(product => ({
           nombre: product.name || product.nombre || '',
@@ -74,38 +81,61 @@ export default async function handler(req, res) {
           ? notFoundProducts.filter(p => p.name && p.name.trim() !== '')
           : []
 
+        const webhookPayload = {
+          params: {},
+          query: {},
+          body: {
+            cliente: {
+              nombre: name,
+              email: email,
+              whatsapp: whatsapp,
+            },
+            'carrito': JSON.stringify(carritoFormato),
+            'productosNoEncontrados': JSON.stringify(productosNoEncontradosFormato),
+            'quoteId': quote.id,
+            'quoteNumber': nextQuoteNumber,
+            'numeroCotizacion': quoteNumberFormatted,
+            'total': total,
+            'documentType': documentType || 'boleta',
+            'ruc': documentType === 'factura' ? ruc : null,
+            'businessName': documentType === 'factura' ? businessName : null,
+            'address': documentType === 'factura' ? address : null,
+            'createdAt': quote.createdAt.toISOString(),
+          },
+          webhookUrl: n8nWebhookUrl,
+          executionMode: 'production'
+        }
+
+        console.log('   Payload:', JSON.stringify(webhookPayload, null, 2))
+
         // Enviar en el formato que espera N8N
-        await fetch(n8nWebhookUrl, {
+        const webhookResponse = await fetch(n8nWebhookUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            params: {},
-            query: {},
-            body: {
-              'cliente[nombre]': name,
-              'cliente[email]': email,
-              'cliente[whatsapp]': whatsapp,
-              'carrito': JSON.stringify(carritoFormato),
-              'productosNoEncontrados': JSON.stringify(productosNoEncontradosFormato),
-              'quoteId': quote.id,
-              'quoteNumber': nextQuoteNumber,
-              'numeroCotizacion': quoteNumberFormatted,
-              'total': total,
-              'documentType': documentType || 'boleta',
-              'ruc': documentType === 'factura' ? ruc : null,
-              'businessName': documentType === 'factura' ? businessName : null,
-              'address': documentType === 'factura' ? address : null,
-              'createdAt': quote.createdAt.toISOString(),
-            },
-            webhookUrl: n8nWebhookUrl,
-            executionMode: 'production'
-          }),
+          body: JSON.stringify(webhookPayload),
         })
+
+        if (!webhookResponse.ok) {
+          const errorText = await webhookResponse.text()
+          console.error(`❌ Error en webhook N8N: Status ${webhookResponse.status}`)
+          console.error(`   Response: ${errorText}`)
+          throw new Error(`Webhook responded with status ${webhookResponse.status}: ${errorText}`)
+        }
+
+        const webhookData = await webhookResponse.json().catch(() => null)
+        console.log('✅ Webhook N8N respondió exitosamente')
+        if (webhookData) {
+          console.log('   Response data:', JSON.stringify(webhookData, null, 2))
+        }
       } catch (webhookError) {
-        console.error('Error sending to N8N:', webhookError)
-        // No fallar la petición si el webhook falla
+        console.error('❌ Error sending to N8N webhook:', webhookError)
+        console.error('   Error details:', {
+          message: webhookError.message,
+          stack: webhookError.stack,
+        })
+        // No fallar la petición si el webhook falla, pero loguear el error
       }
     }
 
