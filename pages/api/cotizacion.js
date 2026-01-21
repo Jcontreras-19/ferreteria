@@ -1,4 +1,5 @@
 import { prisma } from '../../lib/prisma'
+import { generateQuotePDF } from '../../lib/pdfGenerator'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -82,16 +83,31 @@ export default async function handler(req, res) {
           ? notFoundProducts.filter(p => p.name && p.name.trim() !== '')
           : []
 
-        // Payload optimizado para webhook estándar de N8N
-        // Enviamos los datos directamente en el body, no anidados
+        // Generar PDF de la cotización
+        console.log('   Generando PDF de la cotización...')
+        const pdfBuffer = generateQuotePDF({
+          ...quote,
+          products: products, // Usar productos directamente
+        })
+        console.log('   ✅ PDF generado exitosamente')
+
+        // Crear FormData para enviar datos JSON y PDF como archivo adjunto
+        const formData = new FormData()
+        
+        // Agregar datos del cliente
+        formData.append('name', name)
+        formData.append('email', email)
+        formData.append('phone', whatsapp)
+        
+        // Agregar datos de la cotización como JSON string
         const webhookPayload = {
           cliente: {
             nombre: name,
             email: email,
             whatsapp: whatsapp,
           },
-          carrito: carritoFormato, // Array de objetos, no string JSON
-          productosNoEncontrados: productosNoEncontradosFormato, // Array de objetos, no string JSON
+          carrito: carritoFormato,
+          productosNoEncontrados: productosNoEncontradosFormato,
           quoteId: quote.id,
           quoteNumber: nextQuoteNumber,
           numeroCotizacion: quoteNumberFormatted,
@@ -102,21 +118,28 @@ export default async function handler(req, res) {
           address: documentType === 'factura' ? address : null,
           createdAt: quote.createdAt.toISOString(),
         }
-
-        console.log('   Payload:', JSON.stringify(webhookPayload, null, 2))
+        
+        formData.append('data', JSON.stringify(webhookPayload))
+        
+        // Agregar el PDF como archivo adjunto
+        // Convertir Buffer a Uint8Array para compatibilidad con Blob
+        const pdfUint8Array = new Uint8Array(pdfBuffer)
+        const pdfBlob = new Blob([pdfUint8Array], { type: 'application/pdf' })
+        const pdfFileName = `cotizacion-${quoteNumberFormatted.replace('#', '')}-${quote.id.slice(0, 8)}.pdf`
+        formData.append('pdf', pdfBlob, pdfFileName)
+        
+        console.log('   Payload preparado con PDF adjunto')
+        console.log('   Nombre del archivo PDF:', pdfFileName)
 
         // Crear un AbortController para timeout
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 segundos timeout
 
         try {
-          // Enviar en el formato que espera N8N
+          // Enviar FormData con PDF adjunto (multipart/form-data)
           const webhookResponse = await fetch(n8nWebhookUrl, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(webhookPayload),
+            body: formData, // FormData establece automáticamente Content-Type: multipart/form-data
             signal: controller.signal,
           })
 
