@@ -385,6 +385,11 @@ export default function Carrito() {
         (p) => p.name && p.name.trim() !== ''
       )
 
+      console.log('📤 Enviando cotización...')
+      console.log('   Cliente:', formData.name, formData.email)
+      console.log('   Productos:', cart.length)
+      console.log('   Total:', getTotal())
+
       const response = await fetch('/api/cotizacion', {
         method: 'POST',
         headers: {
@@ -401,7 +406,21 @@ export default function Carrito() {
 
       const data = await response.json()
 
+      console.log('📥 Respuesta del servidor:', {
+        status: response.status,
+        ok: response.ok,
+        data: data
+      })
+
       if (response.ok) {
+        console.log('✅ Cotización creada exitosamente')
+        console.log('   Quote ID:', data.quoteId)
+        
+        // Verificar si hay advertencias sobre el webhook
+        if (data.webhookWarning) {
+          console.warn('⚠️ Advertencia sobre webhook:', data.webhookWarning)
+        }
+        
         setSuccess(true)
         setQuoteId(data.quoteId)
         clearCart()
@@ -410,10 +429,16 @@ export default function Carrito() {
           router.push('/')
         }, 2000)
       } else {
+        console.error('❌ Error al crear cotización:', data.error)
         setError(data.error || 'Error al enviar la cotización')
       }
     } catch (error) {
-      console.error('Error:', error)
+      console.error('❌ Error en la petición:', error)
+      console.error('   Detalles:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      })
       setError('Error al enviar la cotización. Por favor intenta de nuevo.')
     } finally {
       setLoading(false)

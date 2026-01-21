@@ -716,3 +716,4 @@ function MetricCard({ title, value, icon: Icon, color, trend }) {
     </div>
   )
 }
+

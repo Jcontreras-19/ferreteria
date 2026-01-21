@@ -96,8 +96,6 @@ select:disabled {
     transform: translateX(0);
     opacity: 1;
   }
-}
-
-.animate-slide-in {
+}.animate-slide-in {
   animation: slideInRight 0.4s ease-out forwards;
 }

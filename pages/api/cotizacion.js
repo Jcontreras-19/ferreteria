@@ -62,6 +62,7 @@ export default async function handler(req, res) {
 
     if (!n8nWebhookUrl) {
       console.warn('⚠️ N8N_WEBHOOK_URL no está configurada. El webhook no se enviará.')
+      console.warn('   Para habilitar el webhook, configura la variable de entorno N8N_WEBHOOK_URL en Vercel o en tu archivo .env.local')
     } else {
       try {
         console.log('📤 Enviando cotización a N8N webhook...')
@@ -81,68 +82,106 @@ export default async function handler(req, res) {
           ? notFoundProducts.filter(p => p.name && p.name.trim() !== '')
           : []
 
+        // Payload optimizado para webhook estándar de N8N
+        // Enviamos los datos directamente en el body, no anidados
         const webhookPayload = {
-          params: {},
-          query: {},
-          body: {
-            cliente: {
-              nombre: name,
-              email: email,
-              whatsapp: whatsapp,
-            },
-            'carrito': JSON.stringify(carritoFormato),
-            'productosNoEncontrados': JSON.stringify(productosNoEncontradosFormato),
-            'quoteId': quote.id,
-            'quoteNumber': nextQuoteNumber,
-            'numeroCotizacion': quoteNumberFormatted,
-            'total': total,
-            'documentType': documentType || 'boleta',
-            'ruc': documentType === 'factura' ? ruc : null,
-            'businessName': documentType === 'factura' ? businessName : null,
-            'address': documentType === 'factura' ? address : null,
-            'createdAt': quote.createdAt.toISOString(),
+          cliente: {
+            nombre: name,
+            email: email,
+            whatsapp: whatsapp,
           },
-          webhookUrl: n8nWebhookUrl,
-          executionMode: 'production'
+          carrito: carritoFormato, // Array de objetos, no string JSON
+          productosNoEncontrados: productosNoEncontradosFormato, // Array de objetos, no string JSON
+          quoteId: quote.id,
+          quoteNumber: nextQuoteNumber,
+          numeroCotizacion: quoteNumberFormatted,
+          total: parseFloat(total),
+          documentType: documentType || 'boleta',
+          ruc: documentType === 'factura' ? ruc : null,
+          businessName: documentType === 'factura' ? businessName : null,
+          address: documentType === 'factura' ? address : null,
+          createdAt: quote.createdAt.toISOString(),
         }
 
         console.log('   Payload:', JSON.stringify(webhookPayload, null, 2))
 
-        // Enviar en el formato que espera N8N
-        const webhookResponse = await fetch(n8nWebhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(webhookPayload),
-        })
+        // Crear un AbortController para timeout
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 segundos timeout
 
-        if (!webhookResponse.ok) {
-          const errorText = await webhookResponse.text()
-          console.error(`❌ Error en webhook N8N: Status ${webhookResponse.status}`)
-          console.error(`   Response: ${errorText}`)
-          throw new Error(`Webhook responded with status ${webhookResponse.status}: ${errorText}`)
-        }
+        try {
+          // Enviar en el formato que espera N8N
+          const webhookResponse = await fetch(n8nWebhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(webhookPayload),
+            signal: controller.signal,
+          })
 
-        const webhookData = await webhookResponse.json().catch(() => null)
-        console.log('✅ Webhook N8N respondió exitosamente')
-        if (webhookData) {
-          console.log('   Response data:', JSON.stringify(webhookData, null, 2))
+          clearTimeout(timeoutId)
+
+          console.log(`   Response Status: ${webhookResponse.status} ${webhookResponse.statusText}`)
+
+          if (!webhookResponse.ok) {
+            const errorText = await webhookResponse.text()
+            console.error(`❌ Error en webhook N8N: Status ${webhookResponse.status}`)
+            console.error(`   Response: ${errorText}`)
+            console.error(`   URL del webhook: ${n8nWebhookUrl}`)
+            throw new Error(`Webhook responded with status ${webhookResponse.status}: ${errorText}`)
+          }
+
+          const webhookData = await webhookResponse.json().catch(() => {
+            console.warn('⚠️ No se pudo parsear la respuesta JSON del webhook')
+            return null
+          })
+          
+          console.log('✅ Webhook N8N respondió exitosamente')
+          if (webhookData) {
+            console.log('   Response data:', JSON.stringify(webhookData, null, 2))
+          }
+        } catch (fetchError) {
+          clearTimeout(timeoutId)
+          
+          if (fetchError.name === 'AbortError') {
+            console.error('❌ Timeout al enviar webhook a N8N (30 segundos)')
+            console.error(`   URL: ${n8nWebhookUrl}`)
+            throw new Error('Timeout: El webhook de N8N no respondió en 30 segundos')
+          } else if (fetchError.code === 'ENOTFOUND' || fetchError.code === 'ECONNREFUSED') {
+            console.error('❌ Error de conexión con N8N webhook')
+            console.error(`   URL: ${n8nWebhookUrl}`)
+            console.error(`   Error: ${fetchError.message}`)
+            throw new Error(`No se pudo conectar con el webhook de N8N: ${fetchError.message}`)
+          } else {
+            throw fetchError
+          }
         }
       } catch (webhookError) {
         console.error('❌ Error sending to N8N webhook:', webhookError)
         console.error('   Error details:', {
           message: webhookError.message,
           stack: webhookError.stack,
+          name: webhookError.name,
+          code: webhookError.code,
         })
+        console.error(`   URL del webhook: ${n8nWebhookUrl}`)
         // No fallar la petición si el webhook falla, pero loguear el error
       }
     }
 
-    return res.status(201).json({
+    // Incluir información sobre el estado del webhook en la respuesta
+    const responseData = {
       message: 'Cotización enviada exitosamente',
       quoteId: quote.id,
-    })
+    }
+
+    // Si no hay webhook configurado, agregar advertencia
+    if (!n8nWebhookUrl) {
+      responseData.webhookWarning = 'N8N_WEBHOOK_URL no está configurada. El webhook no se envió.'
+    }
+
+    return res.status(201).json(responseData)
   } catch (error) {
     console.error('Error creating quote:', error)
     return res.status(500).json({ error: 'Error al crear cotización' })
