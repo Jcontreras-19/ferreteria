@@ -153,11 +153,10 @@ export default async function handler(req, res) {
         const productosNoEncontradosFormato = productsData.notFoundProducts || []
 
         // Generar PDF de la cotización
+        // IMPORTANTE: No sobrescribir updatedQuote.products porque contiene notFoundProducts
+        // El generador parseará updatedQuote.products y extraerá tanto items como notFoundProducts
         console.log('   Generando PDF de la cotización...')
-        const pdfBuffer = generateQuotePDF({
-          ...updatedQuote,
-          products: products,
-        })
+        const pdfBuffer = generateQuotePDF(updatedQuote)
         console.log('   ✅ PDF generado exitosamente')
 
         // Crear FormData para enviar datos JSON y PDF como archivo adjunto

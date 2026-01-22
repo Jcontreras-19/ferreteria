@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
-import { FiCheck, FiX, FiSearch, FiDownload, FiFileText, FiPackage, FiClock, FiUser, FiMail, FiPhone, FiCalendar, FiEye, FiCheckCircle, FiXCircle, FiFilter, FiChevronUp, FiChevronDown, FiAlertCircle, FiGrid, FiList, FiDollarSign, FiTrendingUp, FiTag, FiExternalLink, FiShoppingCart } from 'react-icons/fi'
+import { FiCheck, FiX, FiSearch, FiDownload, FiFileText, FiPackage, FiClock, FiUser, FiMail, FiPhone, FiCalendar, FiEye, FiCheckCircle, FiXCircle, FiFilter, FiChevronUp, FiChevronDown, FiAlertCircle, FiGrid, FiList, FiDollarSign, FiTrendingUp, FiTag, FiExternalLink, FiShoppingCart, FiInfo } from 'react-icons/fi'
 import { checkCotizadorAuth } from '../../lib/cotizadorAuth'
 import CotizadorLayout from '../../components/cotizador/CotizadorLayout'
 import * as XLSX from 'xlsx'
@@ -1189,6 +1189,7 @@ export default function CotizadorPanel() {
         {/* Modal de Detalles - Compacto Sin Scroll */}
         {showDetailModal && selectedQuote && (() => {
           let products = []
+          let notFoundProducts = []
           try {
             // Primero intentar usar productsParsed (ya parseado por la API)
             if (selectedQuote.productsParsed && Array.isArray(selectedQuote.productsParsed)) {
@@ -1208,10 +1209,17 @@ export default function CotizadorPanel() {
               } else {
                 products = []
               }
+              
+              // Extraer productos no encontrados
+              notFoundProducts = productsData.notFoundProducts || []
+              if (!Array.isArray(notFoundProducts)) {
+                notFoundProducts = []
+              }
             }
           } catch (e) {
             console.error('Error parsing products in modal:', e)
             products = []
+            notFoundProducts = []
           }
 
           return (
@@ -1486,9 +1494,82 @@ export default function CotizadorPanel() {
                           </table>
                         </div>
                       </div>
+
+                      {/* Sección de Productos No Encontrados */}
+                      {notFoundProducts && notFoundProducts.length > 0 && (
+                        <div className="bg-white rounded-lg border-2 border-yellow-300 shadow-md overflow-hidden mt-3">
+                          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 px-3 py-2.5 border-b border-orange-600">
+                            <h4 className="text-xs font-bold text-white flex items-center gap-2">
+                              <div className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded flex items-center justify-center">
+                                <FiAlertCircle className="text-white" size={12} />
+                              </div>
+                              Productos No Encontrados ({notFoundProducts.length})
+                            </h4>
+                          </div>
+                          <div className="max-h-48 overflow-y-auto">
+                            <table className="w-full text-xs">
+                              <thead className="bg-gradient-to-r from-yellow-100 to-orange-100 sticky top-0 border-b-2 border-yellow-300">
+                                <tr>
+                                  <th className="px-2 py-2 text-left font-bold text-gray-700">
+                                    <div className="flex items-center gap-1">
+                                      <FiPackage size={10} />
+                                      Producto
+                                    </div>
+                                  </th>
+                                  <th className="px-2 py-2 text-left font-bold text-gray-700">
+                                    <div className="flex items-center gap-1">
+                                      <FiFileText size={10} />
+                                      Descripción
+                                    </div>
+                                  </th>
+                                  <th className="px-2 py-2 text-center font-bold text-gray-700">
+                                    <div className="flex items-center justify-center gap-1">
+                                      <FiShoppingCart size={10} />
+                                      Cant.
+                                    </div>
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-yellow-200">
+                                {notFoundProducts.map((product, index) => (
+                                  <tr key={index} className={index % 2 === 0 ? 'bg-white hover:bg-yellow-50' : 'bg-yellow-50 hover:bg-yellow-100'}>
+                                    <td className="px-2 py-2">
+                                      <div className="flex items-start gap-2">
+                                        <div className="w-6 h-6 bg-yellow-100 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
+                                          <FiAlertCircle className="text-yellow-600" size={10} />
+                                        </div>
+                                        <div>
+                                          <div className="font-semibold text-gray-900">{product.name || 'Sin nombre'}</div>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="px-2 py-2">
+                                      <div className="text-gray-600 text-xs">
+                                        {product.description || 'Sin descripción'}
+                                      </div>
+                                    </td>
+                                    <td className="px-2 py-2 text-center">
+                                      <span className="inline-flex items-center justify-center w-7 h-7 bg-yellow-100 text-yellow-700 font-bold rounded-lg text-xs">
+                                        {product.quantity || 1}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          <div className="bg-yellow-50 border-t border-yellow-200 px-3 py-2">
+                            <p className="text-xs text-yellow-800 italic">
+                              <FiInfo className="inline mr-1" size={10} />
+                              Los productos no encontrados en nuestro catálogo. Nos contactaremos contigo cuando tengamos la cotización.
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
+              </div>
 
                 {/* Footer con Botones Coloridos y Diseño Mejorado */}
                 <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-t-2 border-gray-300 px-4 py-3 flex items-center justify-between gap-3 shadow-inner">
