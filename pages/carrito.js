@@ -75,6 +75,43 @@ export default function Carrito() {
 
   const generatePdfPreview = async (customFormData = null) => {
     try {
+      const dataToUse = customFormData || formData
+      
+      // Preparar datos para el endpoint
+      const previewData = {
+        name: dataToUse.name || '',
+        email: dataToUse.email || '',
+        whatsapp: dataToUse.whatsapp || '',
+        cart: cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          description: item.description || '',
+          price: item.price || 0,
+          quantity: item.quantity || 1
+        })),
+        notFoundProducts: notFoundProducts.filter(p => p.name && p.name.trim() !== ''),
+        documentType: documentType || 'boleta',
+        ruc: dataToUse.ruc || '',
+        businessName: dataToUse.businessName || '',
+        address: dataToUse.address || ''
+      }
+
+      // Llamar al endpoint API para generar el PDF con el mismo generador del servidor
+      const response = await fetch('/api/cotizacion/preview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(previewData)
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al generar la previsualización')
+      }
+
+      const pdfBlob = await response.blob()
+      const url = URL.createObjectURL(pdfBlob)
+      setPdfPreviewUrl(url)
       const { jsPDF } = await import('jspdf')
       const doc = new jsPDF()
       const pageWidth = doc.internal.pageSize.getWidth()
@@ -310,13 +347,10 @@ export default function Carrito() {
       doc.setFontSize(8)
       doc.text(`Teléfono: ${dataToUse.whatsapp || 'N/A'}`, pageWidth - margin - 10, footerY + 5, { align: 'right' })
       doc.text(`Email: ${dataToUse.email || 'N/A'}`, pageWidth - margin - 10, footerY + 10, { align: 'right' })
-      doc.text('www.ferreteria.com', pageWidth - margin - 10, footerY + 15, { align: 'right' })
-
-      const pdfBlob = doc.output('blob')
-      const url = URL.createObjectURL(pdfBlob)
-      setPdfPreviewUrl(url)
     } catch (error) {
       console.error('Error generating PDF preview:', error)
+      // Si falla la generación en servidor, mostrar mensaje de error
+      setError('Error al generar la previsualización. Por favor, intenta de nuevo.')
     }
   }
 
