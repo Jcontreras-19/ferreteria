@@ -433,7 +433,7 @@ export default function Carrito() {
         setQuoteId(data.quoteId)
         clearCart()
         
-        // Mostrar notificación flotante de éxito inmediatamente
+        // Mostrar notificación flotante de éxito inmediatamente (ANTES de cerrar el modal)
         const notificationId = Date.now()
         setNotifications([{
           id: notificationId,
@@ -442,10 +442,14 @@ export default function Carrito() {
         }])
         
         console.log('📢 Notificación mostrada:', notificationId)
+        console.log('   Estado de notificaciones:', notifications.length)
         
         // Auto-eliminar la notificación después de 4 segundos
         setTimeout(() => {
-          setNotifications(prev => prev.filter(n => n.id !== notificationId))
+          setNotifications(prev => {
+            console.log('🗑️ Eliminando notificación:', notificationId)
+            return prev.filter(n => n.id !== notificationId)
+          })
         }, 4000)
         
         // Cerrar el modal después de un breve delay (después de que la notificación sea visible)

@@ -102,7 +102,10 @@ export default async function handler(req, res) {
           formData.append('email', email)
           formData.append('phone', whatsapp)
           
-          // Crear payload con estructura que N8N espera (con body.cliente)
+          // Crear payload con estructura que N8N espera
+          // Cuando N8N recibe FormData, el JSON en 'data' se parsea y queda en $json.data
+          // Pero también podemos acceder directamente a los campos del FormData
+          // Para mantener compatibilidad, enviamos la estructura completa
           const webhookPayload = {
             params: {},
             query: {},
@@ -126,7 +129,12 @@ export default async function handler(req, res) {
             },
           }
           
-          // Enviar el payload completo como JSON string para que N8N pueda parsearlo
+          // Enviar el payload completo como JSON string
+          // IMPORTANTE: N8N parsea FormData y el JSON en 'body' queda en $json.body
+          // Por eso enviamos el body directamente para que N8N pueda acceder a $json.body.cliente.email
+          formData.append('body', JSON.stringify(webhookPayload.body))
+          
+          // También enviamos el payload completo en 'data' por compatibilidad
           formData.append('data', JSON.stringify(webhookPayload))
           
           // Agregar el PDF como archivo adjunto

@@ -196,6 +196,9 @@ export default async function handler(req, res) {
           },
         }
         
+        // Enviar el body directamente para que N8N pueda acceder a $json.body.cliente.email
+        formData.append('body', JSON.stringify(webhookPayload.body))
+        // También enviamos el payload completo en 'data' por compatibilidad
         formData.append('data', JSON.stringify(webhookPayload))
         
         // Agregar el PDF como archivo adjunto
