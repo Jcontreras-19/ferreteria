@@ -7,7 +7,7 @@ import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { useCart } from '../contexts/CartContext'
 import { useAuth } from '../contexts/AuthContext'
-import { FiPlus, FiMinus, FiTrash2, FiShoppingBag, FiX, FiFileText, FiUser, FiMail, FiPhone } from 'react-icons/fi'
+import { FiPlus, FiMinus, FiTrash2, FiShoppingBag, FiX, FiFileText, FiUser, FiMail, FiPhone, FiCheckCircle } from 'react-icons/fi'
 
 export default function Carrito() {
   const router = useRouter()
@@ -29,6 +29,7 @@ export default function Carrito() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [quoteId, setQuoteId] = useState(null)
+  const [notifications, setNotifications] = useState([])
 
   // Cargar datos del usuario si está autenticado
   useEffect(() => {
@@ -401,33 +402,37 @@ export default function Carrito() {
           notFoundProducts: validNotFoundProducts,
           total: getTotal(),
           documentType: documentType,
+          skipWebhook: true, // No enviar al webhook de N8N
         }),
       })
 
       const data = await response.json()
 
-      console.log('📥 Respuesta del servidor:', {
-        status: response.status,
-        ok: response.ok,
-        data: data
-      })
-
       if (response.ok) {
         console.log('✅ Cotización creada exitosamente')
         console.log('   Quote ID:', data.quoteId)
         
-        // Verificar si hay advertencias sobre el webhook
-        if (data.webhookWarning) {
-          console.warn('⚠️ Advertencia sobre webhook:', data.webhookWarning)
-        }
+        // Mostrar notificación flotante de éxito
+        const notificationId = Date.now()
+        setNotifications([{
+          id: notificationId,
+          type: 'success',
+          message: 'Tu cotización ha sido enviada correctamente'
+        }])
+        
+        // Auto-eliminar la notificación después de 3 segundos
+        setTimeout(() => {
+          setNotifications(prev => prev.filter(n => n.id !== notificationId))
+        }, 3000)
         
         setSuccess(true)
         setQuoteId(data.quoteId)
         clearCart()
+        
+        // Cerrar el modal después de un breve delay
         setTimeout(() => {
           setShowQuoteModal(false)
-          router.push('/')
-        }, 2000)
+        }, 1500)
       } else {
         console.error('❌ Error al crear cotización:', data.error)
         setError(data.error || 'Error al enviar la cotización')
@@ -592,35 +597,6 @@ export default function Carrito() {
                   <h2 className="text-2xl font-bold mb-5 text-gray-900 border-b border-gray-200 pb-3">
                     Resumen de Compra
                   </h2>
-                  
-                  {/* Tipo de documento */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Tipo de Documento:
-                    </label>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setDocumentType('boleta')}
-                        className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-colors ${
-                          documentType === 'boleta'
-                            ? 'bg-green-600 text-white'
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                        }`}
-                      >
-                        Boleta
-                      </button>
-                      <button
-                        onClick={() => setDocumentType('factura')}
-                        className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-colors ${
-                          documentType === 'factura'
-                            ? 'bg-green-600 text-white'
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                        }`}
-                      >
-                        Factura
-                      </button>
-                    </div>
-                  </div>
 
                   {/* Detalle de productos */}
                   <div className="mb-4 border-b pb-4">
@@ -719,48 +695,6 @@ export default function Carrito() {
                         <FiUser size={20} />
                         Datos del Cliente
                       </h3>
-                      
-                      {/* Tipo de documento */}
-                      <div className="mb-4">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Tipo de Documento *
-                        </label>
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              setDocumentType('boleta')
-                              setFormData({ ...formData, ruc: '', businessName: '', address: '' })
-                              if (showQuoteModal) {
-                                await generatePdfPreview()
-                              }
-                            }}
-                            className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-colors ${
-                              documentType === 'boleta'
-                                ? 'bg-green-600 text-white'
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
-                          >
-                            Boleta
-                          </button>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              setDocumentType('factura')
-                              if (showQuoteModal) {
-                                await generatePdfPreview()
-                              }
-                            }}
-                            className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-colors ${
-                              documentType === 'factura'
-                                ? 'bg-green-600 text-white'
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
-                          >
-                            Factura
-                          </button>
-                        </div>
-                      </div>
 
                       <div className="space-y-3">
                         <div>
@@ -986,6 +920,25 @@ export default function Carrito() {
             </div>
           </div>
         )}
+
+        {/* Notificaciones flotantes en la esquina superior derecha */}
+        <div className="fixed top-4 right-4 z-[9999] space-y-2 pointer-events-none">
+          {notifications.map((notification) => (
+            <div
+              key={notification.id}
+              className="bg-green-600 text-white px-6 py-4 rounded-lg shadow-xl flex items-center space-x-3 min-w-[350px] max-w-md pointer-events-auto animate-slide-in-right"
+            >
+              <FiCheckCircle size={20} className="flex-shrink-0" />
+              <span className="flex-1 font-medium">{notification.message}</span>
+              <button
+                onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
+                className="text-white hover:text-gray-200 transition-colors flex-shrink-0"
+              >
+                <FiX size={18} />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </>
   )

@@ -1190,12 +1190,27 @@ export default function CotizadorPanel() {
         {showDetailModal && selectedQuote && (() => {
           let products = []
           try {
-            const productsData = typeof selectedQuote.products === 'string' 
-              ? JSON.parse(selectedQuote.products || '{}')
-              : selectedQuote.products || {}
-            products = selectedQuote.productsParsed || productsData.items || productsData
-            if (!Array.isArray(products)) products = []
+            // Primero intentar usar productsParsed (ya parseado por la API)
+            if (selectedQuote.productsParsed && Array.isArray(selectedQuote.productsParsed)) {
+              products = selectedQuote.productsParsed
+            } else {
+              // Si no está parseado, parsear manualmente
+              const productsData = typeof selectedQuote.products === 'string' 
+                ? JSON.parse(selectedQuote.products || '{}')
+                : selectedQuote.products || {}
+              
+              // Obtener productos del formato nuevo (con items) o formato antiguo (array directo)
+              const productsArray = productsData.items || productsData
+              
+              // Asegurarse de que es un array
+              if (Array.isArray(productsArray)) {
+                products = productsArray
+              } else {
+                products = []
+              }
+            }
           } catch (e) {
+            console.error('Error parsing products in modal:', e)
             products = []
           }
 

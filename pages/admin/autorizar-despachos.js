@@ -1136,6 +1136,40 @@ export default function AutorizarDespachos() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Días de Envío y Notas del Cotizador */}
+                    {selectedQuote.status === 'approved' && (selectedQuote.estimatedDelivery || selectedQuote.notes) && (
+                      <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg border-2 border-purple-200 shadow-md p-2">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <FiInfo className="text-purple-600" size={12} />
+                          <span className="text-xs text-purple-700 font-semibold">Información del Cotizador</span>
+                        </div>
+                        <div className="space-y-1.5">
+                          {selectedQuote.estimatedDelivery && (
+                            <div className="flex items-center gap-1.5 p-1.5 bg-purple-50 rounded border border-purple-100">
+                              <div className="w-5 h-5 bg-purple-500 rounded flex items-center justify-center flex-shrink-0">
+                                <FiClock className="text-white" size={10} />
+                              </div>
+                              <div className="flex-1">
+                                <span className="text-xs text-gray-600 font-medium">Días de Envío:</span>
+                                <span className="text-xs text-gray-900 font-bold ml-1">{selectedQuote.estimatedDelivery} días</span>
+                              </div>
+                            </div>
+                          )}
+                          {selectedQuote.notes && (
+                            <div className="flex items-start gap-1.5 p-1.5 bg-purple-50 rounded border border-purple-100">
+                              <div className="w-5 h-5 bg-purple-500 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <FiFileText className="text-white" size={10} />
+                              </div>
+                              <div className="flex-1">
+                                <span className="text-xs text-gray-600 font-medium block mb-0.5">Notas/Indicaciones:</span>
+                                <p className="text-xs text-gray-900 font-medium leading-relaxed">{selectedQuote.notes}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Columna Derecha - Tabla de Productos con Colores (Más Ancha) */}

@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { name, email, whatsapp, products, total, documentType, ruc, businessName, address, notFoundProducts } = req.body
+  const { name, email, whatsapp, products, total, documentType, ruc, businessName, address, notFoundProducts, skipWebhook } = req.body
 
   if (!name || !email || !whatsapp || !products || products.length === 0) {
     return res.status(400).json({ error: 'Todos los campos son requeridos' })
@@ -94,31 +94,36 @@ export default async function handler(req, res) {
         // Crear FormData para enviar datos JSON y PDF como archivo adjunto
         const formData = new FormData()
         
-        // Agregar datos del cliente
+        // Agregar datos del cliente directamente (para acceso fácil en N8N)
         formData.append('name', name)
         formData.append('email', email)
         formData.append('phone', whatsapp)
         
-        // Agregar datos de la cotización como JSON string
+        // Crear payload con estructura que N8N espera (con body.cliente)
         const webhookPayload = {
-          cliente: {
-            nombre: name,
-            email: email,
-            whatsapp: whatsapp,
+          params: {},
+          query: {},
+          body: {
+            cliente: {
+              nombre: name,
+              email: email,
+              whatsapp: whatsapp,
+            },
+            carrito: carritoFormato,
+            productosNoEncontrados: productosNoEncontradosFormato,
+            quoteId: quote.id,
+            quoteNumber: nextQuoteNumber,
+            numeroCotizacion: quoteNumberFormatted,
+            total: parseFloat(total),
+            documentType: documentType || 'boleta',
+            ruc: documentType === 'factura' ? ruc : null,
+            businessName: documentType === 'factura' ? businessName : null,
+            address: documentType === 'factura' ? address : null,
+            createdAt: quote.createdAt.toISOString(),
           },
-          carrito: carritoFormato,
-          productosNoEncontrados: productosNoEncontradosFormato,
-          quoteId: quote.id,
-          quoteNumber: nextQuoteNumber,
-          numeroCotizacion: quoteNumberFormatted,
-          total: parseFloat(total),
-          documentType: documentType || 'boleta',
-          ruc: documentType === 'factura' ? ruc : null,
-          businessName: documentType === 'factura' ? businessName : null,
-          address: documentType === 'factura' ? address : null,
-          createdAt: quote.createdAt.toISOString(),
         }
         
+        // Enviar el payload completo como JSON string para que N8N pueda parsearlo
         formData.append('data', JSON.stringify(webhookPayload))
         
         // Agregar el PDF como archivo adjunto
@@ -190,6 +195,7 @@ export default async function handler(req, res) {
         })
         console.error(`   URL del webhook: ${n8nWebhookUrl}`)
         // No fallar la petición si el webhook falla, pero loguear el error
+      }
       }
     }
 

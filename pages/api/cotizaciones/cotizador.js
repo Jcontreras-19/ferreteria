@@ -44,8 +44,37 @@ export default async function handler(req, res) {
     // Obtener información de stock para cada producto en las cotizaciones
     const quotesWithStock = await Promise.all(quotes.map(async (quote) => {
       try {
-        const products = JSON.parse(quote.products)
-        const productIds = products.map(p => p.id)
+        // Parsear productos (compatible con formato antiguo y nuevo)
+        const productsData = typeof quote.products === 'string' 
+          ? JSON.parse(quote.products) 
+          : quote.products
+        
+        // Obtener el array de productos (puede estar en items o ser el array directamente)
+        const products = productsData.items || productsData
+        
+        // Asegurarse de que es un array
+        if (!Array.isArray(products) || products.length === 0) {
+          return {
+            ...quote,
+            productsParsed: [],
+            allInStock: false,
+            someInStock: false,
+          }
+        }
+        
+        // Obtener IDs de productos válidos
+        const productIds = products
+          .map(p => p.id)
+          .filter(id => id) // Filtrar IDs nulos o undefined
+        
+        if (productIds.length === 0) {
+          return {
+            ...quote,
+            productsParsed: products, // Devolver productos sin información de stock
+            allInStock: false,
+            someInStock: false,
+          }
+        }
         
         const productsWithStock = await prisma.product.findMany({
           where: { id: { in: productIds } },
@@ -57,7 +86,7 @@ export default async function handler(req, res) {
           return {
             ...p,
             stock: productInfo?.stock || 0,
-            inStock: (productInfo?.stock || 0) >= p.quantity
+            inStock: (productInfo?.stock || 0) >= (p.quantity || 1)
           }
         })
 
@@ -68,6 +97,7 @@ export default async function handler(req, res) {
           someInStock: productsInfo.some(p => p.inStock),
         }
       } catch (error) {
+        console.error('Error parsing products for quote:', quote.id, error)
         return {
           ...quote,
           productsParsed: [],
