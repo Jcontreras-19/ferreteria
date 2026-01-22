@@ -208,7 +208,7 @@ export default async function handler(req, res) {
         // Agregar el PDF como archivo adjunto
         const pdfUint8Array = new Uint8Array(pdfBuffer)
         const pdfBlob = new Blob([pdfUint8Array], { type: 'application/pdf' })
-        const pdfFileName = `cotizacion-${updatedQuote.quoteNumber || updatedQuote.id.slice(0, 8)}-${documentNumber}.pdf`
+        const pdfFileName = `cotizacion - ${updatedQuote.quoteNumber}.pdf`
         formData.append('pdf', pdfBlob, pdfFileName)
         
         console.log('   Payload preparado con PDF adjunto')

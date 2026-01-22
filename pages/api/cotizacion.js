@@ -141,7 +141,7 @@ export default async function handler(req, res) {
           // Convertir Buffer a Uint8Array para compatibilidad con Blob
           const pdfUint8Array = new Uint8Array(pdfBuffer)
           const pdfBlob = new Blob([pdfUint8Array], { type: 'application/pdf' })
-          const pdfFileName = `cotizacion-${quoteNumberFormatted.replace('#', '')}-${quote.id.slice(0, 8)}.pdf`
+          const pdfFileName = `cotizacion - ${nextQuoteNumber}.pdf`
           formData.append('pdf', pdfBlob, pdfFileName)
           
           console.log('   Payload preparado con PDF adjunto')
