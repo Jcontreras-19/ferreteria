@@ -1916,6 +1916,7 @@ export default function CotizadorPanel() {
                   </div>
                 </div>
               )}
+              </div>
             </div>
           </div>
         )}
