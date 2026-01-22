@@ -93,6 +93,40 @@ El webhook recibe un JSON con esta estructura:
 }
 ```
 
+## ⚠️ IMPORTANTE: Configuración del Email en N8N
+
+### Problema: "No recipients defined" o "To Email: undefined"
+
+Cuando se envía el PDF usando `multipart/form-data`, el campo `body` llega como un **string JSON**, no como un objeto parseado.
+
+**Solución en N8N:**
+
+En el nodo de email, cambia el campo **"To Email"** de:
+```
+{{ $json.body.cliente.email }}
+```
+
+A una de estas opciones:
+
+**Opción 1 (RECOMENDADA):** Usar el campo directo
+```
+{{ $json.email }}
+```
+
+**Opción 2:** Parsear el JSON
+```
+{{ JSON.parse($json.body).cliente.email }}
+```
+
+### Campos Disponibles en N8N
+
+- `{{ $json.name }}` - Nombre del cliente
+- `{{ $json.email }}` - Email del cliente ⭐ **USA ESTE**
+- `{{ $json.phone }}` - Teléfono/WhatsApp
+- `{{ JSON.parse($json.body).cliente.email }}` - Email parseado del JSON
+- `{{ JSON.parse($json.body).carrito }}` - Array de productos
+- `{{ JSON.parse($json.body).total }}` - Total de la cotización
+
 ## 🔍 Solución de Problemas
 
 ### ❌ "N8N_WEBHOOK_URL no está configurada"

@@ -33,8 +33,16 @@ export default function Carrito() {
 
   // Debug: Log cuando cambien las notificaciones
   useEffect(() => {
+    console.log('📢 Estado de notificaciones actualizado:', notifications.length, notifications)
     if (notifications.length > 0) {
       console.log('📢 Notificaciones activas:', notifications)
+      // Forzar re-renderizado
+      const element = document.querySelector('[data-notification-container]')
+      if (element) {
+        console.log('📢 Contenedor de notificaciones encontrado en DOM')
+      } else {
+        console.warn('⚠️ Contenedor de notificaciones NO encontrado en DOM')
+      }
     }
   }, [notifications])
 
@@ -433,31 +441,52 @@ export default function Carrito() {
         setQuoteId(data.quoteId)
         clearCart()
         
-        // Mostrar notificación flotante de éxito inmediatamente (ANTES de cerrar el modal)
+        // Mostrar notificación flotante de éxito inmediatamente
         const notificationId = Date.now()
-        setNotifications([{
+        console.log('📢 [NOTIFICACIÓN] Intentando mostrar notificación:', notificationId)
+        console.log('📢 [NOTIFICACIÓN] Estado actual de notificaciones:', notifications.length)
+        
+        // Usar función de actualización para asegurar que el estado se actualice
+        const newNotification = {
           id: notificationId,
           type: 'success',
           message: '¡Tu cotización ha sido enviada correctamente!'
-        }])
+        }
         
-        console.log('📢 Notificación mostrada:', notificationId)
-        console.log('   Estado de notificaciones:', notifications.length)
+        console.log('📢 [NOTIFICACIÓN] Nueva notificación creada:', newNotification)
         
-        // Auto-eliminar la notificación después de 4 segundos
+        setNotifications([newNotification])
+        
+        // Verificar que se actualizó después de un momento
         setTimeout(() => {
+          console.log('📢 [NOTIFICACIÓN] Verificando después de 100ms - Estado:', notifications.length)
+          const container = document.querySelector('[data-notification-container]')
+          if (container) {
+            console.log('📢 [NOTIFICACIÓN] Contenedor encontrado en DOM')
+            const notificationElements = container.querySelectorAll('div[class*="bg-green-600"]')
+            console.log('📢 [NOTIFICACIÓN] Elementos de notificación encontrados:', notificationElements.length)
+          } else {
+            console.error('❌ [NOTIFICACIÓN] Contenedor NO encontrado en DOM')
+          }
+        }, 100)
+        
+        // Auto-eliminar la notificación después de 5 segundos
+        setTimeout(() => {
+          console.log('🗑️ [NOTIFICACIÓN] Eliminando notificación:', notificationId)
           setNotifications(prev => {
-            console.log('🗑️ Eliminando notificación:', notificationId)
-            return prev.filter(n => n.id !== notificationId)
+            const filtered = prev.filter(n => n.id !== notificationId)
+            console.log('🗑️ [NOTIFICACIÓN] Notificaciones después de eliminar:', filtered.length)
+            return filtered
           })
-        }, 4000)
+        }, 5000)
         
-        // Cerrar el modal después de un breve delay (después de que la notificación sea visible)
+        // Cerrar el modal después de 3 segundos (dar tiempo para ver la notificación)
         setTimeout(() => {
+          console.log('🚪 [MODAL] Cerrando modal después de 3 segundos')
           setShowQuoteModal(false)
           setError('')
           setSuccess(false)
-        }, 2000)
+        }, 3000)
       } else {
         console.error('❌ Error al crear cotización:', data.error)
         setError(data.error || 'Error al enviar la cotización')
@@ -946,27 +975,41 @@ export default function Carrito() {
           </div>
         )}
 
-        {/* Notificaciones flotantes en la esquina superior derecha */}
-        {notifications.length > 0 && (
-          <div className="fixed top-4 right-4 z-[10000] space-y-2 pointer-events-none">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className="bg-green-600 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center space-x-3 min-w-[350px] max-w-md pointer-events-auto animate-slide-in-right border-2 border-green-700"
+        {/* Notificaciones flotantes en la esquina superior derecha - FUERA del modal */}
+        <div 
+          className="fixed top-4 right-4 z-[99999] space-y-2 pointer-events-none" 
+          style={{ 
+            position: 'fixed',
+            top: '1rem',
+            right: '1rem',
+            zIndex: 99999
+          }}
+          data-notification-container
+        >
+          {notifications.length > 0 && notifications.map((notification) => (
+            <div
+              key={notification.id}
+              className="bg-green-600 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center space-x-3 min-w-[350px] max-w-md pointer-events-auto border-2 border-green-700"
+              style={{ 
+                zIndex: 99999,
+                position: 'relative',
+                animation: 'slideInRight 0.3s ease-out forwards',
+                transform: 'translateX(0)',
+                opacity: 1
+              }}
+            >
+              <FiCheckCircle size={24} className="flex-shrink-0" />
+              <span className="flex-1 font-semibold text-lg">{notification.message}</span>
+              <button
+                onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
+                className="text-white hover:text-green-200 transition-colors flex-shrink-0 p-1 rounded hover:bg-green-700"
+                aria-label="Cerrar notificación"
               >
-                <FiCheckCircle size={24} className="flex-shrink-0" />
-                <span className="flex-1 font-semibold text-lg">{notification.message}</span>
-                <button
-                  onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
-                  className="text-white hover:text-green-200 transition-colors flex-shrink-0 p-1 rounded hover:bg-green-700"
-                  aria-label="Cerrar notificación"
-                >
-                  <FiX size={20} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+                <FiX size={20} />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </>
   )

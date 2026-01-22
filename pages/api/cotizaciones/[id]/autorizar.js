@@ -169,36 +169,40 @@ export default async function handler(req, res) {
         formData.append('phone', updatedQuote.whatsapp)
         
         // Crear payload con estructura que N8N espera
+        // IMPORTANTE: Para que N8N pueda acceder a $json.body.cliente.email,
+        // el body debe tener la estructura correcta
+        const bodyPayload = {
+          cliente: {
+            nombre: updatedQuote.name,
+            email: updatedQuote.email,
+            whatsapp: updatedQuote.whatsapp,
+          },
+          carrito: carritoFormato,
+          productosNoEncontrados: productosNoEncontradosFormato,
+          quoteId: updatedQuote.id,
+          quoteNumber: updatedQuote.quoteNumber,
+          numeroCotizacion: `#${updatedQuote.quoteNumber}`,
+          total: updatedQuote.total,
+          documentType: documentType,
+          documentNumber: documentNumber,
+          ruc: productsData.fiscalData?.ruc || null,
+          businessName: productsData.fiscalData?.businessName || null,
+          address: productsData.fiscalData?.address || null,
+          createdAt: updatedQuote.createdAt.toISOString(),
+          authorizedAt: updatedQuote.authorizedAt?.toISOString() || new Date().toISOString(),
+          estimatedDelivery: updatedQuote.estimatedDelivery || null,
+          notes: updatedQuote.notes || null,
+        }
+        
+        // Enviar el body como JSON string - N8N lo parseará automáticamente
+        formData.append('body', JSON.stringify(bodyPayload))
+        
+        // También enviamos el payload completo con estructura params/query/body para compatibilidad
         const webhookPayload = {
           params: {},
           query: {},
-          body: {
-            cliente: {
-              nombre: updatedQuote.name,
-              email: updatedQuote.email,
-              whatsapp: updatedQuote.whatsapp,
-            },
-            carrito: carritoFormato,
-            productosNoEncontrados: productosNoEncontradosFormato,
-            quoteId: updatedQuote.id,
-            quoteNumber: updatedQuote.quoteNumber,
-            numeroCotizacion: `#${updatedQuote.quoteNumber}`,
-            total: updatedQuote.total,
-            documentType: documentType,
-            documentNumber: documentNumber,
-            ruc: productsData.fiscalData?.ruc || null,
-            businessName: productsData.fiscalData?.businessName || null,
-            address: productsData.fiscalData?.address || null,
-            createdAt: updatedQuote.createdAt.toISOString(),
-            authorizedAt: updatedQuote.authorizedAt?.toISOString() || new Date().toISOString(),
-            estimatedDelivery: updatedQuote.estimatedDelivery || null,
-            notes: updatedQuote.notes || null,
-          },
+          body: bodyPayload,
         }
-        
-        // Enviar el body directamente para que N8N pueda acceder a $json.body.cliente.email
-        formData.append('body', JSON.stringify(webhookPayload.body))
-        // También enviamos el payload completo en 'data' por compatibilidad
         formData.append('data', JSON.stringify(webhookPayload))
         
         // Agregar el PDF como archivo adjunto
