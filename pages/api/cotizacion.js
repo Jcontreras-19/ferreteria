@@ -213,20 +213,19 @@ export default async function handler(req, res) {
         // No fallar la petición si el webhook falla, pero loguear el error
       }
     }
-  }
 
-  // Incluir información sobre el estado del webhook en la respuesta
-  const responseData = {
-    message: 'Cotización enviada exitosamente',
-    quoteId: quote.id,
-  }
+    // Incluir información sobre el estado del webhook en la respuesta
+    const responseData = {
+      message: 'Cotización enviada exitosamente',
+      quoteId: quote.id,
+    }
 
-  // Si no hay webhook configurado, agregar advertencia
-  if (!n8nWebhookUrl) {
-    responseData.webhookWarning = 'N8N_WEBHOOK_URL no está configurada. El webhook no se envió.'
-  }
+    // Si no hay webhook configurado, agregar advertencia
+    if (!n8nWebhookUrl) {
+      responseData.webhookWarning = 'N8N_WEBHOOK_URL no está configurada. El webhook no se envió.'
+    }
 
-  return res.status(201).json(responseData)
+    return res.status(201).json(responseData)
   } catch (error) {
     console.error('Error creating quote:', error)
     return res.status(500).json({ error: 'Error al crear cotización' })
