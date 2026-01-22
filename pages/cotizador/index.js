@@ -23,6 +23,7 @@ export default function CotizadorPanel() {
   const [estimatedDelivery, setEstimatedDelivery] = useState('')
   const [notes, setNotes] = useState('')
   const [rejectionReason, setRejectionReason] = useState('')
+  const [clientEmail, setClientEmail] = useState('')
   const [processing, setProcessing] = useState(false)
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null)
   const [showPdfModal, setShowPdfModal] = useState(false)
@@ -144,6 +145,19 @@ export default function CotizadorPanel() {
   const handleApprove = async () => {
     if (!selectedQuote) return
 
+    // Validar correo del cliente
+    if (!clientEmail || !clientEmail.trim()) {
+      showNotification('Por favor ingresa el correo del cliente', 'error')
+      return
+    }
+
+    // Validar formato de correo
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(clientEmail.trim())) {
+      showNotification('Por favor ingresa un correo válido', 'error')
+      return
+    }
+
     setProcessing(true)
     try {
       const res = await fetch(`/api/cotizaciones/${selectedQuote.id}/aprobar`, {
@@ -153,6 +167,7 @@ export default function CotizadorPanel() {
         body: JSON.stringify({
           estimatedDelivery: estimatedDelivery ? parseInt(estimatedDelivery) : null,
           notes: notes || null,
+          clientEmail: clientEmail.trim(),
         }),
       })
 
@@ -163,6 +178,7 @@ export default function CotizadorPanel() {
         setModalAction(null)
         setEstimatedDelivery('')
         setNotes('')
+        setClientEmail('')
         showNotification('Cotización aprobada exitosamente', 'success')
       } else {
         const error = await res.json()
@@ -219,11 +235,13 @@ export default function CotizadorPanel() {
     if (action === 'approve') {
       setEstimatedDelivery(quote.estimatedDelivery?.toString() || '')
       setNotes(quote.notes || '')
+      setClientEmail(quote.email || '')
       setRejectionReason('')
     } else {
       setRejectionReason('')
       setEstimatedDelivery('')
       setNotes('')
+      setClientEmail('')
     }
   }
 
@@ -1241,18 +1259,18 @@ export default function CotizadorPanel() {
 
         {/* Modal de Detalles - Compacto Sin Scroll */}
         {showDetailModal && selectedQuote && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn">
-            <div className="bg-white rounded-lg w-full max-w-6xl shadow-2xl border border-gray-300 flex flex-col animate-slideUp" style={{ maxHeight: '90vh' }}>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4 animate-fadeIn overflow-y-auto">
+            <div className="bg-white rounded-lg w-full max-w-6xl shadow-2xl border border-gray-300 flex flex-col animate-slideUp my-4" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
               {/* Header con Gradiente Colorido */}
-              <div className="bg-gradient-to-r from-green-600 via-indigo-600 to-purple-600 px-4 py-3 flex items-center justify-between border-b border-indigo-700 shadow-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center ring-2 ring-white/30">
-                    <FiFileText className="text-white" size={18} />
+              <div className="bg-gradient-to-r from-green-600 via-indigo-600 to-purple-600 px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between border-b border-indigo-700 shadow-lg flex-shrink-0">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center ring-2 ring-white/30 flex-shrink-0">
+                    <FiFileText className="text-white" size={16} />
                   </div>
-                  <div>
-                    <h3 className="text-base font-bold text-white">Detalles de Cotización</h3>
-                    <p className="text-green-100 text-xs flex items-center gap-1">
-                      <FiTag size={10} />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm sm:text-base font-bold text-white truncate">Detalles de Cotización</h3>
+                    <p className="text-green-100 text-xs flex items-center gap-1 truncate">
+                      <FiTag size={10} className="flex-shrink-0" />
                       {selectedQuote.quoteNumber 
                         ? `Cotización ${String(selectedQuote.quoteNumber).padStart(7, '0')}`
                         : `#${selectedQuote.id.slice(0, 8).toUpperCase()}`}
@@ -1264,17 +1282,17 @@ export default function CotizadorPanel() {
                     setShowDetailModal(false)
                     setSelectedQuote(null)
                   }}
-                  className="w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110 ring-2 ring-white/30"
+                  className="w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110 ring-2 ring-white/30 flex-shrink-0 ml-2"
                 >
                   <FiX className="text-white" size={16} />
                 </button>
               </div>
 
               {/* Contenido Compacto Sin Scroll con Colores */}
-              <div className="p-4 bg-gradient-to-br from-gray-50 to-white overflow-hidden">
-                  <div className="grid grid-cols-12 gap-3">
+              <div className="p-2 sm:p-4 bg-gradient-to-br from-gray-50 to-white overflow-hidden flex-1 min-h-0">
+                  <div className="grid grid-cols-12 gap-2 sm:gap-3">
                     {/* Columna Izquierda - Info Principal con Colores (Más Estrecha) */}
-                    <div className="col-span-12 lg:col-span-3 space-y-2">
+                    <div className="col-span-12 lg:col-span-3 space-y-2 order-2 lg:order-1">
                       {/* Total con Gradiente Verde - Más Compacto */}
                       <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg border-2 border-green-400 shadow-lg p-2 text-white relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -mr-6 -mt-6"></div>
@@ -1394,18 +1412,18 @@ export default function CotizadorPanel() {
                     </div>
 
                     {/* Columna Derecha - Tabla de Productos con Colores (Más Ancha) */}
-                    <div className="col-span-12 lg:col-span-9">
+                    <div className="col-span-12 lg:col-span-9 order-1 lg:order-2">
                       <div className="bg-white rounded-lg border-2 border-gray-200 shadow-md overflow-hidden">
-                        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-3 py-2.5 border-b border-purple-700">
+                        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-2 sm:px-3 py-2 sm:py-2.5 border-b border-purple-700">
                           <h4 className="text-xs font-bold text-white flex items-center gap-2">
-                            <div className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded flex items-center justify-center">
-                              <FiPackage className="text-white" size={12} />
+                            <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 backdrop-blur-sm rounded flex items-center justify-center flex-shrink-0">
+                              <FiPackage className="text-white" size={10} />
                             </div>
-                            Productos ({parsedQuoteData.products.length})
+                            <span className="truncate">Productos ({parsedQuoteData.products.length})</span>
                           </h4>
                         </div>
-                        <div className="max-h-64 overflow-y-auto">
-                          <table className="w-full text-xs">
+                        <div className="max-h-64 overflow-y-auto overflow-x-auto">
+                          <table className="w-full text-xs min-w-[600px]">
                             <thead className="bg-gradient-to-r from-gray-100 to-gray-200 sticky top-0 border-b-2 border-gray-300">
                               <tr>
                                 <th className="px-2 py-2 text-left font-bold text-gray-700">
@@ -1515,17 +1533,17 @@ export default function CotizadorPanel() {
 
                       {/* Sección de Productos No Encontrados */}
                       {parsedQuoteData.notFoundProducts && parsedQuoteData.notFoundProducts.length > 0 && (
-                        <div className="bg-white rounded-lg border-2 border-yellow-300 shadow-md overflow-hidden mt-3">
-                          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 px-3 py-2.5 border-b border-orange-600">
+                        <div className="bg-white rounded-lg border-2 border-yellow-300 shadow-md overflow-hidden mt-2 sm:mt-3">
+                          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 px-2 sm:px-3 py-2 sm:py-2.5 border-b border-orange-600">
                             <h4 className="text-xs font-bold text-white flex items-center gap-2">
-                              <div className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded flex items-center justify-center">
-                                <FiAlertCircle className="text-white" size={12} />
+                              <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 backdrop-blur-sm rounded flex items-center justify-center flex-shrink-0">
+                                <FiAlertCircle className="text-white" size={10} />
                               </div>
-                              Productos No Encontrados ({parsedQuoteData.notFoundProducts.length})
+                              <span className="truncate">Productos No Encontrados ({parsedQuoteData.notFoundProducts.length})</span>
                             </h4>
                           </div>
-                          <div className="max-h-48 overflow-y-auto">
-                            <table className="w-full text-xs">
+                          <div className="max-h-48 overflow-y-auto overflow-x-auto">
+                            <table className="w-full text-xs min-w-[500px]">
                               <thead className="bg-gradient-to-r from-yellow-100 to-orange-100 sticky top-0 border-b-2 border-yellow-300">
                                 <tr>
                                   <th className="px-2 py-2 text-left font-bold text-gray-700">
@@ -1589,12 +1607,12 @@ export default function CotizadorPanel() {
                 </div>
 
                 {/* Footer con Botones Coloridos y Diseño Mejorado */}
-                <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-t-2 border-gray-300 px-4 py-3 flex items-center justify-between gap-3 shadow-inner">
-                  <div className="flex items-center gap-2 text-xs text-gray-600 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
-                    <div className="w-5 h-5 bg-green-100 rounded flex items-center justify-center">
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-t-2 border-gray-300 px-2 sm:px-4 py-2 sm:py-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 shadow-inner flex-shrink-0">
+                  <div className="flex items-center gap-2 text-xs text-gray-600 bg-white px-2 sm:px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm justify-center sm:justify-start">
+                    <div className="w-5 h-5 bg-green-100 rounded flex items-center justify-center flex-shrink-0">
                       <FiClock className="text-green-600" size={12} />
                     </div>
-                    <span className="font-medium">{new Date(selectedQuote.createdAt).toLocaleDateString('es-PE', {
+                    <span className="font-medium text-center sm:text-left">{new Date(selectedQuote.createdAt).toLocaleDateString('es-PE', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
@@ -1602,16 +1620,17 @@ export default function CotizadorPanel() {
                       minute: '2-digit'
                     })}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
                     <button
                       onClick={() => {
                         setShowDetailModal(false)
                         handleViewPdf(selectedQuote)
                       }}
-                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-xs font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+                      className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-xs font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 flex-1 sm:flex-initial min-w-[100px]"
                     >
-                      <FiExternalLink size={14} />
-                      Ver PDF
+                      <FiExternalLink size={12} />
+                      <span className="hidden sm:inline">Ver PDF</span>
+                      <span className="sm:hidden">PDF</span>
                     </button>
                     <button
                       onClick={() => {
@@ -1620,10 +1639,11 @@ export default function CotizadorPanel() {
                         link.download = `cotizacion-${selectedQuote.quoteNumber || selectedQuote.id}.pdf`
                         link.click()
                       }}
-                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg text-xs font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+                      className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg text-xs font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 flex-1 sm:flex-initial min-w-[100px]"
                     >
-                      <FiDownload size={14} />
-                      Descargar
+                      <FiDownload size={12} />
+                      <span className="hidden sm:inline">Descargar</span>
+                      <span className="sm:hidden">Desc.</span>
                     </button>
                     {selectedQuote.status === 'pending' && (
                       <>
@@ -1632,20 +1652,20 @@ export default function CotizadorPanel() {
                             setShowDetailModal(false)
                             openActionModal(selectedQuote, 'approve')
                           }}
-                          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg text-xs font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+                          className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg text-xs font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 flex-1 sm:flex-initial min-w-[100px]"
                         >
-                          <FiCheckCircle size={14} />
-                          Aprobar
+                          <FiCheckCircle size={12} />
+                          <span>Aprobar</span>
                         </button>
                         <button
                           onClick={() => {
                             setShowDetailModal(false)
                             openActionModal(selectedQuote, 'reject')
                           }}
-                          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg text-xs font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+                          className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg text-xs font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 flex-1 sm:flex-initial min-w-[100px]"
                         >
-                          <FiXCircle size={14} />
-                          Rechazar
+                          <FiXCircle size={12} />
+                          <span>Rechazar</span>
                         </button>
                       </>
                     )}
@@ -1654,10 +1674,10 @@ export default function CotizadorPanel() {
                         setShowDetailModal(false)
                         setSelectedQuote(null)
                       }}
-                      className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm hover:shadow"
+                      className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm hover:shadow flex-1 sm:flex-initial min-w-[100px]"
                     >
-                      <FiX size={14} />
-                      Cerrar
+                      <FiX size={12} />
+                      <span>Cerrar</span>
                     </button>
                 </div>
               </div>
@@ -1716,6 +1736,23 @@ export default function CotizadorPanel() {
 
               {modalAction === 'approve' && (
                 <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Correo del Cliente *
+                    </label>
+                    <input
+                      type="email"
+                      value={clientEmail}
+                      onChange={(e) => setClientEmail(e.target.value)}
+                      placeholder="cliente@ejemplo.com"
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
+                      style={{ color: '#111827' }}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Correo al que se enviará la cotización aprobada
+                    </p>
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Tiempo de entrega estimado (días)
