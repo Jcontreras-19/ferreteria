@@ -1728,113 +1728,190 @@ export default function CotizadorPanel() {
 
         {/* Modal para Aprobar/Rechazar */}
         {showActionModal && selectedQuote && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-2xl w-full p-6">
-              <h2 className="text-2xl font-bold mb-4 text-gray-900">
-                {modalAction === 'approve' ? 'Aprobar Cotización' : 'Rechazar Cotización'}
-              </h2>
-
-              {modalAction === 'approve' && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Correo del Cliente *
-                    </label>
-                    <input
-                      type="email"
-                      value={clientEmail}
-                      onChange={(e) => setClientEmail(e.target.value)}
-                      placeholder="cliente@ejemplo.com"
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
-                      style={{ color: '#111827' }}
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Correo al que se enviará la cotización aprobada
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tiempo de entrega estimado (días)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={estimatedDelivery}
-                      onChange={(e) => setEstimatedDelivery(e.target.value)}
-                      placeholder="Ej: 5"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
-                      style={{ color: '#111827' }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Notas (opcional)
-                    </label>
-                    <textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Notas adicionales sobre la cotización..."
-                      rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
-                      style={{ color: '#111827' }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-end space-x-2">
-                    <button
-                      onClick={() => {
-                        setShowActionModal(false)
-                        setSelectedQuote(null)
-                        setModalAction(null)
-                      }}
-                      className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded-lg transition-colors text-gray-800"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      onClick={handleApprove}
-                      disabled={processing}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50 text-white"
-                    >
-                      {processing ? 'Procesando...' : 'Aprobar'}
-                    </button>
-                  </div>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn">
+            <div className="bg-white rounded-xl max-w-2xl w-full shadow-2xl border border-gray-200 overflow-hidden animate-slideUp">
+              {/* Header con gradiente */}
+              <div className={`bg-gradient-to-r ${modalAction === 'approve' ? 'from-green-600 via-emerald-600 to-teal-600' : 'from-red-600 via-rose-600 to-pink-600'} px-6 py-4 flex items-center gap-3`}>
+                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center ring-2 ring-white/30">
+                  {modalAction === 'approve' ? (
+                    <FiCheckCircle className="text-white" size={24} />
+                  ) : (
+                    <FiXCircle className="text-white" size={24} />
+                  )}
                 </div>
-              )}
+                <div>
+                  <h2 className="text-xl font-bold text-white">
+                    {modalAction === 'approve' ? 'Aprobar Cotización' : 'Rechazar Cotización'}
+                  </h2>
+                  <p className="text-white/80 text-sm">
+                    {modalAction === 'approve' 
+                      ? 'Completa la información para aprobar esta cotización'
+                      : 'Indica la razón del rechazo'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-6 bg-gradient-to-br from-gray-50 to-white">
+                {modalAction === 'approve' && (
+                  <div className="space-y-5">
+                    {/* Campo de Correo del Cliente */}
+                    <div className="bg-white rounded-lg border-2 border-blue-200 shadow-sm p-4">
+                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <FiMail className="text-blue-600" size={16} />
+                        </div>
+                        <span>Correo del Cliente *</span>
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <FiMail className="text-gray-400" size={18} />
+                        </div>
+                        <input
+                          type="email"
+                          value={clientEmail}
+                          onChange={(e) => setClientEmail(e.target.value)}
+                          placeholder="cliente@ejemplo.com"
+                          required
+                          className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all"
+                          style={{ color: '#111827' }}
+                        />
+                      </div>
+                      <p className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                        <FiInfo size={12} />
+                        Correo al que se enviará la cotización cuando se autorice el despacho
+                      </p>
+                    </div>
+
+                    {/* Campo de Tiempo de Entrega */}
+                    <div className="bg-white rounded-lg border-2 border-purple-200 shadow-sm p-4">
+                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <FiClock className="text-purple-600" size={16} />
+                        </div>
+                        <span>Tiempo de entrega estimado (días)</span>
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <FiClock className="text-gray-400" size={18} />
+                        </div>
+                        <input
+                          type="number"
+                          min="1"
+                          value={estimatedDelivery}
+                          onChange={(e) => setEstimatedDelivery(e.target.value)}
+                          placeholder="Ej: 5"
+                          className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 transition-all"
+                          style={{ color: '#111827' }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Campo de Notas */}
+                    <div className="bg-white rounded-lg border-2 border-indigo-200 shadow-sm p-4">
+                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                        <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                          <FiFileText className="text-indigo-600" size={16} />
+                        </div>
+                        <span>Notas (opcional)</span>
+                      </label>
+                      <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Notas adicionales sobre la cotización, instrucciones especiales, etc..."
+                        rows={4}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 transition-all resize-none"
+                        style={{ color: '#111827' }}
+                      />
+                    </div>
+
+                    {/* Botones */}
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+                      <button
+                        onClick={() => {
+                          setShowActionModal(false)
+                          setSelectedQuote(null)
+                          setModalAction(null)
+                        }}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all text-gray-700 font-medium shadow-sm hover:shadow"
+                      >
+                        <FiX size={18} />
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleApprove}
+                        disabled={processing}
+                        className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-lg transition-all disabled:opacity-50 text-white font-semibold shadow-md hover:shadow-lg transform hover:scale-105 disabled:transform-none"
+                      >
+                        {processing ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Procesando...
+                          </>
+                        ) : (
+                          <>
+                            <FiCheckCircle size={18} />
+                            Aprobar Cotización
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
               {modalAction === 'reject' && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Razón del rechazo *
+                <div className="space-y-5">
+                  <div className="bg-white rounded-lg border-2 border-red-200 shadow-sm p-4">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                      <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                        <FiAlertCircle className="text-red-600" size={16} />
+                      </div>
+                      <span>Razón del rechazo *</span>
+                      <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       value={rejectionReason}
                       onChange={(e) => setRejectionReason(e.target.value)}
                       placeholder="Ingresa la razón por la cual rechazas esta cotización..."
-                      rows={4}
+                      rows={5}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 transition-all resize-none"
                       style={{ color: '#111827' }}
                     />
+                    <p className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                      <FiInfo size={12} />
+                      Esta información será visible para el cliente
+                    </p>
                   </div>
-                  <div className="flex items-center justify-end space-x-2">
+
+                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
                     <button
                       onClick={() => {
                         setShowActionModal(false)
                         setSelectedQuote(null)
                         setModalAction(null)
                       }}
-                      className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded-lg transition-colors text-gray-800"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all text-gray-700 font-medium shadow-sm hover:shadow"
                     >
+                      <FiX size={18} />
                       Cancelar
                     </button>
                     <button
                       onClick={handleReject}
                       disabled={processing || !rejectionReason.trim()}
-                      className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 text-white"
+                      className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 rounded-lg transition-all disabled:opacity-50 text-white font-semibold shadow-md hover:shadow-lg transform hover:scale-105 disabled:transform-none"
                     >
-                      {processing ? 'Procesando...' : 'Rechazar'}
+                      {processing ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Procesando...
+                        </>
+                      ) : (
+                        <>
+                          <FiXCircle size={18} />
+                          Rechazar Cotización
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>

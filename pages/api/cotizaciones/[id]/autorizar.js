@@ -47,10 +47,21 @@ export default async function handler(req, res) {
     }
 
     const { id } = req.query
-    const { documentType } = req.body
+    const { documentType, clientEmail } = req.body
 
     if (!documentType || !['boleta', 'factura'].includes(documentType)) {
       return res.status(400).json({ error: 'Tipo de documento inválido. Debe ser "boleta" o "factura"' })
+    }
+
+    // Validar que se proporcione el correo del cliente
+    if (!clientEmail || !clientEmail.trim()) {
+      return res.status(400).json({ error: 'El correo del cliente es requerido' })
+    }
+
+    // Validar formato de correo
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(clientEmail.trim())) {
+      return res.status(400).json({ error: 'El correo del cliente no es válido' })
     }
 
     // Obtener la cotización
@@ -110,7 +121,7 @@ export default async function handler(req, res) {
 
     // Actualizar cotización y descontar stock en una transacción
     const [updatedQuote] = await prisma.$transaction([
-      // Actualizar cotización
+      // Actualizar cotización (también actualizar el correo con el del cliente)
       prisma.quote.update({
         where: { id },
         data: {
@@ -119,6 +130,7 @@ export default async function handler(req, res) {
           authorizedAt: new Date(),
           documentType: documentType,
           documentNumber: documentNumber,
+          email: clientEmail.trim(), // Actualizar el correo con el del cliente
           updatedAt: new Date(),
         },
       }),
@@ -135,7 +147,7 @@ export default async function handler(req, res) {
       try {
         console.log('📤 Enviando cotización autorizada a N8N webhook...')
         console.log(`   URL: ${n8nWebhookUrl}`)
-        console.log(`   Cliente: ${updatedQuote.name} (${updatedQuote.email})`)
+        console.log(`   Cliente: ${updatedQuote.name} (${clientEmail.trim()})`)
         console.log(`   Cotización #${updatedQuote.quoteNumber}`)
         console.log(`   Documento: ${documentType} ${documentNumber}`)
 
@@ -162,9 +174,9 @@ export default async function handler(req, res) {
         // Crear FormData para enviar datos JSON y PDF como archivo adjunto
         const formData = new FormData()
         
-        // Agregar datos del cliente
+        // Agregar datos del cliente (usar el correo proporcionado en el modal)
         formData.append('name', updatedQuote.name)
-        formData.append('email', updatedQuote.email)
+        formData.append('email', clientEmail.trim())
         formData.append('phone', updatedQuote.whatsapp)
         
         // Agregar campos adicionales para el email de N8N (acceso directo sin parsear JSON)
@@ -179,7 +191,7 @@ export default async function handler(req, res) {
         const bodyPayload = {
           cliente: {
             nombre: updatedQuote.name,
-            email: updatedQuote.email,
+            email: clientEmail.trim(), // Usar el correo del cliente proporcionado en el modal
             whatsapp: updatedQuote.whatsapp,
           },
           carrito: carritoFormato,

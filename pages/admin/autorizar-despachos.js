@@ -22,6 +22,7 @@ export default function AutorizarDespachos() {
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showActionModal, setShowActionModal] = useState(false)
   const [documentType, setDocumentType] = useState('boleta')
+  const [clientEmail, setClientEmail] = useState('')
   const [processing, setProcessing] = useState(false)
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null)
   const [showPdfModal, setShowPdfModal] = useState(false)
@@ -186,13 +187,29 @@ export default function AutorizarDespachos() {
   const handleAuthorize = async () => {
     if (!selectedQuote) return
 
+    // Validar correo del cliente
+    if (!clientEmail || !clientEmail.trim()) {
+      showNotification('Por favor ingresa el correo del cliente', 'error')
+      return
+    }
+
+    // Validar formato de correo
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(clientEmail.trim())) {
+      showNotification('Por favor ingresa un correo válido', 'error')
+      return
+    }
+
     setProcessing(true)
     try {
       const res = await fetch(`/api/cotizaciones/${selectedQuote.id}/autorizar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ documentType }),
+        body: JSON.stringify({ 
+          documentType,
+          clientEmail: clientEmail.trim(),
+        }),
       })
 
       const data = await res.json()
@@ -201,6 +218,7 @@ export default function AutorizarDespachos() {
         showNotification(data.message || 'Despacho autorizado exitosamente', 'success')
         setShowActionModal(false)
         setShowDetailModal(false)
+        setClientEmail('')
         fetchQuotes()
       } else {
         showNotification(data.error || 'Error al autorizar despacho', 'error')
@@ -216,6 +234,7 @@ export default function AutorizarDespachos() {
   const openActionModal = (quote) => {
     setSelectedQuote(quote)
     setDocumentType('boleta')
+    setClientEmail(quote.email || '')
     setShowActionModal(true)
   }
 
@@ -1417,65 +1436,113 @@ export default function AutorizarDespachos() {
 
       {/* Modal de Autorización */}
       {showActionModal && selectedQuote && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full shadow-2xl">
-            <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 text-white rounded-t-lg">
-              <h3 className="text-xl font-bold">Autorizar Despacho</h3>
-              <p className="text-green-100 text-sm mt-1">Cotización #{selectedQuote.quoteNumber || 'N/A'}</p>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-xl max-w-lg w-full shadow-2xl border border-gray-200 overflow-hidden animate-slideUp">
+            {/* Header con gradiente */}
+            <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-6 py-5 flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center ring-2 ring-white/30">
+                <FiCheckCircle className="text-white" size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">Autorizar Despacho</h3>
+                <p className="text-green-100 text-sm">Cotización #{selectedQuote.quoteNumber || 'N/A'}</p>
+              </div>
             </div>
 
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Tipo de Documento
+            <div className="p-6 bg-gradient-to-br from-gray-50 to-white space-y-5">
+              {/* Campo de Correo del Cliente */}
+              <div className="bg-white rounded-lg border-2 border-blue-200 shadow-sm p-4">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <FiMail className="text-blue-600" size={16} />
+                  </div>
+                  <span>Correo del Cliente *</span>
+                  <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiMail className="text-gray-400" size={18} />
+                  </div>
+                  <input
+                    type="email"
+                    value={clientEmail}
+                    onChange={(e) => setClientEmail(e.target.value)}
+                    placeholder="cliente@ejemplo.com"
+                    required
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all"
+                    style={{ color: '#111827' }}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                  <FiInfo size={12} />
+                  Correo al que se enviará la cotización autorizada
+                </p>
+              </div>
+
+              {/* Campo de Tipo de Documento */}
+              <div className="bg-white rounded-lg border-2 border-purple-200 shadow-sm p-4">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <FiFileText className="text-purple-600" size={16} />
+                  </div>
+                  <span>Tipo de Documento</span>
                 </label>
                 <select
                   value={documentType}
                   onChange={(e) => setDocumentType(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 transition-all"
                 >
                   <option value="boleta">Boleta</option>
                   <option value="factura">Factura</option>
                 </select>
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="flex items-start space-x-2">
-                  <FiAlertCircle className="text-yellow-600 mt-0.5" size={20} />
+              {/* Información de advertencia */}
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <FiAlertCircle className="text-yellow-600" size={18} />
+                  </div>
                   <div className="text-sm text-yellow-800">
-                    <p className="font-semibold mb-1">Al autorizar:</p>
-                    <ul className="list-disc list-inside space-y-1">
+                    <p className="font-semibold mb-2">Al autorizar este despacho:</p>
+                    <ul className="list-disc list-inside space-y-1.5">
                       <li>Se generará automáticamente la {documentType === 'factura' ? 'factura' : 'boleta'}</li>
                       <li>Se descontará el stock de los productos</li>
                       <li>La cotización cambiará a estado "Autorizada"</li>
+                      <li>Se enviará un correo al cliente con la cotización</li>
                     </ul>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gray-50 px-6 py-4 rounded-b-lg flex justify-end space-x-2">
+            {/* Footer con botones */}
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button
-                onClick={() => setShowActionModal(false)}
+                onClick={() => {
+                  setShowActionModal(false)
+                  setClientEmail('')
+                }}
                 disabled={processing}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-5 py-2.5 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all text-gray-700 font-medium shadow-sm hover:shadow disabled:opacity-50"
               >
+                <FiX size={18} />
                 Cancelar
               </button>
               <button
                 onClick={handleAuthorize}
                 disabled={processing}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center space-x-2"
+                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg transition-all disabled:opacity-50 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 disabled:transform-none"
               >
                 {processing ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span>Procesando...</span>
                   </>
                 ) : (
                   <>
-                    <FiCheck size={18} />
-                    <span>Autorizar</span>
+                    <FiCheckCircle size={18} />
+                    <span>Autorizar Despacho</span>
                   </>
                 )}
               </button>
