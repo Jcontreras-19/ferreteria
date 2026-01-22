@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { FiCheck, FiX, FiSearch, FiDownload, FiFileText, FiPackage, FiClock, FiUser, FiMail, FiPhone, FiCalendar, FiEye, FiCheckCircle, FiXCircle, FiFilter, FiChevronUp, FiChevronDown, FiAlertCircle, FiGrid, FiList, FiDollarSign, FiTrendingUp, FiTag, FiExternalLink, FiShoppingCart, FiInfo } from 'react-icons/fi'
@@ -624,6 +624,46 @@ export default function CotizadorPanel() {
     }, 3000)
   }
 
+  // Parsear productos del quote seleccionado
+  const parsedQuoteData = useMemo(() => {
+    if (!selectedQuote) return { products: [], notFoundProducts: [] }
+    
+    let products = []
+    let notFoundProducts = []
+    try {
+      // Primero intentar usar productsParsed (ya parseado por la API)
+      if (selectedQuote.productsParsed && Array.isArray(selectedQuote.productsParsed)) {
+        products = selectedQuote.productsParsed
+      } else {
+        // Si no está parseado, parsear manualmente
+        const productsData = typeof selectedQuote.products === 'string' 
+          ? JSON.parse(selectedQuote.products || '{}')
+          : selectedQuote.products || {}
+        
+        // Obtener productos del formato nuevo (con items) o formato antiguo (array directo)
+        const productsArray = productsData.items || productsData
+        
+        // Asegurarse de que es un array
+        if (Array.isArray(productsArray)) {
+          products = productsArray
+        } else {
+          products = []
+        }
+        
+        // Extraer productos no encontrados
+        notFoundProducts = productsData.notFoundProducts || []
+        if (!Array.isArray(notFoundProducts)) {
+          notFoundProducts = []
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing products in modal:', e)
+      products = []
+      notFoundProducts = []
+    }
+    return { products, notFoundProducts }
+  }, [selectedQuote])
+
   if (loading) {
     return (
       <CotizadorLayout user={user} loading={loading}>
@@ -1187,73 +1227,38 @@ export default function CotizadorPanel() {
         </div>
 
         {/* Modal de Detalles - Compacto Sin Scroll */}
-        {showDetailModal && selectedQuote && (() => {
-          let products = []
-          let notFoundProducts = []
-          try {
-            // Primero intentar usar productsParsed (ya parseado por la API)
-            if (selectedQuote.productsParsed && Array.isArray(selectedQuote.productsParsed)) {
-              products = selectedQuote.productsParsed
-            } else {
-              // Si no está parseado, parsear manualmente
-              const productsData = typeof selectedQuote.products === 'string' 
-                ? JSON.parse(selectedQuote.products || '{}')
-                : selectedQuote.products || {}
-              
-              // Obtener productos del formato nuevo (con items) o formato antiguo (array directo)
-              const productsArray = productsData.items || productsData
-              
-              // Asegurarse de que es un array
-              if (Array.isArray(productsArray)) {
-                products = productsArray
-              } else {
-                products = []
-              }
-              
-              // Extraer productos no encontrados
-              notFoundProducts = productsData.notFoundProducts || []
-              if (!Array.isArray(notFoundProducts)) {
-                notFoundProducts = []
-              }
-            }
-          } catch (e) {
-            console.error('Error parsing products in modal:', e)
-            products = []
-            notFoundProducts = []
-          }
-
-          return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn">
-              <div className="bg-white rounded-lg w-full max-w-6xl shadow-2xl border border-gray-300 flex flex-col animate-slideUp" style={{ maxHeight: '90vh' }}>
-                {/* Header con Gradiente Colorido */}
-                <div className="bg-gradient-to-r from-green-600 via-indigo-600 to-purple-600 px-4 py-3 flex items-center justify-between border-b border-indigo-700 shadow-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center ring-2 ring-white/30">
-                      <FiFileText className="text-white" size={18} />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-bold text-white">Detalles de Cotización</h3>
-                      <p className="text-green-100 text-xs flex items-center gap-1">
-                        <FiTag size={10} />
-                        {selectedQuote.quoteNumber 
-                          ? `Cotización ${String(selectedQuote.quoteNumber).padStart(7, '0')}`
-                          : `#${selectedQuote.id.slice(0, 8).toUpperCase()}`}
-                      </p>
-                    </div>
+        {showDetailModal && selectedQuote && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn">
+            <div className="bg-white rounded-lg w-full max-w-6xl shadow-2xl border border-gray-300 flex flex-col animate-slideUp" style={{ maxHeight: '90vh' }}>
+              {/* Header con Gradiente Colorido */}
+              <div className="bg-gradient-to-r from-green-600 via-indigo-600 to-purple-600 px-4 py-3 flex items-center justify-between border-b border-indigo-700 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center ring-2 ring-white/30">
+                    <FiFileText className="text-white" size={18} />
                   </div>
-                  <button
-                    onClick={() => {
-                      setShowDetailModal(false)
-                      setSelectedQuote(null)
-                    }}
-                    className="w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110 ring-2 ring-white/30"
-                  >
-                    <FiX className="text-white" size={16} />
-                  </button>
+                  <div>
+                    <h3 className="text-base font-bold text-white">Detalles de Cotización</h3>
+                    <p className="text-green-100 text-xs flex items-center gap-1">
+                      <FiTag size={10} />
+                      {selectedQuote.quoteNumber 
+                        ? `Cotización ${String(selectedQuote.quoteNumber).padStart(7, '0')}`
+                        : `#${selectedQuote.id.slice(0, 8).toUpperCase()}`}
+                    </p>
+                  </div>
                 </div>
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false)
+                    setSelectedQuote(null)
+                  }}
+                  className="w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110 ring-2 ring-white/30"
+                >
+                  <FiX className="text-white" size={16} />
+                </button>
+              </div>
 
-                {/* Contenido Compacto Sin Scroll con Colores */}
-                <div className="p-4 bg-gradient-to-br from-gray-50 to-white overflow-hidden">
+              {/* Contenido Compacto Sin Scroll con Colores */}
+              <div className="p-4 bg-gradient-to-br from-gray-50 to-white overflow-hidden">
                   <div className="grid grid-cols-12 gap-3">
                     {/* Columna Izquierda - Info Principal con Colores (Más Estrecha) */}
                     <div className="col-span-12 lg:col-span-3 space-y-2">
@@ -1383,7 +1388,7 @@ export default function CotizadorPanel() {
                             <div className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded flex items-center justify-center">
                               <FiPackage className="text-white" size={12} />
                             </div>
-                            Productos ({products.length})
+                            Productos ({parsedQuoteData.products.length})
                           </h4>
                         </div>
                         <div className="max-h-64 overflow-y-auto">
@@ -1423,14 +1428,14 @@ export default function CotizadorPanel() {
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                              {products.length === 0 ? (
+                              {parsedQuoteData.products.length === 0 ? (
                                 <tr>
                                   <td colSpan="5" className="px-2 py-4 text-center text-gray-500">
                                     No hay productos en esta cotización
                                   </td>
                                 </tr>
                               ) : (
-                                products.map((product, index) => {
+                                parsedQuoteData.products.map((product, index) => {
                                   const stock = product.stock || 0
                                   const quantity = product.quantity || 1
                                   const hasStock = stock >= quantity
@@ -1496,14 +1501,14 @@ export default function CotizadorPanel() {
                       </div>
 
                       {/* Sección de Productos No Encontrados */}
-                      {notFoundProducts && notFoundProducts.length > 0 && (
+                      {parsedQuoteData.notFoundProducts && parsedQuoteData.notFoundProducts.length > 0 && (
                         <div className="bg-white rounded-lg border-2 border-yellow-300 shadow-md overflow-hidden mt-3">
                           <div className="bg-gradient-to-r from-yellow-500 to-orange-500 px-3 py-2.5 border-b border-orange-600">
                             <h4 className="text-xs font-bold text-white flex items-center gap-2">
                               <div className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded flex items-center justify-center">
                                 <FiAlertCircle className="text-white" size={12} />
                               </div>
-                              Productos No Encontrados ({notFoundProducts.length})
+                              Productos No Encontrados ({parsedQuoteData.notFoundProducts.length})
                             </h4>
                           </div>
                           <div className="max-h-48 overflow-y-auto">
@@ -1531,7 +1536,7 @@ export default function CotizadorPanel() {
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-yellow-200">
-                                {notFoundProducts.map((product, index) => (
+                                {parsedQuoteData.notFoundProducts.map((product, index) => (
                                   <tr key={index} className={index % 2 === 0 ? 'bg-white hover:bg-yellow-50' : 'bg-yellow-50 hover:bg-yellow-100'}>
                                     <td className="px-2 py-2">
                                       <div className="flex items-start gap-2">
@@ -1569,7 +1574,6 @@ export default function CotizadorPanel() {
                     </div>
                   </div>
                 </div>
-              </div>
 
                 {/* Footer con Botones Coloridos y Diseño Mejorado */}
                 <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-t-2 border-gray-300 px-4 py-3 flex items-center justify-between gap-3 shadow-inner">
@@ -1642,12 +1646,11 @@ export default function CotizadorPanel() {
                       <FiX size={14} />
                       Cerrar
                     </button>
-                  </div>
                 </div>
               </div>
             </div>
-          )
-        })()}
+          </div>
+        )}
 
         {/* Modal de Previsualización PDF */}
         {showPdfModal && pdfPreviewUrl && (

@@ -201,16 +201,17 @@ export default async function handler(req, res) {
               throw fetchError
             }
           }
-      } catch (webhookError) {
-        console.error('❌ Error sending to N8N webhook:', webhookError)
-        console.error('   Error details:', {
-          message: webhookError.message,
-          stack: webhookError.stack,
-          name: webhookError.name,
-          code: webhookError.code,
-        })
-        console.error(`   URL del webhook: ${n8nWebhookUrl}`)
-        // No fallar la petición si el webhook falla, pero loguear el error
+        } catch (webhookError) {
+          console.error('❌ Error sending to N8N webhook:', webhookError)
+          console.error('   Error details:', {
+            message: webhookError.message,
+            stack: webhookError.stack,
+            name: webhookError.name,
+            code: webhookError.code,
+          })
+          console.error(`   URL del webhook: ${n8nWebhookUrl}`)
+          // No fallar la petición si el webhook falla, pero loguear el error
+        }
       }
     }
 
@@ -231,4 +232,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Error al crear cotización' })
   }
 }
-
