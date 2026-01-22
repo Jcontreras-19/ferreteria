@@ -4,10 +4,12 @@ import Head from 'next/head'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { useCart } from '../contexts/CartContext'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Registro() {
   const router = useRouter()
   const { cart, getTotal, clearCart } = useCart()
+  const { user } = useAuth()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -71,6 +73,14 @@ export default function Registro() {
     }
 
     try {
+      // Determinar si el usuario es admin o cotizador
+      const adminRoles = ['admin', 'superadmin', 'editor', 'viewer']
+      const cotizadorRoles = ['cotizador', 'vendedor']
+      const isAdminOrCotizador = user && (adminRoles.includes(user.role) || cotizadorRoles.includes(user.role))
+      
+      // Si es cliente, enviar al N8N. Si es admin/cotizador, NO enviar (solo cuando el admin autorice)
+      const skipWebhook = isAdminOrCotizador
+
       const response = await fetch('/api/cotizacion', {
         method: 'POST',
         headers: {
@@ -81,6 +91,7 @@ export default function Registro() {
           products: cart,
           total: getTotal(),
           documentType: documentType,
+          skipWebhook: skipWebhook, // No enviar al webhook si es admin/cotizador
         }),
       })
 

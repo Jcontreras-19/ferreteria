@@ -17,6 +17,20 @@ export default function Header() {
   const isAdmin = user && ['admin', 'superadmin', 'editor', 'viewer'].includes(user.role)
   const isCotizador = user && ['admin', 'superadmin', 'cotizador', 'vendedor'].includes(user.role)
 
+  // Función para obtener el nombre del perfil según el rol
+  const getProfileName = (role) => {
+    const roleMap = {
+      'admin': 'Administrador',
+      'superadmin': 'Super Administrador',
+      'editor': 'Editor',
+      'viewer': 'Visualizador',
+      'cotizador': 'Cotizador',
+      'vendedor': 'Vendedor',
+      'customer': 'Cliente',
+    }
+    return roleMap[role] || 'Cliente'
+  }
+
   // Cerrar menú de usuario al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -120,6 +134,9 @@ export default function Header() {
                     <div className="px-4 py-2 border-b border-gray-200">
                       <p className="text-sm font-semibold text-gray-900">{user?.name || 'Usuario'}</p>
                       <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                      <p className="text-xs font-medium text-blue-600 mt-1">
+                        {getProfileName(user?.role)}
+                      </p>
                     </div>
                     <Link
                       href="/productos"
@@ -245,6 +262,13 @@ export default function Header() {
               </Link>
               {isAuthenticated ? (
                 <>
+                  <div className="py-2 border-b border-gray-700 mb-2">
+                    <p className="text-sm font-semibold text-white">{user?.name || 'Usuario'}</p>
+                    <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+                    <p className="text-xs font-medium text-blue-400 mt-1">
+                      {getProfileName(user?.role)}
+                    </p>
+                  </div>
                   <Link
                     href="/productos"
                     className="py-2 hover:text-blue-400 transition-colors"

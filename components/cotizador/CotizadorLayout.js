@@ -18,6 +18,21 @@ import {
 
 export default function CotizadorLayout({ children, user, onLogout }) {
   const router = useRouter()
+  
+  // Función para obtener el nombre del perfil según el rol
+  const getProfileName = (role) => {
+    const roleMap = {
+      'admin': 'Administrador',
+      'superadmin': 'Super Administrador',
+      'editor': 'Editor',
+      'viewer': 'Visualizador',
+      'cotizador': 'Cotizador',
+      'vendedor': 'Vendedor',
+      'customer': 'Cliente',
+    }
+    return roleMap[role] || 'Cliente'
+  }
+  
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -231,6 +246,9 @@ export default function CotizadorLayout({ children, user, onLogout }) {
                     <p className="text-xs text-gray-500 truncate">
                       {user?.email}
                     </p>
+                    <p className="text-xs font-medium text-green-600 mt-1">
+                      {getProfileName(user?.role)}
+                    </p>
                   </div>
                   <Link
                     href="/productos"
@@ -292,7 +310,7 @@ export default function CotizadorLayout({ children, user, onLogout }) {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                  <p className="text-xs text-gray-500">Cotizador</p>
+                  <p className="text-xs text-green-600 font-medium">{getProfileName(user?.role)}</p>
                 </div>
                 <FiChevronDown 
                   className={`text-gray-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} 
@@ -308,6 +326,9 @@ export default function CotizadorLayout({ children, user, onLogout }) {
                     </p>
                     <p className="text-xs text-gray-500 truncate">
                       {user?.email}
+                    </p>
+                    <p className="text-xs font-medium text-green-600 mt-1">
+                      {getProfileName(user?.role)}
                     </p>
                   </div>
                   <Link

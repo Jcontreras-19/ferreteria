@@ -31,6 +31,13 @@ export default function Carrito() {
   const [quoteId, setQuoteId] = useState(null)
   const [notifications, setNotifications] = useState([])
 
+  // Debug: Log cuando cambien las notificaciones
+  useEffect(() => {
+    if (notifications.length > 0) {
+      console.log('📢 Notificaciones activas:', notifications)
+    }
+  }, [notifications])
+
   // Cargar datos del usuario si está autenticado
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -386,10 +393,20 @@ export default function Carrito() {
         (p) => p.name && p.name.trim() !== ''
       )
 
+      // Determinar si el usuario es admin o cotizador
+      const adminRoles = ['admin', 'superadmin', 'editor', 'viewer']
+      const cotizadorRoles = ['cotizador', 'vendedor']
+      const isAdminOrCotizador = user && (adminRoles.includes(user.role) || cotizadorRoles.includes(user.role))
+      
+      // Si es cliente, enviar al N8N. Si es admin/cotizador, NO enviar (solo cuando el admin autorice)
+      const skipWebhook = isAdminOrCotizador
+
       console.log('📤 Enviando cotización...')
       console.log('   Cliente:', formData.name, formData.email)
       console.log('   Productos:', cart.length)
       console.log('   Total:', getTotal())
+      console.log('   Usuario actual:', user?.name, `(${user?.role || 'cliente'})`)
+      console.log('   Enviar a N8N:', !skipWebhook ? 'SÍ' : 'NO (solo cuando admin autorice)')
 
       const response = await fetch('/api/cotizacion', {
         method: 'POST',
@@ -402,7 +419,7 @@ export default function Carrito() {
           notFoundProducts: validNotFoundProducts,
           total: getTotal(),
           documentType: documentType,
-          skipWebhook: true, // No enviar al webhook de N8N
+          skipWebhook: skipWebhook, // No enviar al webhook si es admin/cotizador
         }),
       })
 
@@ -412,27 +429,31 @@ export default function Carrito() {
         console.log('✅ Cotización creada exitosamente')
         console.log('   Quote ID:', data.quoteId)
         
-        // Mostrar notificación flotante de éxito
-        const notificationId = Date.now()
-        setNotifications([{
-          id: notificationId,
-          type: 'success',
-          message: 'Tu cotización ha sido enviada correctamente'
-        }])
-        
-        // Auto-eliminar la notificación después de 3 segundos
-        setTimeout(() => {
-          setNotifications(prev => prev.filter(n => n.id !== notificationId))
-        }, 3000)
-        
         setSuccess(true)
         setQuoteId(data.quoteId)
         clearCart()
         
-        // Cerrar el modal después de un breve delay
+        // Mostrar notificación flotante de éxito inmediatamente
+        const notificationId = Date.now()
+        setNotifications([{
+          id: notificationId,
+          type: 'success',
+          message: '¡Tu cotización ha sido enviada correctamente!'
+        }])
+        
+        console.log('📢 Notificación mostrada:', notificationId)
+        
+        // Auto-eliminar la notificación después de 4 segundos
+        setTimeout(() => {
+          setNotifications(prev => prev.filter(n => n.id !== notificationId))
+        }, 4000)
+        
+        // Cerrar el modal después de un breve delay (después de que la notificación sea visible)
         setTimeout(() => {
           setShowQuoteModal(false)
-        }, 1500)
+          setError('')
+          setSuccess(false)
+        }, 2000)
       } else {
         console.error('❌ Error al crear cotización:', data.error)
         setError(data.error || 'Error al enviar la cotización')
@@ -922,23 +943,26 @@ export default function Carrito() {
         )}
 
         {/* Notificaciones flotantes en la esquina superior derecha */}
-        <div className="fixed top-4 right-4 z-[9999] space-y-2 pointer-events-none">
-          {notifications.map((notification) => (
-            <div
-              key={notification.id}
-              className="bg-green-600 text-white px-6 py-4 rounded-lg shadow-xl flex items-center space-x-3 min-w-[350px] max-w-md pointer-events-auto animate-slide-in-right"
-            >
-              <FiCheckCircle size={20} className="flex-shrink-0" />
-              <span className="flex-1 font-medium">{notification.message}</span>
-              <button
-                onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
-                className="text-white hover:text-gray-200 transition-colors flex-shrink-0"
+        {notifications.length > 0 && (
+          <div className="fixed top-4 right-4 z-[10000] space-y-2 pointer-events-none">
+            {notifications.map((notification) => (
+              <div
+                key={notification.id}
+                className="bg-green-600 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center space-x-3 min-w-[350px] max-w-md pointer-events-auto animate-slide-in-right border-2 border-green-700"
               >
-                <FiX size={18} />
-              </button>
-            </div>
-          ))}
-        </div>
+                <FiCheckCircle size={24} className="flex-shrink-0" />
+                <span className="flex-1 font-semibold text-lg">{notification.message}</span>
+                <button
+                  onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
+                  className="text-white hover:text-green-200 transition-colors flex-shrink-0 p-1 rounded hover:bg-green-700"
+                  aria-label="Cerrar notificación"
+                >
+                  <FiX size={20} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </>
   )
