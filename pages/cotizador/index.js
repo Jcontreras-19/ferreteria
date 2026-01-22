@@ -634,6 +634,19 @@ export default function CotizadorPanel() {
       // Primero intentar usar productsParsed (ya parseado por la API)
       if (selectedQuote.productsParsed && Array.isArray(selectedQuote.productsParsed)) {
         products = selectedQuote.productsParsed
+        // Si la API ya incluyó notFoundProducts, usarlo directamente
+        if (selectedQuote.notFoundProducts && Array.isArray(selectedQuote.notFoundProducts)) {
+          notFoundProducts = selectedQuote.notFoundProducts
+        } else {
+          // Si no está en el objeto, extraer del products original
+          const productsData = typeof selectedQuote.products === 'string' 
+            ? JSON.parse(selectedQuote.products || '{}')
+            : selectedQuote.products || {}
+          notFoundProducts = productsData.notFoundProducts || []
+          if (!Array.isArray(notFoundProducts)) {
+            notFoundProducts = []
+          }
+        }
       } else {
         // Si no está parseado, parsear manualmente
         const productsData = typeof selectedQuote.products === 'string' 

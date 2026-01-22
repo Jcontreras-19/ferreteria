@@ -52,11 +52,16 @@ export default async function handler(req, res) {
         // Obtener el array de productos (puede estar en items o ser el array directamente)
         const products = productsData.items || productsData
         
+        // Extraer productos no encontrados
+        const notFoundProducts = productsData.notFoundProducts || []
+        const validNotFoundProducts = Array.isArray(notFoundProducts) ? notFoundProducts : []
+        
         // Asegurarse de que es un array
         if (!Array.isArray(products) || products.length === 0) {
           return {
             ...quote,
             productsParsed: [],
+            notFoundProducts: validNotFoundProducts,
             allInStock: false,
             someInStock: false,
           }
@@ -71,6 +76,7 @@ export default async function handler(req, res) {
           return {
             ...quote,
             productsParsed: products, // Devolver productos sin información de stock
+            notFoundProducts: validNotFoundProducts,
             allInStock: false,
             someInStock: false,
           }
@@ -93,14 +99,29 @@ export default async function handler(req, res) {
         return {
           ...quote,
           productsParsed: productsInfo,
+          notFoundProducts: validNotFoundProducts,
           allInStock: productsInfo.every(p => p.inStock),
           someInStock: productsInfo.some(p => p.inStock),
         }
       } catch (error) {
         console.error('Error parsing products for quote:', quote.id, error)
+        // Intentar extraer notFoundProducts incluso si hay error
+        let notFoundProducts = []
+        try {
+          const productsData = typeof quote.products === 'string' 
+            ? JSON.parse(quote.products) 
+            : quote.products
+          notFoundProducts = productsData.notFoundProducts || []
+          if (!Array.isArray(notFoundProducts)) {
+            notFoundProducts = []
+          }
+        } catch (e) {
+          // Si falla, dejar como array vacío
+        }
         return {
           ...quote,
           productsParsed: [],
+          notFoundProducts: notFoundProducts,
           allInStock: false,
           someInStock: false,
         }
