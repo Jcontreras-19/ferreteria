@@ -60,21 +60,47 @@ Actualiza tu nodo "CORREO CLIENTE" con este HTML corregido:
 
 ## Cambios en las Expresiones
 
+### ⚠️ IMPORTANTE: Cómo acceder a los campos en N8N
+
+Con `multipart/form-data`, N8N mapea los campos del FormData directamente a `$json.body.*`
+
 ### Nombre del Cliente:
-**Antes:** `{{ $json.body.clientNombre || $json.body['cliente[nombre]'] || 'Cliente' }}`  
-**Ahora:** `{{ $json.body.clientNombre || $json.body.name || 'Cliente' }}` ✅
+**Expresión correcta:** `{{ $json.body.clientNombre || $json.body.name || 'Cliente' }}` ✅
 
 ### Número de Cotización:
-**Antes:** `{{ $json.body.numeroCotizacion || $json.body.quoteNumber || '—' }}`  
-**Ahora:** (Sin cambios, pero ahora funciona correctamente) ✅
+**Expresión correcta:** `{{ $json.body.numeroCotizacion || $json.body.quoteNumber || '—' }}` ✅
+
+**Nota:** Si `numeroCotizacion` no funciona, prueba también:
+- `{{ $json.body.numeroCotizacion }}`
+- `{{ '#' + $json.body.quoteNumber }}`
+- `{{ JSON.parse($json.body.body).numeroCotizacion }}` (si necesitas parsear el JSON)
 
 ### Total:
-**Antes:** `{{ new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(parseFloat($json.body.total)) }}`  
-**Ahora:** `{{ new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(parseFloat($json.body.total || 0)) }}` ✅
+**Expresión correcta:** `{{ new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(parseFloat($json.body.total || 0)) }}` ✅
+
+**Nota:** Si `total` muestra "NaN" o "0.00", prueba:
+- `{{ $json.body.total }}` (para ver el valor raw)
+- `{{ JSON.parse($json.body.body).total }}` (si necesitas parsear el JSON)
 
 ### Fecha:
-**Antes:** `{{ $now.format('DD MMM YYYY', { locale: 'es' }).replace('.', '') }}`  
-**Ahora:** `{{ $now.format('DD MMM YYYY', { locale: 'es' }) }}` ✅ (removido el `.replace` que causaba el problema)
+**Expresión correcta:** `{{ $now.format('DD MMM YYYY', { locale: 'es' }) }}` ✅
+
+## 🔍 Debugging en N8N
+
+Si los campos no aparecen, agrega un nodo "Function" antes del nodo de correo para ver qué datos llegan:
+
+```javascript
+// Ver todos los datos recibidos
+return {
+  json: {
+    debug: $json.body,
+    clientNombre: $json.body.clientNombre,
+    numeroCotizacion: $json.body.numeroCotizacion,
+    total: $json.body.total,
+    quoteNumber: $json.body.quoteNumber
+  }
+}
+```
 
 ## Verificación
 

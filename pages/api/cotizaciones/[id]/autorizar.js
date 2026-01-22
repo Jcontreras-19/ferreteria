@@ -168,6 +168,12 @@ export default async function handler(req, res) {
         formData.append('email', updatedQuote.email)
         formData.append('phone', updatedQuote.whatsapp)
         
+        // Agregar campos adicionales para el email de N8N (acceso directo sin parsear JSON)
+        formData.append('clientNombre', updatedQuote.name || '')
+        formData.append('numeroCotizacion', `#${updatedQuote.quoteNumber || ''}`)
+        formData.append('quoteNumber', (updatedQuote.quoteNumber || 0).toString())
+        formData.append('total', (updatedQuote.total || 0).toString())
+        
         // Crear payload con estructura que N8N espera
         // IMPORTANTE: Para que N8N pueda acceder a $json.body.cliente.email,
         // el body debe tener la estructura correcta
