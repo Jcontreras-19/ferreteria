@@ -141,10 +141,10 @@ export default function Home() {
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
         <Header />
         <main className="flex-1 pt-20 pb-8">
-          {/* Hero Section - Banner con imagen completa - Ajuste automático */}
+          {/* Hero Section - Banner con imagen completa - Altura reducida */}
           <section className="relative bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 overflow-hidden">
-            {/* Carrusel de Imágenes - Se ajusta automáticamente a las dimensiones de las imágenes */}
-            <div className="relative w-full" style={{ aspectRatio: '16/9', minHeight: '400px' }}>
+            {/* Carrusel de Imágenes - Altura optimizada para laptops */}
+            <div className="relative w-full h-64 md:h-80 lg:h-96">
               <div className="relative w-full h-full">
                 {heroImages.map((image, index) => (
                   <div
