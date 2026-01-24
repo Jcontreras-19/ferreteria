@@ -141,9 +141,9 @@ export default function Home() {
         <main className="flex-1 pt-20 pb-8">
           {/* Hero Section - Banner con imagen completa */}
           <section className="relative bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 overflow-hidden">
-            {/* Carrusel de Imágenes - Ocupa todo el espacio */}
-            <div className="relative w-full h-72 md:h-96 lg:h-[500px]">
-              <div className="relative w-full h-full flex items-center justify-center">
+            {/* Carrusel de Imágenes - Ocupa todo el espacio con mejor ajuste de ancho */}
+            <div className="relative w-full h-80 md:h-[450px] lg:h-[550px]">
+              <div className="relative w-full h-full">
                 {heroImages.map((image, index) => (
                   <div
                     key={index}
@@ -155,9 +155,10 @@ export default function Home() {
                       src={image}
                       alt={`Imagen ${index + 1} - Corporación GRC`}
                       fill
-                      className="object-contain"
+                      className="object-cover object-center"
                       priority={index === 0}
                       unoptimized
+                      sizes="100vw"
                     />
                   </div>
                 ))}
