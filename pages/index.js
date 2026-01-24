@@ -137,10 +137,10 @@ export default function Home() {
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
         <Header />
         <main className="flex-1 pt-20 pb-8">
-          {/* Categorías en la parte superior */}
-          <section className="bg-white border-b border-gray-200 py-4 md:py-6">
+          {/* Categorías en la parte superior - Franja delgada y sutil */}
+          <section className="bg-white border-b border-gray-100 py-2">
             <div className="container mx-auto px-4">
-              <div className="flex items-center gap-4 md:gap-6 overflow-x-auto pb-2 scrollbar-hide">
+              <div className="flex items-center gap-3 md:gap-4 overflow-x-auto pb-1 scrollbar-hide">
                 {categories.slice(0, 8).map((category, index) => {
                   const config = categoryConfig[category] || categoryConfig['Otros']
                   const Icon = config.icon
@@ -148,14 +148,14 @@ export default function Home() {
                     <button
                       key={category}
                       onClick={() => goToCategory(category)}
-                      className="flex items-center gap-3 flex-shrink-0 group hover:scale-105 transition-transform duration-300"
+                      className="flex items-center gap-2 flex-shrink-0 group hover:opacity-80 transition-opacity duration-200"
                     >
-                      {/* Icono circular */}
-                      <div className={`w-16 h-16 md:w-20 md:h-20 ${config.bgColor} rounded-full flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300`}>
-                        <Icon className="text-white" size={28} />
+                      {/* Icono circular pequeño */}
+                      <div className={`w-10 h-10 ${config.bgColor} rounded-full flex items-center justify-center shadow-sm group-hover:shadow transition-all duration-200`}>
+                        <Icon className="text-white" size={18} />
                       </div>
-                      {/* Texto del botón */}
-                      <span className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-lg text-sm md:text-base transition-colors duration-300 whitespace-nowrap">
+                      {/* Texto del botón pequeño */}
+                      <span className="bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium px-3 py-1.5 rounded-md text-xs md:text-sm transition-colors duration-200 whitespace-nowrap">
                         {category}
                       </span>
                     </button>
@@ -235,17 +235,6 @@ export default function Home() {
                           priority={index === 0}
                           unoptimized
                         />
-                        {/* Overlay con texto para la primera imagen (reunión de negocios) */}
-                        {index === 0 && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-900/40 to-green-900/60 flex items-center justify-end pr-8">
-                            <div className="text-white text-right">
-                              <h3 className="text-3xl md:text-4xl font-bold mb-2">GRC</h3>
-                              <p className="text-lg md:text-xl font-semibold">corporación</p>
-                              <p className="text-xl md:text-2xl font-bold mt-2">SERVICIOS</p>
-                              <p className="text-xl md:text-2xl font-bold">PARA EMPRESAS</p>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     ))}
                     
