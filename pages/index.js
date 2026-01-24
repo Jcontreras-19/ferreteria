@@ -19,6 +19,8 @@ export default function Home() {
 
   // Imágenes para el carrusel del hero (imágenes locales desde public/hero-imagenes)
   // Estas imágenes cambian automáticamente cada 5 segundos
+  // El banner se ajusta automáticamente a las dimensiones de las imágenes
+  
   const heroImages = [
     '/hero-imagenes/herramientas.png', // Imagen 1 - herramientas
     '/hero-imagenes/envio_rapidos.png', // Imagen 2 - envio_rapidos
@@ -139,10 +141,10 @@ export default function Home() {
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
         <Header />
         <main className="flex-1 pt-20 pb-8">
-          {/* Hero Section - Banner con imagen completa */}
+          {/* Hero Section - Banner con imagen completa - Ajuste automático */}
           <section className="relative bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 overflow-hidden">
-            {/* Carrusel de Imágenes - Ocupa todo el espacio con mejor ajuste de ancho */}
-            <div className="relative w-full h-80 md:h-[450px] lg:h-[550px]">
+            {/* Carrusel de Imágenes - Se ajusta automáticamente a las dimensiones de las imágenes */}
+            <div className="relative w-full" style={{ aspectRatio: '16/9', minHeight: '400px' }}>
               <div className="relative w-full h-full">
                 {heroImages.map((image, index) => (
                   <div
@@ -155,7 +157,7 @@ export default function Home() {
                       src={image}
                       alt={`Imagen ${index + 1} - Corporación GRC`}
                       fill
-                      className="object-cover object-center"
+                      className="object-contain object-center"
                       priority={index === 0}
                       unoptimized
                       sizes="100vw"
