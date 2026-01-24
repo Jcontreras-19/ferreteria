@@ -20,8 +20,10 @@ export default function Home() {
   // Imágenes para el carrusel del hero (imágenes locales desde public/hero-imagenes)
   // Estas imágenes cambian automáticamente cada 5 segundos
   const heroImages = [
-    '/hero-imagenes/herramientas.png', // Imagen de herramientas (primera)
-    '/hero-imagenes/envio_rapidos.png', // Imagen de envío rápido
+    '/hero-imagenes/herramientas.png', // Imagen 1 - herramientas
+    '/hero-imagenes/envio_rapidos.png', // Imagen 2 - envio_rapidos
+    '/hero-imagenes/calidad.png', // Imagen 3 - calidad
+    '/hero-imagenes/proyecto.png', // Imagen 4 - proyectos
   ]
 
   // Categorías con iconos y colores
