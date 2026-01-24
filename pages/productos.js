@@ -13,16 +13,28 @@ export default function Productos() {
 
   useEffect(() => {
     const search = router.query.search || ''
+    const category = router.query.category || ''
     setSearchQuery(search)
-    fetchProducts(search)
-  }, [router.query.search])
+    fetchProducts(search, category)
+  }, [router.query.search, router.query.category])
 
-  const fetchProducts = async (search = '') => {
+  const fetchProducts = async (search = '', category = '') => {
     try {
       setLoading(true)
-      const url = search
-        ? `/api/productos?search=${encodeURIComponent(search)}&limit=1000`
-        : '/api/productos?limit=1000'
+      let url = '/api/productos?limit=1000'
+      const params = []
+      
+      if (search) {
+        params.push(`search=${encodeURIComponent(search)}`)
+      }
+      if (category) {
+        params.push(`category=${encodeURIComponent(category)}`)
+      }
+      
+      if (params.length > 0) {
+        url += '&' + params.join('&')
+      }
+      
       const res = await fetch(url)
       const data = await res.json()
       
@@ -65,7 +77,19 @@ export default function Productos() {
         <Header />
         <main className="flex-1 pt-20 pb-8">
           <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold mb-6">Catálogo de Productos</h1>
+            <h1 className="text-3xl font-bold mb-6">
+              {router.query.category 
+                ? `Productos - ${router.query.category}` 
+                : 'Catálogo de Productos'}
+            </h1>
+            {router.query.category && (
+              <button
+                onClick={() => router.push('/productos')}
+                className="mb-4 text-green-600 hover:text-green-700 font-medium flex items-center gap-2"
+              >
+                ← Ver todos los productos
+              </button>
+            )}
 
             {/* Buscador */}
             <form onSubmit={handleSearch} className="mb-8">

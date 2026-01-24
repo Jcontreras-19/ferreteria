@@ -4,7 +4,7 @@ import { getCurrentUser } from '../../../lib/auth'
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
-      const { search, page = '1', limit = '10' } = req.query
+      const { search, category, page = '1', limit = '10' } = req.query
       const pageNum = parseInt(page) || 1
       const limitNum = parseInt(limit) || 10
       const skip = (pageNum - 1) * limitNum
@@ -12,12 +12,27 @@ export default async function handler(req, res) {
       let where = {}
 
       if (search) {
-        // Búsqueda en nombre y descripción (temporalmente sin category para evitar errores)
+        // Búsqueda en nombre y descripción
         where = {
           OR: [
-            { name: { contains: search } },
-            { description: { contains: search } },
+            { name: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } },
           ],
+        }
+      }
+
+      if (category) {
+        // Filtro por categoría
+        if (where.OR) {
+          // Si ya hay un filtro de búsqueda, combinarlos con AND
+          where = {
+            AND: [
+              where,
+              { category: { equals: category, mode: 'insensitive' } }
+            ]
+          }
+        } else {
+          where.category = { equals: category, mode: 'insensitive' }
         }
       }
 
