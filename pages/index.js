@@ -141,10 +141,10 @@ export default function Home() {
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
         <Header />
         <main className="flex-1 pt-20 pb-8">
-          {/* Hero Section - Banner con imagen completa - Altura reducida */}
+          {/* Hero Section - Banner con imagen completa - Ocupa todo el ancho */}
           <section className="relative bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 overflow-hidden">
-            {/* Carrusel de Imágenes - Altura optimizada para laptops */}
-            <div className="relative w-full h-64 md:h-80 lg:h-96">
+            {/* Carrusel de Imágenes - Ocupa todo el ancho y muestra imagen completa */}
+            <div className="relative w-full" style={{ minHeight: '300px', maxHeight: '500px' }}>
               <div className="relative w-full h-full">
                 {heroImages.map((image, index) => (
                   <div
@@ -153,15 +153,14 @@ export default function Home() {
                       index === currentHeroImage ? 'opacity-100 z-10' : 'opacity-0 z-0'
                     }`}
                   >
-                    <Image
-                      src={image}
-                      alt={`Imagen ${index + 1} - Corporación GRC`}
-                      fill
-                      className="object-contain object-center"
-                      priority={index === 0}
-                      unoptimized
-                      sizes="100vw"
-                    />
+                    <div className="relative w-full h-full flex items-center justify-center">
+                      <img
+                        src={image}
+                        alt={`Imagen ${index + 1} - Corporación GRC`}
+                        className="w-full h-auto object-contain"
+                        style={{ maxHeight: '500px' }}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -170,11 +169,12 @@ export default function Home() {
 
 
           {/* Carrusel de Productos Destacados */}
-          <section className="container mx-auto px-4 py-12">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-800">
-                Productos Destacados
-              </h2>
+          <section className="bg-gradient-to-br from-gray-50 via-green-50 to-emerald-50 py-12 md:py-16">
+            <div className="container mx-auto px-4">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-800">
+                  Productos Destacados
+                </h2>
               <div className="flex items-center gap-2">
                 <button
                   onClick={prevSlide}
@@ -235,14 +235,15 @@ export default function Home() {
               </div>
             )}
 
-            <div className="text-center mt-8">
-              <a
-                href="/productos"
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                Ver Todos los Productos
-                <FiChevronRight className="group-hover:translate-x-1 transition-transform" />
-              </a>
+              <div className="text-center mt-8">
+                <a
+                  href="/productos"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  Ver Todos los Productos
+                  <FiChevronRight className="group-hover:translate-x-1 transition-transform" />
+                </a>
+              </div>
             </div>
           </section>
 
