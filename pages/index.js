@@ -139,50 +139,11 @@ export default function Home() {
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
         <Header />
         <main className="flex-1 pt-20 pb-8">
-          {/* Categorías en la parte superior - Diseño profesional y realista */}
-          <section className="bg-gradient-to-b from-white to-gray-50 border-b border-gray-200 shadow-sm py-3">
-            <div className="container mx-auto px-4">
-              <div className="flex items-center gap-3 md:gap-5 overflow-x-auto pb-2 scrollbar-hide">
-                {categories.slice(0, 8).map((category, index) => {
-                  const config = categoryConfig[category] || categoryConfig['Otros']
-                  const Icon = config.icon
-                  return (
-                    <button
-                      key={category}
-                      onClick={() => goToCategory(category)}
-                      className="flex items-center gap-3 flex-shrink-0 group cursor-pointer"
-                    >
-                      {/* Icono circular con efecto 3D y sombra realista */}
-                      <div className={`relative w-12 h-12 md:w-14 md:h-14 ${config.bgColor} rounded-full flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-110 group-hover:-translate-y-1`}
-                        style={{
-                          background: `linear-gradient(135deg, ${config.bgColor.replace('bg-', '')} 0%, ${config.bgColor.replace('bg-', '')}dd 100%)`,
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 -2px 4px rgba(0, 0, 0, 0.1)'
-                        }}
-                      >
-                        <Icon className="text-white drop-shadow-md" size={20} />
-                        {/* Brillo superior para efecto 3D */}
-                        <div className="absolute top-1 left-1 w-4 h-4 bg-white/30 rounded-full blur-sm"></div>
-                      </div>
-                      {/* Botón de texto con diseño profesional */}
-                      <span className="bg-white hover:bg-gray-50 text-gray-800 font-semibold px-4 py-2 rounded-lg text-xs md:text-sm transition-all duration-300 whitespace-nowrap border border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-gray-300 group-hover:text-gray-900 transform group-hover:scale-105"
-                        style={{
-                          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-                        }}
-                      >
-                        {category}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </section>
-
           {/* Hero Section - Banner con imagen completa */}
           <section className="relative bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 overflow-hidden">
             {/* Carrusel de Imágenes - Ocupa todo el espacio */}
-            <div className="relative w-full h-64 md:h-80 lg:h-96">
-              <div className="relative w-full h-full">
+            <div className="relative w-full h-72 md:h-96 lg:h-[500px]">
+              <div className="relative w-full h-full flex items-center justify-center">
                 {heroImages.map((image, index) => (
                   <div
                     key={index}
@@ -194,30 +155,12 @@ export default function Home() {
                       src={image}
                       alt={`Imagen ${index + 1} - Corporación GRC`}
                       fill
-                      className="object-cover"
+                      className="object-contain"
                       priority={index === 0}
                       unoptimized
                     />
                   </div>
                 ))}
-                
-                {/* Indicadores del carrusel */}
-                {heroImages.length > 1 && (
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
-                    {heroImages.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentHeroImage(index)}
-                        className={`h-2 rounded-full transition-all duration-300 ${
-                          index === currentHeroImage
-                            ? 'w-8 bg-white'
-                            : 'w-2 bg-white/50'
-                        }`}
-                        aria-label={`Ir a imagen ${index + 1}`}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           </section>
