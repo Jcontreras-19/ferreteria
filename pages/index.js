@@ -137,16 +137,33 @@ export default function Home() {
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
         <Header />
         <main className="flex-1 pt-20 pb-8">
-          {/* Banner de Aviso Llamativo */}
-          <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white py-3 px-4 animate-slide-down">
-            <div className="container mx-auto flex items-center justify-center gap-3">
-              <FiTrendingUp className="animate-pulse" size={20} />
-              <p className="text-sm md:text-base font-semibold">
-                🎉 ¡Ofertas Especiales! Envío gratis en compras mayores a S/. 500
-              </p>
-              <FiTrendingUp className="animate-pulse" size={20} />
+          {/* Categorías en la parte superior */}
+          <section className="bg-white border-b border-gray-200 py-4 md:py-6">
+            <div className="container mx-auto px-4">
+              <div className="flex items-center gap-4 md:gap-6 overflow-x-auto pb-2 scrollbar-hide">
+                {categories.slice(0, 8).map((category, index) => {
+                  const config = categoryConfig[category] || categoryConfig['Otros']
+                  const Icon = config.icon
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => goToCategory(category)}
+                      className="flex items-center gap-3 flex-shrink-0 group hover:scale-105 transition-transform duration-300"
+                    >
+                      {/* Icono circular */}
+                      <div className={`w-16 h-16 md:w-20 md:h-20 ${config.bgColor} rounded-full flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300`}>
+                        <Icon className="text-white" size={28} />
+                      </div>
+                      {/* Texto del botón */}
+                      <span className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-lg text-sm md:text-base transition-colors duration-300 whitespace-nowrap">
+                        {category}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          </section>
 
           {/* Hero Section Mejorado - Layout de 2 columnas */}
           <section className="relative bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 py-8 md:py-12 overflow-hidden">
@@ -253,36 +270,6 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Globos de Categorías Interactivos */}
-          <section className="container mx-auto px-4 py-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center text-gray-800">
-              Explora por Categorías
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
-              {categories.slice(0, 6).map((category, index) => {
-                const config = categoryConfig[category] || categoryConfig['Otros']
-                const Icon = config.icon
-                return (
-                  <button
-                    key={category}
-                    onClick={() => goToCategory(category)}
-                    className="group relative bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 animate-fade-in"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <div className={`absolute inset-0 bg-gradient-to-br ${config.color} rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
-                    <div className="relative z-10 flex flex-col items-center">
-                      <div className={`w-16 h-16 ${config.bgColor} rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-                        <Icon className="text-white" size={28} />
-                      </div>
-                      <span className="text-sm font-semibold text-gray-700 group-hover:text-white transition-colors duration-300 text-center line-clamp-2">
-                        {category}
-                      </span>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </section>
 
           {/* Carrusel de Productos Destacados */}
           <section className="container mx-auto px-4 py-12">
