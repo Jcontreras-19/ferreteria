@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
+import Image from 'next/image'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import ProductCard from '../components/ProductCard'
@@ -10,9 +11,20 @@ export default function Home() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [currentHeroImage, setCurrentHeroImage] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const carouselRef = useRef(null)
   const autoPlayRef = useRef(null)
+  const heroImageRef = useRef(null)
+
+  // Imágenes para el carrusel del hero (imágenes locales desde public/hero-imagenes)
+  // Agrega más imágenes a la carpeta public/hero-imagenes y añádelas aquí
+  const heroImages = [
+    '/hero-imagenes/reunión_grc.png', // Imagen principal de reunión GRC
+    // Puedes agregar más imágenes aquí cuando las subas a public/hero-imagenes
+    // Ejemplo: '/hero-imagenes/construccion.jpg',
+    // Ejemplo: '/hero-imagenes/herramientas.jpg',
+  ]
 
   // Categorías con iconos y colores
   const categoryConfig = {
@@ -29,7 +41,7 @@ export default function Home() {
     fetchCategories()
   }, [])
 
-  // Auto-play del carrusel
+  // Auto-play del carrusel de productos
   useEffect(() => {
     if (isAutoPlaying && products.length > 0) {
       autoPlayRef.current = setInterval(() => {
@@ -42,6 +54,15 @@ export default function Home() {
       }
     }
   }, [isAutoPlaying, products.length])
+
+  // Auto-play del carrusel de imágenes del hero
+  useEffect(() => {
+    const heroInterval = setInterval(() => {
+      setCurrentHeroImage((prev) => (prev + 1) % heroImages.length)
+    }, 5000) // Cambia cada 5 segundos
+    
+    return () => clearInterval(heroInterval)
+  }, [heroImages.length])
 
   const fetchProducts = async () => {
     try {
@@ -127,52 +148,107 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Hero Section Mejorado */}
-          <section className="relative bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 py-16 md:py-24 overflow-hidden">
+          {/* Hero Section Mejorado - Layout de 2 columnas */}
+          <section className="relative bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 py-8 md:py-12 overflow-hidden">
             {/* Elementos decorativos animados */}
             <div className="absolute inset-0 overflow-hidden">
               <div className="absolute -top-20 -right-20 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
               <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
             </div>
             
-            <div className="container mx-auto px-4 text-center relative z-10">
-              <div className="flex items-center justify-center space-x-4 mb-6 animate-fade-in">
-                <div className="flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full border-4 border-white/30 shadow-2xl transform hover:scale-110 transition-transform duration-300">
-                  <span className="text-white font-bold text-2xl">GRC</span>
-                </div>
-                <div className="text-left">
-                  <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-2 animate-slide-up">
-                    Corporación GRC
-                  </h1>
-                  <div className="flex items-center gap-2">
-                    <FiShield className="text-white/90" size={18} />
-                    <p className="text-sm md:text-base text-green-100 font-medium">
-                      ISO 9001:2015 Certificado
-                    </p>
+            <div className="container mx-auto px-4 relative z-10">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                {/* Columna Izquierda - Contenido */}
+                <div className="text-center lg:text-left animate-fade-in">
+                  <div className="flex items-center justify-center lg:justify-start space-x-4 mb-6">
+                    <div className="flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full border-4 border-white/30 shadow-2xl transform hover:scale-110 transition-transform duration-300">
+                      <span className="text-white font-bold text-2xl">GRC</span>
+                    </div>
+                    <div>
+                      <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-2 animate-slide-up">
+                        Corporación GRC
+                      </h1>
+                      <div className="flex items-center gap-2 justify-center lg:justify-start">
+                        <FiShield className="text-white/90" size={18} />
+                        <p className="text-sm md:text-base text-green-100 font-medium">
+                          ISO 9001:2015 Certificado
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <p className="text-xl md:text-2xl mb-6 text-green-100 font-medium animate-slide-up delay-200">
+                    SERVICIOS DE APOYO A LAS EMPRESAS
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-slide-up delay-300">
+                    <a
+                      href="/productos"
+                      className="group bg-white text-green-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-green-50 transition-all duration-300 shadow-2xl hover:shadow-green-500/50 transform hover:scale-105 hover:-translate-y-1"
+                    >
+                      <span className="flex items-center gap-2 justify-center">
+                        Ver Productos
+                        <FiChevronRight className="group-hover:translate-x-1 transition-transform" />
+                      </span>
+                    </a>
+                    <a
+                      href="/productos"
+                      className="group border-2 border-white text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm"
+                    >
+                      Explorar Catálogo
+                    </a>
                   </div>
                 </div>
-              </div>
-              
-              <p className="text-xl md:text-2xl mb-8 text-green-100 font-medium animate-slide-up delay-200">
-                SERVICIOS DE APOYO A LAS EMPRESAS
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up delay-300">
-                <a
-                  href="/productos"
-                  className="group bg-white text-green-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-green-50 transition-all duration-300 shadow-2xl hover:shadow-green-500/50 transform hover:scale-105 hover:-translate-y-1"
-                >
-                  <span className="flex items-center gap-2">
-                    Ver Productos
-                    <FiChevronRight className="group-hover:translate-x-1 transition-transform" />
-                  </span>
-                </a>
-                <a
-                  href="/productos"
-                  className="group border-2 border-white text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm"
-                >
-                  Explorar Catálogo
-                </a>
+
+                {/* Columna Derecha - Carrusel de Imágenes */}
+                <div className="relative h-64 md:h-80 lg:h-96 rounded-2xl overflow-hidden shadow-2xl animate-fade-in delay-400">
+                  <div className="relative w-full h-full">
+                    {heroImages.map((image, index) => (
+                      <div
+                        key={index}
+                        className={`absolute inset-0 transition-opacity duration-1000 ${
+                          index === currentHeroImage ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                        }`}
+                      >
+                        <Image
+                          src={image}
+                          alt={`Imagen ${index + 1} - Corporación GRC`}
+                          fill
+                          className="object-cover"
+                          priority={index === 0}
+                          unoptimized
+                        />
+                        {/* Overlay con texto para la primera imagen (reunión de negocios) */}
+                        {index === 0 && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-900/40 to-green-900/60 flex items-center justify-end pr-8">
+                            <div className="text-white text-right">
+                              <h3 className="text-3xl md:text-4xl font-bold mb-2">GRC</h3>
+                              <p className="text-lg md:text-xl font-semibold">corporación</p>
+                              <p className="text-xl md:text-2xl font-bold mt-2">SERVICIOS</p>
+                              <p className="text-xl md:text-2xl font-bold">PARA EMPRESAS</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {/* Indicadores del carrusel */}
+                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
+                      {heroImages.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentHeroImage(index)}
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            index === currentHeroImage
+                              ? 'w-8 bg-white'
+                              : 'w-2 bg-white/50'
+                          }`}
+                          aria-label={`Ir a imagen ${index + 1}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
