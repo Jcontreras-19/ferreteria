@@ -176,9 +176,9 @@ export default function Home() {
             maxWidth: '100vw',
             marginLeft: 'calc((100% - 100vw) / 2)',
             marginRight: 'calc((100% - 100vw) / 2)',
-            paddingTop: '100px',
-            paddingBottom: '20px',
-            marginTop: 0,
+            paddingTop: '0',
+            paddingBottom: '0',
+            marginTop: '80px',
             marginBottom: 0,
             position: 'relative',
             overflow: 'visible'
@@ -229,20 +229,6 @@ export default function Home() {
                   />
                 </div>
               ))}
-              {/* Indicadores del carrusel */}
-              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 flex gap-2 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                {heroImages.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentHeroImage(index)}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      index === currentHeroImage 
-                        ? 'w-8 bg-white' 
-                        : 'w-2 bg-white/50'
-                    }`}
-                  />
-                ))}
-              </div>
             </div>
 
             {/* Mitad Derecha - Texto sincronizado con la imagen del carrusel (35% del ancho) */}
