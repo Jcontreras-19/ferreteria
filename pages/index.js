@@ -307,14 +307,16 @@ export default function Home() {
 
 
           {/* Carrusel de Productos Destacados */}
-          <section className="bg-gradient-to-b from-gray-200 via-gray-200 to-gray-200 py-6 md:py-8 border-t border-gray-300">
+          <section className="py-6 md:py-8 border-t border-green-400" style={{ 
+            background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #059669 100%)'
+          }}>
             <div className="container mx-auto px-4">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-1">
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-1 drop-shadow-sm">
                     Productos Destacados
                   </h2>
-                  <p className="text-gray-700 font-medium text-sm">Los mejores productos para tus proyectos</p>
+                  <p className="text-green-50 font-medium text-sm">Los mejores productos para tus proyectos</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
