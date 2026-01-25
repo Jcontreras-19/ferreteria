@@ -185,18 +185,16 @@ export default function Home() {
           }}
         >
           <div className="flex flex-col lg:flex-row w-full" style={{ minHeight: '400px', maxHeight: '450px' }}>
-            {/* Mitad Izquierda - Carrusel de Imágenes (65% del ancho) */}
+            {/* Lado Izquierdo - Carrusel de Imágenes (ancho basado en la imagen) */}
             <div 
-              className="w-full lg:w-[65%] bg-white relative"
+              className="w-full lg:w-[60%] bg-white relative"
               style={{ 
                 height: '400px',
                 position: 'relative',
                 overflow: 'hidden',
                 padding: 0,
                 margin: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+                flexShrink: 0
               }}
             >
               {heroImages.map((image, index) => (
@@ -218,17 +216,18 @@ export default function Home() {
                     margin: 0,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'flex-start'
                   }}
                 >
                   <img
                     src={image}
                     alt={`Imagen ${index + 1} - Corporación GRC`}
                     style={{ 
-                      width: '100%',
                       height: '100%',
+                      width: 'auto',
+                      maxWidth: '100%',
                       objectFit: 'contain',
-                      objectPosition: 'center',
+                      objectPosition: 'left center',
                       display: 'block',
                       margin: 0,
                       padding: 0
@@ -238,10 +237,10 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Mitad Derecha - Texto sincronizado con la imagen del carrusel (35% del ancho) */}
+            {/* Lado Derecho - Texto sincronizado (ocupa el resto del espacio) */}
             <div 
-              className="w-full lg:w-[35%] bg-white flex items-center justify-center border-l border-gray-200"
-              style={{ height: '400px', overflow: 'auto', position: 'relative', padding: '24px' }}
+              className="w-full lg:flex-1 bg-white flex items-center justify-center border-l border-gray-200"
+              style={{ height: '400px', overflow: 'auto', position: 'relative', padding: '24px', minWidth: '300px' }}
             >
               <div className="w-full" style={{ position: 'relative', maxHeight: '100%' }}>
                 {heroTexts.map((text, index) => (
