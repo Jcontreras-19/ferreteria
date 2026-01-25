@@ -181,15 +181,15 @@ export default function Home() {
             marginTop: '80px',
             marginBottom: 0,
             position: 'relative',
-            overflow: 'visible'
+            overflow: 'hidden'
           }}
         >
-          <div className="flex flex-col lg:flex-row w-full" style={{ minHeight: '400px', maxHeight: '450px' }}>
+          <div className="flex flex-col lg:flex-row w-full" style={{ height: '400px' }}>
             {/* Lado Izquierdo - Carrusel de Imágenes (45% del ancho) */}
             <div 
               className="w-full lg:w-[45%] bg-white relative"
               style={{ 
-                height: '400px',
+                height: '100%',
                 position: 'relative',
                 overflow: 'hidden',
                 padding: 0,
@@ -306,41 +306,59 @@ export default function Home() {
         <main className="flex-1 pt-2 pb-8">
 
 
-          {/* Carrusel de Productos Destacados */}
-          <section className="bg-gradient-to-br from-gray-100 via-slate-100 to-gray-100 py-6 md:py-8 border-t border-gray-200">
+          {/* Carrusel de Productos Destacados - Rediseño Moderno */}
+          <section className="bg-gray-900 py-12 md:py-16">
             <div className="container mx-auto px-4">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-1">
-                    Productos Destacados
-                  </h2>
-                  <p className="text-gray-600 font-medium text-sm">Los mejores productos para tus proyectos</p>
+              {/* Header centrado */}
+              <div className="text-center mb-10">
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-3">
+                  Productos Destacados
+                </h2>
+                <p className="text-gray-300 text-lg md:text-xl max-w-2xl mx-auto">
+                  Los mejores productos para tus proyectos
+                </p>
+                {/* Línea decorativa */}
+                <div className="w-24 h-1 bg-gradient-to-r from-transparent via-green-500 to-transparent mx-auto mt-4"></div>
+              </div>
+
+              {/* Controles de navegación centrados */}
+              <div className="flex items-center justify-center gap-3 mb-8">
+                <button
+                  onClick={prevSlide}
+                  className="p-2.5 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-all duration-300 border border-gray-700 hover:border-green-500 transform hover:scale-110 active:scale-95"
+                  aria-label="Anterior"
+                >
+                  <FiChevronLeft size={22} />
+                </button>
+                <div className="flex gap-1.5">
+                  {Array.from({ length: Math.ceil(featuredProducts.length / 4) }).map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentSlide(index * 4)}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        Math.floor(currentSlide / 4) === index
+                          ? 'w-6 bg-green-500'
+                          : 'w-1.5 bg-gray-600 hover:bg-gray-500'
+                      }`}
+                    />
+                  ))}
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={prevSlide}
-                    className="p-2 rounded-full bg-white/80 hover:bg-white text-gray-600 hover:text-green-600 transition-all duration-300 shadow-sm hover:shadow-md border border-gray-200 hover:border-green-300 transform hover:scale-105 active:scale-95"
-                    aria-label="Anterior"
-                  >
-                    <FiChevronLeft size={20} />
-                  </button>
-                  <button
-                    onClick={nextSlide}
-                    className="p-2 rounded-full bg-white/80 hover:bg-white text-gray-600 hover:text-green-600 transition-all duration-300 shadow-sm hover:shadow-md border border-gray-200 hover:border-green-300 transform hover:scale-105 active:scale-95"
-                    aria-label="Siguiente"
-                  >
-                    <FiChevronRight size={20} />
-                  </button>
-                </div>
+                <button
+                  onClick={nextSlide}
+                  className="p-2.5 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-all duration-300 border border-gray-700 hover:border-green-500 transform hover:scale-110 active:scale-95"
+                  aria-label="Siguiente"
+                >
+                  <FiChevronRight size={22} />
+                </button>
               </div>
 
             {loading ? (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
+              <div className="text-center py-16">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
                 <p className="text-gray-400 mt-4">Cargando productos...</p>
               </div>
             ) : featuredProducts.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-16">
                 <p className="text-gray-400">No hay productos disponibles</p>
               </div>
             ) : (
@@ -353,36 +371,21 @@ export default function Home() {
                   {featuredProducts.map((product, index) => (
                     <div key={product.id} className="w-full sm:w-1/2 lg:w-1/4 flex-shrink-0 px-3">
                       <div className="animate-fade-in transform transition-all duration-300 hover:scale-105" style={{ animationDelay: `${index * 100}ms` }}>
-                        <ProductCard product={product} />
+                        <ProductCard product={product} darkMode={true} />
                       </div>
                     </div>
-                  ))}
-                </div>
-                
-                {/* Indicadores del carrusel - Más sutiles */}
-                <div className="flex justify-center gap-1.5 mt-6">
-                  {Array.from({ length: Math.ceil(featuredProducts.length / 4) }).map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentSlide(index * 4)}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        Math.floor(currentSlide / 4) === index
-                          ? 'w-6 bg-green-500 opacity-80'
-                          : 'w-1.5 bg-gray-300 opacity-40 hover:opacity-60'
-                      }`}
-                    />
                   ))}
                 </div>
               </div>
             )}
 
-              <div className="text-center mt-8">
+              <div className="text-center mt-12">
                 <a
                   href="/productos"
-                  className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  className="inline-flex items-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white px-10 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border border-green-500/50"
                 >
                   Ver Todos los Productos
-                  <FiChevronRight className="group-hover:translate-x-1 transition-transform" />
+                  <FiChevronRight className="group-hover:translate-x-1 transition-transform" size={20} />
                 </a>
               </div>
             </div>

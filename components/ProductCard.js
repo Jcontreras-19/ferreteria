@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { FiEye } from 'react-icons/fi'
 import ProductModal from './ProductModal'
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, darkMode = false }) {
   const { addToCart } = useCart()
   const { isAuthenticated } = useAuth()
   const [showModal, setShowModal] = useState(false)
@@ -13,6 +13,122 @@ export default function ProductCard({ product }) {
 
   const handleAddToCart = () => {
     addToCart(product)
+  }
+
+  if (darkMode) {
+    return (
+      <>
+        <div className="bg-gray-800 rounded-2xl shadow-2xl hover:shadow-green-500/20 overflow-hidden transition-all duration-300 transform hover:-translate-y-3 border border-gray-700 hover:border-green-500/50 group">
+          {/* Imagen del producto */}
+          <div className="relative w-full h-52 bg-gradient-to-br from-gray-900 to-gray-800 group overflow-hidden">
+            {product.image && !imageError ? (
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                className="object-contain transition-all duration-500 group-hover:scale-110"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                unoptimized
+                onError={(e) => {
+                  console.error('Error cargando imagen:', product.image, e)
+                  setImageError(true)
+                }}
+                onLoad={() => {
+                  console.log('Imagen cargada exitosamente:', product.image)
+                }}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-800">
+                <div className="text-center">
+                  <div className="text-4xl mb-2">📦</div>
+                  <div className="text-xs text-gray-400">Sin imagen</div>
+                </div>
+              </div>
+            )}
+            {/* Overlay con efecto de luz en hover */}
+            <div className="absolute inset-0 bg-gradient-to-t from-green-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            {/* Botón de vista rápida */}
+            <button
+              onClick={() => setShowModal(true)}
+              className="absolute top-3 right-3 bg-gray-700 hover:bg-green-600 text-gray-300 hover:text-white p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl z-10 transform hover:scale-110 border border-gray-600"
+              title="Vista rápida"
+            >
+              <FiEye size={18} />
+            </button>
+          </div>
+
+          {/* Información del producto */}
+          <div className="p-6 bg-gray-800">
+            <h3 className="text-lg font-bold text-white mb-2 line-clamp-2 group-hover:text-green-400 transition-colors">
+              {product.name}
+            </h3>
+            {product.description && (
+              <p className="text-sm text-gray-400 mb-4 line-clamp-2 leading-relaxed">
+                {product.description}
+              </p>
+            )}
+            {product.category && (
+              <div className="flex items-center gap-1.5 mb-4">
+                <span className="text-xs font-semibold text-green-400 bg-green-500/20 px-3 py-1.5 rounded-full border border-green-500/30">
+                  {product.category}
+                </span>
+              </div>
+            )}
+            {isAuthenticated && (
+              <div className="flex items-center justify-between mb-3 pt-4 border-t border-gray-700">
+                <div>
+                  <p className="text-2xl font-bold text-green-400 mb-1">
+                    S/. {product.price.toFixed(2)}
+                  </p>
+                </div>
+                <button
+                  onClick={handleAddToCart}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white px-6 py-2.5 rounded-lg transition-all duration-300 font-semibold shadow-lg hover:shadow-green-500/50 transform hover:scale-105 active:scale-95"
+                >
+                  Agregar
+                </button>
+              </div>
+            )}
+            {product.stock !== undefined && (
+              <div className="mt-3 pt-3 border-t border-gray-700">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-400">Stock:</span>
+                  <span
+                    className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold shadow-md ${
+                      product.stock > 20
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                        : product.stock > 10
+                        ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                        : product.stock > 0
+                        ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                        : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                    }`}
+                  >
+                    {product.stock > 0 ? (
+                      <>
+                        <span className="w-2 h-2 rounded-full mr-1.5 bg-current animate-pulse"></span>
+                        {product.stock} unidades
+                      </>
+                    ) : (
+                      'Agotado'
+                    )}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Modal de detalles del producto */}
+        {showModal && (
+          <ProductModal
+            product={product}
+            onClose={() => setShowModal(false)}
+            onAddToCart={handleAddToCart}
+          />
+        )}
+      </>
+    )
   }
 
   return (
