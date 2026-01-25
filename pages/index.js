@@ -141,28 +141,57 @@ export default function Home() {
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
         <Header />
         {/* Hero Section - Banner con imagen completa - Ocupa TODO el ancho de la pantalla */}
-        <section className="relative bg-white overflow-hidden w-screen" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)' }}>
+        <section 
+          className="bg-white overflow-hidden" 
+          style={{ 
+            width: '100vw',
+            marginLeft: 'calc(50% - 50vw)',
+            marginRight: 'calc(50% - 50vw)',
+            padding: 0,
+            marginTop: 0,
+            marginBottom: 0
+          }}
+        >
           {/* Carrusel de Imágenes - Ocupa todo el ancho con altura fija de 300px */}
-          <div className="relative w-full" style={{ height: '300px', overflow: 'hidden' }}>
+          <div 
+            style={{ 
+              width: '100vw', 
+              height: '300px', 
+              overflow: 'hidden', 
+              margin: 0, 
+              padding: 0,
+              position: 'relative'
+            }}
+          >
             {heroImages.map((image, index) => (
               <div
                 key={index}
-                className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${
+                className={`transition-opacity duration-1000 ${
                   index === currentHeroImage 
                     ? 'opacity-100 z-10' 
                     : 'opacity-0 z-0 pointer-events-none'
                 }`}
+                style={{ 
+                  position: 'absolute',
+                  width: '100vw', 
+                  height: '300px', 
+                  top: 0, 
+                  left: 0, 
+                  margin: 0, 
+                  padding: 0 
+                }}
               >
                 <img
                   src={image}
                   alt={`Imagen ${index + 1} - Corporación GRC`}
-                  className="w-full h-full"
                   style={{ 
-                    width: '100%',
-                    height: '100%',
+                    width: '100vw',
+                    height: '300px',
                     objectFit: 'contain',
                     objectPosition: 'center',
-                    display: 'block'
+                    display: 'block',
+                    margin: 0,
+                    padding: 0
                   }}
                 />
               </div>
