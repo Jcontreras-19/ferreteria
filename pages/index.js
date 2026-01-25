@@ -193,7 +193,10 @@ export default function Home() {
                 position: 'relative',
                 overflow: 'hidden',
                 padding: 0,
-                margin: 0
+                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
             >
               {heroImages.map((image, index) => (
@@ -212,7 +215,10 @@ export default function Home() {
                     right: 0,
                     bottom: 0,
                     padding: 0,
-                    margin: 0
+                    margin: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
                   <img
@@ -221,7 +227,7 @@ export default function Home() {
                     style={{ 
                       width: '100%',
                       height: '100%',
-                      objectFit: 'cover',
+                      objectFit: 'contain',
                       objectPosition: 'center',
                       display: 'block',
                       margin: 0,
@@ -234,10 +240,10 @@ export default function Home() {
 
             {/* Mitad Derecha - Texto sincronizado con la imagen del carrusel (35% del ancho) */}
             <div 
-              className="w-full lg:w-[35%] bg-white p-8 md:p-10 flex items-center justify-center border-l border-gray-200"
-              style={{ height: '400px', overflow: 'visible', position: 'relative' }}
+              className="w-full lg:w-[35%] bg-white flex items-center justify-center border-l border-gray-200"
+              style={{ height: '400px', overflow: 'auto', position: 'relative', padding: '24px' }}
             >
-              <div className="w-full max-w-sm" style={{ position: 'relative' }}>
+              <div className="w-full" style={{ position: 'relative', maxHeight: '100%' }}>
                 {heroTexts.map((text, index) => (
                   <div
                     key={index}
@@ -247,34 +253,36 @@ export default function Home() {
                         : 'opacity-0 translate-y-4 absolute pointer-events-none hidden'
                     }`}
                     style={{
-                      width: '100%'
+                      width: '100%',
+                      padding: 0,
+                      margin: 0
                     }}
                   >
-                    <div className="space-y-5">
+                    <div className="space-y-4">
                       {/* Subtítulo */}
-                      <p className="text-gray-500 text-xs font-semibold uppercase tracking-widest mb-2" style={{ letterSpacing: '0.15em' }}>
+                      <p className="text-gray-500 text-xs font-semibold uppercase tracking-widest" style={{ letterSpacing: '0.15em', margin: 0, padding: 0 }}>
                         {text.subtitle}
                       </p>
                       
                       {/* Título principal */}
-                      <h2 className="text-gray-900 text-2xl md:text-3xl font-bold leading-tight mb-3" style={{ lineHeight: '1.3', fontWeight: '700' }}>
+                      <h2 className="text-gray-900 text-2xl md:text-3xl font-bold leading-tight" style={{ lineHeight: '1.3', fontWeight: '700', margin: 0, padding: 0 }}>
                         {text.title}
                       </h2>
                       
                       {/* Línea decorativa */}
-                      <div className="w-12 h-0.5 bg-gradient-to-r from-green-600 to-emerald-600 mb-4"></div>
+                      <div className="w-12 h-0.5 bg-gradient-to-r from-green-600 to-emerald-600" style={{ margin: '8px 0' }}></div>
                       
                       {/* Descripción */}
-                      <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-5" style={{ lineHeight: '1.6' }}>
+                      <p className="text-gray-600 text-sm md:text-base leading-relaxed" style={{ lineHeight: '1.6', margin: 0, padding: 0 }}>
                         {text.description}
                       </p>
                       
                       {/* Características */}
-                      <div className="space-y-2.5 mb-6">
+                      <div className="space-y-2">
                         {text.features.map((feature, idx) => (
-                          <div key={idx} className="flex items-start gap-3">
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-600 flex-shrink-0 mt-2"></div>
-                            <span className="text-gray-700 text-sm md:text-base leading-relaxed" style={{ lineHeight: '1.5' }}>
+                          <div key={idx} className="flex items-start gap-2.5" style={{ margin: 0, padding: 0 }}>
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-600 flex-shrink-0" style={{ marginTop: '6px' }}></div>
+                            <span className="text-gray-700 text-sm md:text-base" style={{ lineHeight: '1.5', margin: 0, padding: 0 }}>
                               {feature}
                             </span>
                           </div>
@@ -285,6 +293,7 @@ export default function Home() {
                       <button 
                         onClick={() => window.location.href = '/productos'}
                         className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.02] text-sm md:text-base"
+                        style={{ marginTop: '16px' }}
                       >
                         Ver Productos
                       </button>
