@@ -185,9 +185,9 @@ export default function Home() {
           }}
         >
           <div className="flex flex-col lg:flex-row w-full" style={{ minHeight: '400px', maxHeight: '450px' }}>
-            {/* Lado Izquierdo - Carrusel de Imágenes (35% del ancho) */}
+            {/* Lado Izquierdo - Carrusel de Imágenes (40% del ancho) */}
             <div 
-              className="w-full lg:w-[35%] bg-white relative"
+              className="w-full lg:w-[40%] bg-white relative"
               style={{ 
                 height: '400px',
                 position: 'relative',
@@ -237,9 +237,9 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Lado Derecho - Texto sincronizado (65% del ancho) */}
+            {/* Lado Derecho - Texto sincronizado (60% del ancho) */}
             <div 
-              className="w-full lg:w-[65%] bg-white flex items-center justify-center border-l border-gray-200"
+              className="w-full lg:w-[60%] bg-white flex items-center justify-center border-l border-gray-200"
               style={{ height: '400px', overflow: 'auto', position: 'relative', padding: '24px' }}
             >
               <div className="w-full" style={{ position: 'relative', maxHeight: '100%' }}>
