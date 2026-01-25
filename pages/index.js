@@ -140,7 +140,7 @@ export default function Home() {
       </Head>
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white" style={{ overflowX: 'hidden' }}>
         <Header />
-        {/* Hero Section - Banner con imagen completa - Ocupa TODO el ancho de la pantalla */}
+        {/* Hero Section - Banner con imagen completa - Ocupa 100% ancho y alto */}
         <section 
           className="bg-white overflow-hidden" 
           style={{ 
@@ -154,11 +154,13 @@ export default function Home() {
             position: 'relative'
           }}
         >
-          {/* Carrusel de Imágenes - Ocupa todo el ancho con altura fija de 300px */}
+          {/* Carrusel de Imágenes - Ocupa 100% ancho y alto */}
           <div 
             style={{ 
               width: '100%', 
-              height: '300px', 
+              height: '100vh', 
+              minHeight: '500px',
+              maxHeight: '600px',
               overflow: 'hidden', 
               margin: 0, 
               padding: 0,
@@ -176,7 +178,7 @@ export default function Home() {
                 style={{ 
                   position: 'absolute',
                   width: '100%', 
-                  height: '300px', 
+                  height: '100%', 
                   top: 0, 
                   left: 0, 
                   margin: 0, 
@@ -188,8 +190,8 @@ export default function Home() {
                   alt={`Imagen ${index + 1} - Corporación GRC`}
                   style={{ 
                     width: '100%',
-                    height: '300px',
-                    objectFit: 'contain',
+                    height: '100%',
+                    objectFit: 'cover',
                     objectPosition: 'center',
                     display: 'block',
                     margin: 0,
