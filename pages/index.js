@@ -142,7 +142,7 @@ export default function Home() {
         <Header />
         <main className="flex-1 pt-20 pb-8">
           {/* Hero Section - Banner con imagen completa - Ocupa todo el ancho */}
-          <section className="relative bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 overflow-hidden">
+          <section className="relative bg-white overflow-hidden">
             {/* Carrusel de Imágenes - Ocupa todo el ancho y muestra imagen completa */}
             <div className="relative w-full" style={{ minHeight: '300px', maxHeight: '500px' }}>
               <div className="relative w-full h-full">
