@@ -226,8 +226,12 @@ export default function Home() {
                       objectPosition: 'center',
                       display: 'block',
                       margin: 0,
-                      padding: 0
+                      padding: 0,
+                      imageRendering: 'high-quality',
+                      imageRendering: '-webkit-optimize-contrast'
                     }}
+                    loading="eager"
+                    decoding="async"
                   />
                 </div>
               ))}
@@ -299,18 +303,18 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <main className="flex-1 pt-4 pb-8">
+        <main className="flex-1 pt-2 pb-8">
 
 
           {/* Carrusel de Productos Destacados */}
-          <section className="bg-gradient-to-b from-gray-100 via-slate-50 to-gray-100 py-10 md:py-12 border-t border-gray-200">
+          <section className="bg-gradient-to-b from-gray-100 via-slate-50 to-gray-100 py-6 md:py-8 border-t border-gray-200">
             <div className="container mx-auto px-4">
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-1">
                     Productos Destacados
                   </h2>
-                  <p className="text-gray-600 font-medium">Los mejores productos para tus proyectos</p>
+                  <p className="text-gray-600 font-medium text-sm">Los mejores productos para tus proyectos</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -355,16 +359,16 @@ export default function Home() {
                   ))}
                 </div>
                 
-                {/* Indicadores del carrusel */}
-                <div className="flex justify-center gap-2 mt-8">
+                {/* Indicadores del carrusel - Más sutiles */}
+                <div className="flex justify-center gap-1.5 mt-6">
                   {Array.from({ length: Math.ceil(featuredProducts.length / 4) }).map((_, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentSlide(index * 4)}
-                      className={`h-2 rounded-full transition-all duration-300 hover:scale-125 ${
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
                         Math.floor(currentSlide / 4) === index
-                          ? 'w-8 bg-green-600 shadow-md'
-                          : 'w-2 bg-gray-400 hover:bg-gray-500'
+                          ? 'w-6 bg-green-500 opacity-80'
+                          : 'w-1.5 bg-gray-300 opacity-40 hover:opacity-60'
                       }`}
                     />
                   ))}
