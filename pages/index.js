@@ -170,7 +170,7 @@ export default function Home() {
         <Header />
         {/* Hero Section - Banner dividido en 2 mitades */}
         <section 
-          className="bg-gradient-to-br from-green-50 to-emerald-100" 
+          className="bg-white" 
           style={{ 
             width: '100vw',
             maxWidth: '100vw',
@@ -185,9 +185,9 @@ export default function Home() {
           }}
         >
           <div className="flex flex-col lg:flex-row w-full" style={{ minHeight: '550px' }}>
-            {/* Mitad Izquierda - Carrusel de Imágenes */}
+            {/* Mitad Izquierda - Carrusel de Imágenes (65% del ancho) */}
             <div 
-              className="w-full lg:w-1/2 bg-gradient-to-br from-green-600 to-emerald-700 relative"
+              className="w-full lg:w-[65%] bg-white relative"
               style={{ 
                 minHeight: '550px',
                 height: '100%',
@@ -245,12 +245,12 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Mitad Derecha - Texto sincronizado con la imagen del carrusel */}
+            {/* Mitad Derecha - Texto sincronizado con la imagen del carrusel (35% del ancho) */}
             <div 
-              className="w-full lg:w-1/2 bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 p-8 md:p-12 flex items-center justify-center"
+              className="w-full lg:w-[35%] bg-gradient-to-b from-gray-50 to-white p-8 md:p-10 flex items-center justify-center border-l border-gray-200"
               style={{ minHeight: '550px', overflow: 'visible', position: 'relative' }}
             >
-              <div className="w-full max-w-lg" style={{ position: 'relative', paddingTop: '0', paddingBottom: '0' }}>
+              <div className="w-full max-w-md" style={{ position: 'relative', paddingTop: '0', paddingBottom: '0' }}>
                 {heroTexts.map((text, index) => (
                   <div
                     key={index}
@@ -269,26 +269,29 @@ export default function Home() {
                   >
                     <div className="space-y-6">
                       {/* Subtítulo */}
-                      <p className="text-green-200 text-sm md:text-base font-semibold uppercase tracking-wider" style={{ marginTop: '0', paddingTop: '0' }}>
+                      <p className="text-gray-500 text-xs md:text-sm font-semibold uppercase tracking-widest" style={{ marginTop: '0', paddingTop: '0', letterSpacing: '0.1em' }}>
                         {text.subtitle}
                       </p>
                       
                       {/* Título principal */}
-                      <h2 className="text-white text-4xl md:text-5xl font-bold leading-tight" style={{ marginTop: '0', paddingTop: '0', lineHeight: '1.1' }}>
+                      <h2 className="text-gray-900 text-3xl md:text-4xl font-bold leading-tight" style={{ marginTop: '0', paddingTop: '0', lineHeight: '1.2', fontWeight: '700' }}>
                         {text.title}
                       </h2>
                       
+                      {/* Línea decorativa */}
+                      <div className="w-16 h-1 bg-gradient-to-r from-green-600 to-emerald-600"></div>
+                      
                       {/* Descripción */}
-                      <p className="text-green-100 text-lg md:text-xl leading-relaxed">
+                      <p className="text-gray-600 text-base md:text-lg leading-relaxed font-light">
                         {text.description}
                       </p>
                       
                       {/* Características */}
-                      <div className="space-y-3 pt-4">
+                      <div className="space-y-3 pt-2">
                         {text.features.map((feature, idx) => (
-                          <div key={idx} className="flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-white flex-shrink-0"></div>
-                            <span className="text-white text-base md:text-lg">
+                          <div key={idx} className="flex items-start gap-3">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-600 flex-shrink-0 mt-2"></div>
+                            <span className="text-gray-700 text-sm md:text-base font-medium leading-relaxed">
                               {feature}
                             </span>
                           </div>
@@ -298,7 +301,7 @@ export default function Home() {
                       {/* Botón CTA */}
                       <button 
                         onClick={() => window.location.href = '/productos'}
-                        className="mt-6 w-full bg-white text-green-600 font-bold py-4 px-8 rounded-xl hover:bg-green-50 transition-all duration-300 transform hover:scale-105 shadow-lg"
+                        className="mt-8 w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-3.5 px-8 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.02]"
                       >
                         Ver Productos
                       </button>
