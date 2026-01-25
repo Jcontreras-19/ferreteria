@@ -213,21 +213,17 @@ export default function Home() {
                     right: 0,
                     bottom: 0,
                     padding: 0,
-                    margin: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-start'
+                    margin: 0
                   }}
                 >
                   <img
                     src={image}
                     alt={`Imagen ${index + 1} - Corporación GRC`}
                     style={{ 
+                      width: '100%',
                       height: '100%',
-                      width: 'auto',
-                      maxWidth: '100%',
-                      objectFit: 'contain',
-                      objectPosition: 'left center',
+                      objectFit: 'cover',
+                      objectPosition: 'center',
                       display: 'block',
                       margin: 0,
                       padding: 0
