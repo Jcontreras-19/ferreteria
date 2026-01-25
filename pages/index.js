@@ -143,27 +143,26 @@ export default function Home() {
         <main className="flex-1 pt-20 pb-8">
           {/* Hero Section - Banner con imagen completa - Ocupa todo el ancho */}
           <section className="relative bg-white overflow-hidden w-full">
-            {/* Carrusel de Imágenes - Ocupa todo el ancho y muestra imagen completa */}
-            <div className="relative w-full" style={{ maxHeight: '300px', overflow: 'hidden' }}>
+            {/* Carrusel de Imágenes - Ocupa todo el ancho con altura fija de 300px */}
+            <div className="relative w-full" style={{ height: '300px', overflow: 'hidden' }}>
               {heroImages.map((image, index) => (
                 <div
                   key={index}
-                  className={`w-full transition-opacity duration-1000 ${
+                  className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${
                     index === currentHeroImage 
-                      ? 'opacity-100 relative z-10' 
-                      : 'opacity-0 absolute top-0 left-0 w-full z-0 pointer-events-none'
+                      ? 'opacity-100 z-10' 
+                      : 'opacity-0 z-0 pointer-events-none'
                   }`}
                 >
                   <img
                     src={image}
                     alt={`Imagen ${index + 1} - Corporación GRC`}
-                    className="w-full h-auto block"
+                    className="w-full h-full object-cover"
                     style={{ 
                       width: '100%',
-                      height: 'auto',
-                      maxWidth: '100%',
-                      maxHeight: '300px',
-                      objectFit: 'contain'
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block'
                     }}
                   />
                 </div>
