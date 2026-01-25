@@ -190,11 +190,9 @@ export default function Home() {
               className="w-full lg:w-1/2 bg-gradient-to-br from-green-600 to-emerald-700 relative"
               style={{ 
                 minHeight: '550px',
+                height: '100%',
                 position: 'relative',
-                overflow: 'visible',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+                overflow: 'hidden'
               }}
             >
               {heroImages.map((image, index) => (
@@ -208,26 +206,25 @@ export default function Home() {
                   style={{
                     width: '100%',
                     height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '20px',
-                    boxSizing: 'border-box',
                     top: 0,
-                    left: 0
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    padding: 0,
+                    margin: 0
                   }}
                 >
                   <img
                     src={image}
                     alt={`Imagen ${index + 1} - Corporación GRC`}
                     style={{ 
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      width: 'auto',
-                      height: 'auto',
-                      objectFit: 'contain',
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
                       objectPosition: 'center',
-                      display: 'block'
+                      display: 'block',
+                      margin: 0,
+                      padding: 0
                     }}
                   />
                 </div>
