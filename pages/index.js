@@ -142,28 +142,30 @@ export default function Home() {
         <Header />
         <main className="flex-1 pt-20 pb-8">
           {/* Hero Section - Banner con imagen completa - Ocupa todo el ancho */}
-          <section className="relative bg-white overflow-hidden">
+          <section className="relative bg-white overflow-hidden w-full">
             {/* Carrusel de Imágenes - Ocupa todo el ancho y muestra imagen completa */}
-            <div className="relative w-full" style={{ minHeight: '300px', maxHeight: '500px' }}>
-              <div className="relative w-full h-full">
-                {heroImages.map((image, index) => (
-                  <div
-                    key={index}
-                    className={`absolute inset-0 transition-opacity duration-1000 ${
-                      index === currentHeroImage ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                    }`}
-                  >
-                    <div className="relative w-full h-full flex items-center justify-center">
-                      <img
-                        src={image}
-                        alt={`Imagen ${index + 1} - Corporación GRC`}
-                        className="w-full h-auto object-contain"
-                        style={{ maxHeight: '500px' }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="relative w-full">
+              {heroImages.map((image, index) => (
+                <div
+                  key={index}
+                  className={`w-full transition-opacity duration-1000 ${
+                    index === currentHeroImage 
+                      ? 'opacity-100 relative z-10' 
+                      : 'opacity-0 absolute top-0 left-0 w-full z-0 pointer-events-none'
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`Imagen ${index + 1} - Corporación GRC`}
+                    className="w-full h-auto block"
+                    style={{ 
+                      width: '100%',
+                      height: 'auto',
+                      maxWidth: '100%'
+                    }}
+                  />
+                </div>
+              ))}
             </div>
           </section>
 
