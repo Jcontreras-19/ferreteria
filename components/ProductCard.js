@@ -18,11 +18,11 @@ export default function ProductCard({ product, darkMode = false }) {
   if (darkMode) {
     return (
       <>
-        <div className="bg-gray-800 rounded-3xl shadow-2xl hover:shadow-green-500/30 overflow-hidden transition-all duration-500 transform hover:-translate-y-4 border border-gray-700/50 hover:border-green-500/60 group relative">
+        <div className="bg-gradient-to-br from-slate-700 via-gray-700 to-slate-700 rounded-3xl shadow-2xl hover:shadow-green-500/40 overflow-hidden transition-all duration-500 transform hover:-translate-y-4 border border-slate-600/60 hover:border-green-500/80 group relative">
           {/* Badge de categoría flotante */}
           {product.category && (
             <div className="absolute top-4 left-4 z-20">
-              <div className="flex items-center gap-1.5 bg-gray-900/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-green-500/30">
+              <div className="flex items-center gap-1.5 bg-gray-900/95 backdrop-blur-sm px-3 py-1.5 rounded-full border border-green-500/50 shadow-lg">
                 <FiTag size={12} className="text-green-400" />
                 <span className="text-xs font-semibold text-green-400">
                   {product.category}
@@ -32,7 +32,7 @@ export default function ProductCard({ product, darkMode = false }) {
           )}
 
           {/* Imagen del producto con overlay mejorado */}
-          <div className="relative w-full h-56 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 group overflow-hidden">
+          <div className="relative w-full h-56 bg-gradient-to-br from-slate-800 via-gray-800 to-slate-800 group overflow-hidden">
             {product.image && !imageError ? (
               <Image
                 src={product.image}
@@ -90,7 +90,7 @@ export default function ProductCard({ product, darkMode = false }) {
           </div>
 
           {/* Información del producto - Diseño mejorado */}
-          <div className="p-6 bg-gray-800">
+          <div className="p-6 bg-gradient-to-br from-slate-700 via-gray-700 to-slate-700">
             {/* Título con mejor jerarquía */}
             <h3 className="text-xl font-bold text-white mb-2 line-clamp-2 group-hover:text-green-400 transition-colors leading-tight">
               {product.name}
