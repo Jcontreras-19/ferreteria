@@ -307,29 +307,29 @@ export default function Home() {
 
 
           {/* Carrusel de Productos Destacados */}
-          <section className="bg-gradient-to-b from-gray-100 via-slate-50 to-gray-100 py-6 md:py-8 border-t border-gray-200">
+          <section className="bg-gradient-to-b from-gray-200 via-gray-200 to-gray-200 py-6 md:py-8 border-t border-gray-300">
             <div className="container mx-auto px-4">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-1">
                     Productos Destacados
                   </h2>
-                  <p className="text-gray-600 font-medium text-sm">Los mejores productos para tus proyectos</p>
+                  <p className="text-gray-700 font-medium text-sm">Los mejores productos para tus proyectos</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={prevSlide}
-                    className="p-3 rounded-full bg-green-600 hover:bg-green-700 text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95"
+                    className="p-2 rounded-full bg-white/80 hover:bg-white text-gray-600 hover:text-green-600 transition-all duration-300 shadow-sm hover:shadow-md border border-gray-200 hover:border-green-300 transform hover:scale-105 active:scale-95"
                     aria-label="Anterior"
                   >
-                    <FiChevronLeft size={24} />
+                    <FiChevronLeft size={20} />
                   </button>
                   <button
                     onClick={nextSlide}
-                    className="p-3 rounded-full bg-green-600 hover:bg-green-700 text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95"
+                    className="p-2 rounded-full bg-white/80 hover:bg-white text-gray-600 hover:text-green-600 transition-all duration-300 shadow-sm hover:shadow-md border border-gray-200 hover:border-green-300 transform hover:scale-105 active:scale-95"
                     aria-label="Siguiente"
                   >
-                    <FiChevronRight size={24} />
+                    <FiChevronRight size={20} />
                   </button>
                 </div>
               </div>
