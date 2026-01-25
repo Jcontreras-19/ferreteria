@@ -140,9 +140,9 @@ export default function Home() {
       </Head>
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white" style={{ overflowX: 'hidden' }}>
         <Header />
-        {/* Hero Section - Banner con imagen completa - Ocupa 100% ancho y alto */}
+        {/* Hero Section - Banner dividido en 2 mitades */}
         <section 
-          className="bg-white overflow-hidden" 
+          className="bg-gradient-to-br from-green-50 to-emerald-100 overflow-hidden" 
           style={{ 
             width: '100vw',
             maxWidth: '100vw',
@@ -154,81 +154,123 @@ export default function Home() {
             position: 'relative'
           }}
         >
-          {/* Carrusel de Imágenes - Ocupa 100% ancho y alto */}
-          <div 
-            style={{ 
-              width: '100%', 
-              height: '100vh', 
-              minHeight: '500px',
-              maxHeight: '600px',
-              overflow: 'hidden', 
-              margin: 0, 
-              padding: 0,
-              position: 'relative'
-            }}
-          >
-            {heroImages.map((image, index) => (
-              <div
-                key={index}
-                className={`transition-opacity duration-1000 ${
-                  index === currentHeroImage 
-                    ? 'opacity-100 z-10' 
-                    : 'opacity-0 z-0 pointer-events-none'
-                }`}
-                style={{ 
-                  position: 'absolute',
-                  width: '100%', 
-                  height: '100%', 
-                  top: 0, 
-                  left: 0, 
-                  margin: 0, 
-                  padding: 0 
-                }}
-              >
-                <img
-                  src={image}
-                  alt={`Imagen ${index + 1} - Corporación GRC`}
-                  style={{ 
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    objectPosition: 'center',
-                    display: 'block',
-                    margin: 0,
-                    padding: 0
-                  }}
-                />
+          <div className="flex flex-col lg:flex-row w-full" style={{ minHeight: '500px', maxHeight: '600px' }}>
+            {/* Mitad Izquierda - Carrusel de Imágenes */}
+            <div 
+              className="w-full lg:w-1/2 bg-white relative overflow-hidden"
+              style={{ 
+                height: '500px',
+                position: 'relative'
+              }}
+            >
+              {heroImages.map((image, index) => (
+                <div
+                  key={index}
+                  className={`absolute inset-0 transition-opacity duration-1000 ${
+                    index === currentHeroImage 
+                      ? 'opacity-100 z-10' 
+                      : 'opacity-0 z-0 pointer-events-none'
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`Imagen ${index + 1} - Corporación GRC`}
+                    className="w-full h-full object-contain"
+                    style={{ 
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      objectPosition: 'center',
+                      display: 'block'
+                    }}
+                  />
+                </div>
+              ))}
+              {/* Indicadores del carrusel */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
+                {heroImages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentHeroImage(index)}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      index === currentHeroImage 
+                        ? 'w-8 bg-green-600' 
+                        : 'w-2 bg-gray-400'
+                    }`}
+                  />
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* Mitad Derecha - Categorías en Círculos */}
+            <div 
+              className="w-full lg:w-1/2 bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 p-8 md:p-12 flex items-center justify-center"
+              style={{ height: '500px' }}
+            >
+              <div className="w-full max-w-2xl">
+                <h2 className="text-white text-3xl md:text-4xl font-bold mb-8 text-center">
+                  Nuestras Categorías
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                  {categories.slice(0, 6).map((category, index) => {
+                    const config = categoryConfig[category] || categoryConfig['Otros']
+                    const Icon = config.icon
+                    return (
+                      <button
+                        key={category}
+                        onClick={() => goToCategory(category)}
+                        className="group flex flex-col items-center justify-center p-6 bg-white/10 backdrop-blur-sm rounded-2xl hover:bg-white/20 transition-all duration-300 transform hover:scale-110 hover:shadow-2xl"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br ${config.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                          <Icon className="text-white" size={32} />
+                        </div>
+                        <span className="text-white text-sm md:text-base font-semibold text-center group-hover:text-green-200 transition-colors">
+                          {category.length > 15 ? `${category.substring(0, 15)}...` : category}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+                {categories.length === 0 && (
+                  <div className="text-center text-white/80">
+                    <p>Cargando categorías...</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </section>
         <main className="flex-1 pt-8 pb-8">
 
 
           {/* Carrusel de Productos Destacados */}
-          <section className="bg-gradient-to-br from-gray-50 via-green-50 to-emerald-50 py-12 md:py-16">
+          <section className="bg-gradient-to-br from-white via-green-50 to-emerald-50 py-12 md:py-16">
             <div className="container mx-auto px-4">
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-800">
-                  Productos Destacados
-                </h2>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={prevSlide}
-                  className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
-                  aria-label="Anterior"
-                >
-                  <FiChevronLeft size={24} />
-                </button>
-                <button
-                  onClick={nextSlide}
-                  className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
-                  aria-label="Siguiente"
-                >
-                  <FiChevronRight size={24} />
-                </button>
+                <div>
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
+                    Productos Destacados
+                  </h2>
+                  <p className="text-gray-600">Los mejores productos para tus proyectos</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={prevSlide}
+                    className="p-3 rounded-full bg-green-600 hover:bg-green-700 text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110"
+                    aria-label="Anterior"
+                  >
+                    <FiChevronLeft size={24} />
+                  </button>
+                  <button
+                    onClick={nextSlide}
+                    className="p-3 rounded-full bg-green-600 hover:bg-green-700 text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110"
+                    aria-label="Siguiente"
+                  >
+                    <FiChevronRight size={24} />
+                  </button>
+                </div>
               </div>
-            </div>
 
             {loading ? (
               <div className="text-center py-12">
