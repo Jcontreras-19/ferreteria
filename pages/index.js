@@ -140,36 +140,36 @@ export default function Home() {
       </Head>
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
         <Header />
-        <main className="flex-1 pt-20 pb-8">
-          {/* Hero Section - Banner con imagen completa - Ocupa todo el ancho */}
-          <section className="relative bg-white overflow-hidden w-full">
-            {/* Carrusel de Imágenes - Ocupa todo el ancho con altura fija de 300px */}
-            <div className="relative w-full" style={{ height: '300px', overflow: 'hidden' }}>
-              {heroImages.map((image, index) => (
-                <div
-                  key={index}
-                  className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${
-                    index === currentHeroImage 
-                      ? 'opacity-100 z-10' 
-                      : 'opacity-0 z-0 pointer-events-none'
-                  }`}
-                >
-                  <img
-                    src={image}
-                    alt={`Imagen ${index + 1} - Corporación GRC`}
-                    className="w-full h-full"
-                    style={{ 
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      objectPosition: 'center',
-                      display: 'block'
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          </section>
+        {/* Hero Section - Banner con imagen completa - Ocupa TODO el ancho de la pantalla */}
+        <section className="relative bg-white overflow-hidden w-screen" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)' }}>
+          {/* Carrusel de Imágenes - Ocupa todo el ancho con altura fija de 300px */}
+          <div className="relative w-full" style={{ height: '300px', overflow: 'hidden' }}>
+            {heroImages.map((image, index) => (
+              <div
+                key={index}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${
+                  index === currentHeroImage 
+                    ? 'opacity-100 z-10' 
+                    : 'opacity-0 z-0 pointer-events-none'
+                }`}
+              >
+                <img
+                  src={image}
+                  alt={`Imagen ${index + 1} - Corporación GRC`}
+                  className="w-full h-full"
+                  style={{ 
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    objectPosition: 'center',
+                    display: 'block'
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+        <main className="flex-1 pt-8 pb-8">
 
 
           {/* Carrusel de Productos Destacados */}
