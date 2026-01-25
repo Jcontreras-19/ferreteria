@@ -170,26 +170,31 @@ export default function Home() {
         <Header />
         {/* Hero Section - Banner dividido en 2 mitades */}
         <section 
-          className="bg-gradient-to-br from-green-50 to-emerald-100 overflow-hidden" 
+          className="bg-gradient-to-br from-green-50 to-emerald-100" 
           style={{ 
             width: '100vw',
             maxWidth: '100vw',
             marginLeft: 'calc((100% - 100vw) / 2)',
             marginRight: 'calc((100% - 100vw) / 2)',
-            padding: 0,
+            paddingTop: '100px',
+            paddingBottom: '20px',
             marginTop: 0,
             marginBottom: 0,
-            position: 'relative'
+            position: 'relative',
+            overflow: 'visible'
           }}
         >
-          <div className="flex flex-col lg:flex-row w-full" style={{ minHeight: '500px', maxHeight: '600px' }}>
+          <div className="flex flex-col lg:flex-row w-full" style={{ minHeight: '550px' }}>
             {/* Mitad Izquierda - Carrusel de Imágenes */}
             <div 
               className="w-full lg:w-1/2 bg-gradient-to-br from-green-600 to-emerald-700 relative"
               style={{ 
-                height: '500px',
+                minHeight: '550px',
                 position: 'relative',
-                overflow: 'hidden'
+                overflow: 'visible',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
             >
               {heroImages.map((image, index) => (
@@ -206,7 +211,10 @@ export default function Home() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: '0'
+                    padding: '20px',
+                    boxSizing: 'border-box',
+                    top: 0,
+                    left: 0
                   }}
                 >
                   <img
@@ -225,7 +233,7 @@ export default function Home() {
                 </div>
               ))}
               {/* Indicadores del carrusel */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
+              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 flex gap-2 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full">
                 {heroImages.map((_, index) => (
                   <button
                     key={index}
@@ -243,9 +251,9 @@ export default function Home() {
             {/* Mitad Derecha - Texto sincronizado con la imagen del carrusel */}
             <div 
               className="w-full lg:w-1/2 bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 p-8 md:p-12 flex items-center justify-center"
-              style={{ height: '500px' }}
+              style={{ minHeight: '550px', overflow: 'visible', position: 'relative' }}
             >
-              <div className="w-full max-w-lg">
+              <div className="w-full max-w-lg" style={{ position: 'relative', paddingTop: '0', paddingBottom: '0' }}>
                 {heroTexts.map((text, index) => (
                   <div
                     key={index}
@@ -254,15 +262,22 @@ export default function Home() {
                         ? 'opacity-100 translate-y-0 block' 
                         : 'opacity-0 translate-y-4 absolute pointer-events-none hidden'
                     }`}
+                    style={{
+                      width: '100%',
+                      paddingTop: '0',
+                      paddingBottom: '0',
+                      marginTop: '0',
+                      marginBottom: '0'
+                    }}
                   >
                     <div className="space-y-6">
                       {/* Subtítulo */}
-                      <p className="text-green-200 text-sm md:text-base font-semibold uppercase tracking-wider">
+                      <p className="text-green-200 text-sm md:text-base font-semibold uppercase tracking-wider" style={{ marginTop: '0', paddingTop: '0' }}>
                         {text.subtitle}
                       </p>
                       
                       {/* Título principal */}
-                      <h2 className="text-white text-4xl md:text-5xl font-bold leading-tight">
+                      <h2 className="text-white text-4xl md:text-5xl font-bold leading-tight" style={{ marginTop: '0', paddingTop: '0', lineHeight: '1.1' }}>
                         {text.title}
                       </h2>
                       
@@ -275,7 +290,7 @@ export default function Home() {
                       <div className="space-y-3 pt-4">
                         {text.features.map((feature, idx) => (
                           <div key={idx} className="flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-white"></div>
+                            <div className="w-2 h-2 rounded-full bg-white flex-shrink-0"></div>
                             <span className="text-white text-base md:text-lg">
                               {feature}
                             </span>
