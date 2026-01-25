@@ -299,30 +299,30 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <main className="flex-1 pt-8 pb-8">
+        <main className="flex-1 pt-4 pb-8">
 
 
           {/* Carrusel de Productos Destacados */}
-          <section className="bg-gradient-to-br from-white via-green-50 to-emerald-50 py-12 md:py-16">
+          <section className="bg-gradient-to-b from-gray-100 via-slate-50 to-gray-100 py-10 md:py-12 border-t border-gray-200">
             <div className="container mx-auto px-4">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
                     Productos Destacados
                   </h2>
-                  <p className="text-gray-600">Los mejores productos para tus proyectos</p>
+                  <p className="text-gray-600 font-medium">Los mejores productos para tus proyectos</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={prevSlide}
-                    className="p-3 rounded-full bg-green-600 hover:bg-green-700 text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110"
+                    className="p-3 rounded-full bg-green-600 hover:bg-green-700 text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95"
                     aria-label="Anterior"
                   >
                     <FiChevronLeft size={24} />
                   </button>
                   <button
                     onClick={nextSlide}
-                    className="p-3 rounded-full bg-green-600 hover:bg-green-700 text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110"
+                    className="p-3 rounded-full bg-green-600 hover:bg-green-700 text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95"
                     aria-label="Siguiente"
                   >
                     <FiChevronRight size={24} />
@@ -347,8 +347,8 @@ export default function Home() {
                   style={{ transform: `translateX(-${currentSlide * 25}%)` }}
                 >
                   {featuredProducts.map((product, index) => (
-                    <div key={product.id} className="w-full sm:w-1/2 lg:w-1/4 flex-shrink-0 px-2">
-                      <div className="animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
+                    <div key={product.id} className="w-full sm:w-1/2 lg:w-1/4 flex-shrink-0 px-3">
+                      <div className="animate-fade-in transform transition-all duration-300 hover:scale-105" style={{ animationDelay: `${index * 100}ms` }}>
                         <ProductCard product={product} />
                       </div>
                     </div>
@@ -356,15 +356,15 @@ export default function Home() {
                 </div>
                 
                 {/* Indicadores del carrusel */}
-                <div className="flex justify-center gap-2 mt-6">
+                <div className="flex justify-center gap-2 mt-8">
                   {Array.from({ length: Math.ceil(featuredProducts.length / 4) }).map((_, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentSlide(index * 4)}
-                      className={`h-2 rounded-full transition-all duration-300 ${
+                      className={`h-2 rounded-full transition-all duration-300 hover:scale-125 ${
                         Math.floor(currentSlide / 4) === index
-                          ? 'w-8 bg-green-600'
-                          : 'w-2 bg-gray-300'
+                          ? 'w-8 bg-green-600 shadow-md'
+                          : 'w-2 bg-gray-400 hover:bg-gray-500'
                       }`}
                     />
                   ))}
