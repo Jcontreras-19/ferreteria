@@ -138,24 +138,26 @@ export default function Home() {
         <title>Corporación GRC - Ferretería</title>
         <meta name="description" content="Corporación GRC - SERVICIOS DE APOYO A LAS EMPRESAS. ISO 9001:2015" />
       </Head>
-      <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white" style={{ overflowX: 'hidden' }}>
         <Header />
         {/* Hero Section - Banner con imagen completa - Ocupa TODO el ancho de la pantalla */}
         <section 
           className="bg-white overflow-hidden" 
           style={{ 
             width: '100vw',
-            marginLeft: 'calc(50% - 50vw)',
-            marginRight: 'calc(50% - 50vw)',
+            maxWidth: '100vw',
+            marginLeft: 'calc((100% - 100vw) / 2)',
+            marginRight: 'calc((100% - 100vw) / 2)',
             padding: 0,
             marginTop: 0,
-            marginBottom: 0
+            marginBottom: 0,
+            position: 'relative'
           }}
         >
           {/* Carrusel de Imágenes - Ocupa todo el ancho con altura fija de 300px */}
           <div 
             style={{ 
-              width: '100vw', 
+              width: '100%', 
               height: '300px', 
               overflow: 'hidden', 
               margin: 0, 
@@ -173,7 +175,7 @@ export default function Home() {
                 }`}
                 style={{ 
                   position: 'absolute',
-                  width: '100vw', 
+                  width: '100%', 
                   height: '300px', 
                   top: 0, 
                   left: 0, 
@@ -185,7 +187,7 @@ export default function Home() {
                   src={image}
                   alt={`Imagen ${index + 1} - Corporación GRC`}
                   style={{ 
-                    width: '100vw',
+                    width: '100%',
                     height: '300px',
                     objectFit: 'contain',
                     objectPosition: 'center',
