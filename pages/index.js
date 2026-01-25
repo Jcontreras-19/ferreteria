@@ -303,53 +303,56 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <main className="flex-1 pt-2 pb-8">
+        <main className="flex-1 pb-8">
 
 
           {/* Carrusel de Productos Destacados - Rediseño Moderno */}
-          <section className="bg-gray-900 py-12 md:py-16">
+          <section className="bg-gray-900 pt-0 pb-12 md:pb-16">
             <div className="container mx-auto px-4">
-              {/* Header centrado */}
-              <div className="text-center mb-10">
-                <h2 className="text-4xl md:text-5xl font-bold text-white mb-3">
-                  Productos Destacados
-                </h2>
-                <p className="text-gray-300 text-lg md:text-xl max-w-2xl mx-auto">
-                  Los mejores productos para tus proyectos
-                </p>
-                {/* Línea decorativa */}
-                <div className="w-24 h-1 bg-gradient-to-r from-transparent via-green-500 to-transparent mx-auto mt-4"></div>
-              </div>
-
-              {/* Controles de navegación centrados */}
-              <div className="flex items-center justify-center gap-3 mb-8">
-                <button
-                  onClick={prevSlide}
-                  className="p-2.5 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-all duration-300 border border-gray-700 hover:border-green-500 transform hover:scale-110 active:scale-95"
-                  aria-label="Anterior"
-                >
-                  <FiChevronLeft size={22} />
-                </button>
-                <div className="flex gap-1.5">
-                  {Array.from({ length: Math.ceil(featuredProducts.length / 4) }).map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentSlide(index * 4)}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        Math.floor(currentSlide / 4) === index
-                          ? 'w-6 bg-green-500'
-                          : 'w-1.5 bg-gray-600 hover:bg-gray-500'
-                      }`}
-                    />
-                  ))}
+              {/* Franja delgada con título, subtítulo y controles en una línea */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 py-4 mb-6">
+                {/* Título y subtítulo a la izquierda */}
+                <div className="flex flex-col sm:flex-row items-center sm:items-baseline gap-2 sm:gap-4 flex-1">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white whitespace-nowrap">
+                    Productos Destacados
+                  </h2>
+                  <p className="text-gray-300 text-sm sm:text-base md:text-lg whitespace-nowrap">
+                    Los mejores productos para tus proyectos
+                  </p>
                 </div>
-                <button
-                  onClick={nextSlide}
-                  className="p-2.5 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-all duration-300 border border-gray-700 hover:border-green-500 transform hover:scale-110 active:scale-95"
-                  aria-label="Siguiente"
-                >
-                  <FiChevronRight size={22} />
-                </button>
+
+                {/* Controles de navegación a la derecha */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={prevSlide}
+                    className="p-1.5 sm:p-2 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-all duration-300 border border-gray-700 hover:border-green-500/50 transform hover:scale-105 active:scale-95"
+                    aria-label="Anterior"
+                  >
+                    <FiChevronLeft size={18} />
+                  </button>
+                  {/* Indicadores muy sutiles */}
+                  <div className="flex gap-1 items-center">
+                    {Array.from({ length: Math.ceil(featuredProducts.length / 4) }).map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentSlide(index * 4)}
+                        className={`rounded-full transition-all duration-300 ${
+                          Math.floor(currentSlide / 4) === index
+                            ? 'w-2 h-2 bg-green-500/60'
+                            : 'w-1.5 h-1.5 bg-gray-700/40 hover:bg-gray-600/60'
+                        }`}
+                        aria-label={`Ir a página ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={nextSlide}
+                    className="p-1.5 sm:p-2 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-all duration-300 border border-gray-700 hover:border-green-500/50 transform hover:scale-105 active:scale-95"
+                    aria-label="Siguiente"
+                  >
+                    <FiChevronRight size={18} />
+                  </button>
+                </div>
               </div>
 
             {loading ? (
