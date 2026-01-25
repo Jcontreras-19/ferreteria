@@ -185,9 +185,9 @@ export default function Home() {
           }}
         >
           <div className="flex flex-col lg:flex-row w-full" style={{ minHeight: '400px', maxHeight: '450px' }}>
-            {/* Lado Izquierdo - Carrusel de Imágenes (ancho ajustado al contenido de la imagen) */}
+            {/* Lado Izquierdo - Carrusel de Imágenes (35% del ancho) */}
             <div 
-              className="w-full lg:w-[58%] bg-white relative"
+              className="w-full lg:w-[35%] bg-white relative"
               style={{ 
                 height: '400px',
                 position: 'relative',
@@ -237,10 +237,10 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Lado Derecho - Texto sincronizado (ocupa el resto del espacio) */}
+            {/* Lado Derecho - Texto sincronizado (65% del ancho) */}
             <div 
-              className="w-full lg:flex-1 bg-white flex items-center justify-center border-l border-gray-200"
-              style={{ height: '400px', overflow: 'auto', position: 'relative', padding: '24px', minWidth: '300px' }}
+              className="w-full lg:w-[65%] bg-white flex items-center justify-center border-l border-gray-200"
+              style={{ height: '400px', overflow: 'auto', position: 'relative', padding: '24px' }}
             >
               <div className="w-full" style={{ position: 'relative', maxHeight: '100%' }}>
                 {heroTexts.map((text, index) => (
