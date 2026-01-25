@@ -144,7 +144,7 @@ export default function Home() {
           {/* Hero Section - Banner con imagen completa - Ocupa todo el ancho */}
           <section className="relative bg-white overflow-hidden w-full">
             {/* Carrusel de Imágenes - Ocupa todo el ancho y muestra imagen completa */}
-            <div className="relative w-full">
+            <div className="relative w-full" style={{ maxHeight: '400px', overflow: 'hidden' }}>
               {heroImages.map((image, index) => (
                 <div
                   key={index}
@@ -161,7 +161,9 @@ export default function Home() {
                     style={{ 
                       width: '100%',
                       height: 'auto',
-                      maxWidth: '100%'
+                      maxWidth: '100%',
+                      maxHeight: '400px',
+                      objectFit: 'contain'
                     }}
                   />
                 </div>
