@@ -184,13 +184,12 @@ export default function Home() {
             overflow: 'visible'
           }}
         >
-          <div className="flex flex-col lg:flex-row w-full" style={{ minHeight: '550px' }}>
+          <div className="flex flex-col lg:flex-row w-full" style={{ minHeight: '400px', maxHeight: '450px' }}>
             {/* Mitad Izquierda - Carrusel de Imágenes (65% del ancho) */}
             <div 
               className="w-full lg:w-[65%] bg-white relative"
               style={{ 
-                minHeight: '550px',
-                height: '100%',
+                height: '400px',
                 position: 'relative',
                 overflow: 'hidden'
               }}
@@ -211,16 +210,21 @@ export default function Home() {
                     right: 0,
                     bottom: 0,
                     padding: 0,
-                    margin: 0
+                    margin: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
                   <img
                     src={image}
                     alt={`Imagen ${index + 1} - Corporación GRC`}
                     style={{ 
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      width: 'auto',
+                      height: 'auto',
+                      objectFit: 'contain',
                       objectPosition: 'center',
                       display: 'block',
                       margin: 0,
@@ -233,8 +237,8 @@ export default function Home() {
 
             {/* Mitad Derecha - Texto sincronizado con la imagen del carrusel (35% del ancho) */}
             <div 
-              className="w-full lg:w-[35%] bg-gradient-to-b from-gray-50 to-white p-8 md:p-10 flex items-center justify-center border-l border-gray-200"
-              style={{ minHeight: '550px', overflow: 'visible', position: 'relative' }}
+              className="w-full lg:w-[35%] bg-gradient-to-b from-gray-50 to-white p-6 md:p-8 flex items-center justify-center border-l border-gray-200"
+              style={{ height: '400px', overflow: 'visible', position: 'relative' }}
             >
               <div className="w-full max-w-md" style={{ position: 'relative', paddingTop: '0', paddingBottom: '0' }}>
                 {heroTexts.map((text, index) => (
