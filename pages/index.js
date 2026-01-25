@@ -185,9 +185,9 @@ export default function Home() {
           }}
         >
           <div className="flex flex-col lg:flex-row w-full" style={{ minHeight: '400px', maxHeight: '450px' }}>
-            {/* Lado Izquierdo - Carrusel de Imágenes (ancho basado en la imagen) */}
+            {/* Lado Izquierdo - Carrusel de Imágenes (ancho ajustado al contenido de la imagen) */}
             <div 
-              className="w-full lg:w-[60%] bg-white relative"
+              className="w-full lg:w-[58%] bg-white relative"
               style={{ 
                 height: '400px',
                 position: 'relative',
