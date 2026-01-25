@@ -191,7 +191,9 @@ export default function Home() {
               style={{ 
                 height: '400px',
                 position: 'relative',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                padding: 0,
+                margin: 0
               }}
             >
               {heroImages.map((image, index) => (
@@ -210,21 +212,16 @@ export default function Home() {
                     right: 0,
                     bottom: 0,
                     padding: 0,
-                    margin: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    margin: 0
                   }}
                 >
                   <img
                     src={image}
                     alt={`Imagen ${index + 1} - Corporación GRC`}
                     style={{ 
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      width: 'auto',
-                      height: 'auto',
-                      objectFit: 'contain',
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
                       objectPosition: 'center',
                       display: 'block',
                       margin: 0,
@@ -237,10 +234,10 @@ export default function Home() {
 
             {/* Mitad Derecha - Texto sincronizado con la imagen del carrusel (35% del ancho) */}
             <div 
-              className="w-full lg:w-[35%] bg-gradient-to-b from-gray-50 to-white p-6 md:p-8 flex items-center justify-center border-l border-gray-200"
+              className="w-full lg:w-[35%] bg-white p-8 md:p-10 flex items-center justify-center border-l border-gray-200"
               style={{ height: '400px', overflow: 'visible', position: 'relative' }}
             >
-              <div className="w-full max-w-md" style={{ position: 'relative', paddingTop: '0', paddingBottom: '0' }}>
+              <div className="w-full max-w-sm" style={{ position: 'relative' }}>
                 {heroTexts.map((text, index) => (
                   <div
                     key={index}
@@ -250,38 +247,34 @@ export default function Home() {
                         : 'opacity-0 translate-y-4 absolute pointer-events-none hidden'
                     }`}
                     style={{
-                      width: '100%',
-                      paddingTop: '0',
-                      paddingBottom: '0',
-                      marginTop: '0',
-                      marginBottom: '0'
+                      width: '100%'
                     }}
                   >
-                    <div className="space-y-6">
+                    <div className="space-y-5">
                       {/* Subtítulo */}
-                      <p className="text-gray-500 text-xs md:text-sm font-semibold uppercase tracking-widest" style={{ marginTop: '0', paddingTop: '0', letterSpacing: '0.1em' }}>
+                      <p className="text-gray-500 text-xs font-semibold uppercase tracking-widest mb-2" style={{ letterSpacing: '0.15em' }}>
                         {text.subtitle}
                       </p>
                       
                       {/* Título principal */}
-                      <h2 className="text-gray-900 text-3xl md:text-4xl font-bold leading-tight" style={{ marginTop: '0', paddingTop: '0', lineHeight: '1.2', fontWeight: '700' }}>
+                      <h2 className="text-gray-900 text-2xl md:text-3xl font-bold leading-tight mb-3" style={{ lineHeight: '1.3', fontWeight: '700' }}>
                         {text.title}
                       </h2>
                       
                       {/* Línea decorativa */}
-                      <div className="w-16 h-1 bg-gradient-to-r from-green-600 to-emerald-600"></div>
+                      <div className="w-12 h-0.5 bg-gradient-to-r from-green-600 to-emerald-600 mb-4"></div>
                       
                       {/* Descripción */}
-                      <p className="text-gray-600 text-base md:text-lg leading-relaxed font-light">
+                      <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-5" style={{ lineHeight: '1.6' }}>
                         {text.description}
                       </p>
                       
                       {/* Características */}
-                      <div className="space-y-3 pt-2">
+                      <div className="space-y-2.5 mb-6">
                         {text.features.map((feature, idx) => (
                           <div key={idx} className="flex items-start gap-3">
                             <div className="w-1.5 h-1.5 rounded-full bg-green-600 flex-shrink-0 mt-2"></div>
-                            <span className="text-gray-700 text-sm md:text-base font-medium leading-relaxed">
+                            <span className="text-gray-700 text-sm md:text-base leading-relaxed" style={{ lineHeight: '1.5' }}>
                               {feature}
                             </span>
                           </div>
@@ -291,7 +284,7 @@ export default function Home() {
                       {/* Botón CTA */}
                       <button 
                         onClick={() => window.location.href = '/productos'}
-                        className="mt-8 w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-3.5 px-8 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.02]"
+                        className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.02] text-sm md:text-base"
                       >
                         Ver Productos
                       </button>
