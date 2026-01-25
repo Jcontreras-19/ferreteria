@@ -307,16 +307,14 @@ export default function Home() {
 
 
           {/* Carrusel de Productos Destacados */}
-          <section className="py-6 md:py-8 border-t border-green-400" style={{ 
-            background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #059669 100%)'
-          }}>
+          <section className="bg-gradient-to-br from-gray-100 via-slate-100 to-gray-100 py-6 md:py-8 border-t border-gray-200">
             <div className="container mx-auto px-4">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-1 drop-shadow-sm">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-1">
                     Productos Destacados
                   </h2>
-                  <p className="text-green-50 font-medium text-sm">Los mejores productos para tus proyectos</p>
+                  <p className="text-gray-600 font-medium text-sm">Los mejores productos para tus proyectos</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -390,40 +388,6 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Banner de Beneficios */}
-          <section className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-12">
-            <div className="container mx-auto px-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="flex items-center gap-4 animate-fade-in">
-                  <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <FiTruck size={28} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg mb-1">Envío Rápido</h3>
-                    <p className="text-gray-300 text-sm">Entrega en 24-48 horas</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 animate-fade-in delay-200">
-                  <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <FiShield size={28} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg mb-1">Garantía Total</h3>
-                    <p className="text-gray-300 text-sm">Productos certificados</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 animate-fade-in delay-400">
-                  <div className="w-16 h-16 bg-yellow-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <FiStar size={28} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg mb-1">Calidad Premium</h3>
-                    <p className="text-gray-300 text-sm">ISO 9001:2015</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
         </main>
         <Footer />
       </div>
