@@ -28,6 +28,34 @@ export default function Home() {
     '/hero-imagenes/proyecto.png', // Imagen 4 - proyectos
   ]
 
+  // Textos relacionados con cada imagen del carrusel
+  const heroTexts = [
+    {
+      title: 'Herramientas Profesionales',
+      subtitle: 'Para tus Proyectos',
+      description: 'Contamos con las mejores herramientas manuales y eléctricas del mercado. Calidad garantizada para profesionales y aficionados.',
+      features: ['Herramientas de alta calidad', 'Marcas reconocidas', 'Stock disponible']
+    },
+    {
+      title: 'Envío Rápido',
+      subtitle: 'A Todo el País',
+      description: 'Entregamos tus pedidos de forma rápida y segura. Servicio de envío eficiente para que recibas tus productos cuando los necesites.',
+      features: ['Envío nacional', 'Entrega rápida', 'Embalaje seguro']
+    },
+    {
+      title: 'Calidad Garantizada',
+      subtitle: 'ISO 9001:2015',
+      description: 'Corporación GRC cuenta con certificación ISO 9001:2015, garantizando la más alta calidad en todos nuestros productos y servicios.',
+      features: ['Certificación ISO', 'Calidad verificada', 'Satisfacción garantizada']
+    },
+    {
+      title: 'Equipamos tu Proyecto',
+      subtitle: 'Soluciones Completas',
+      description: 'Desde materiales de construcción hasta herramientas especializadas. Todo lo que necesitas para hacer realidad tu proyecto.',
+      features: ['Productos completos', 'Asesoría profesional', 'Soluciones a medida']
+    }
+  ]
+
   // Categorías con iconos y colores
   const categoryConfig = {
     'Herramientas Manuales': { icon: FiTool, color: 'from-blue-500 to-blue-700', bgColor: 'bg-blue-500' },
@@ -157,10 +185,11 @@ export default function Home() {
           <div className="flex flex-col lg:flex-row w-full" style={{ minHeight: '500px', maxHeight: '600px' }}>
             {/* Mitad Izquierda - Carrusel de Imágenes */}
             <div 
-              className="w-full lg:w-1/2 bg-white relative overflow-hidden"
+              className="w-full lg:w-1/2 bg-gradient-to-br from-green-600 to-emerald-700 relative"
               style={{ 
                 height: '500px',
-                position: 'relative'
+                position: 'relative',
+                overflow: 'hidden'
               }}
             >
               {heroImages.map((image, index) => (
@@ -171,14 +200,23 @@ export default function Home() {
                       ? 'opacity-100 z-10' 
                       : 'opacity-0 z-0 pointer-events-none'
                   }`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0'
+                  }}
                 >
                   <img
                     src={image}
                     alt={`Imagen ${index + 1} - Corporación GRC`}
-                    className="w-full h-full object-contain"
                     style={{ 
-                      width: '100%',
-                      height: '100%',
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      width: 'auto',
+                      height: 'auto',
                       objectFit: 'contain',
                       objectPosition: 'center',
                       display: 'block'
@@ -194,49 +232,67 @@ export default function Home() {
                     onClick={() => setCurrentHeroImage(index)}
                     className={`h-2 rounded-full transition-all duration-300 ${
                       index === currentHeroImage 
-                        ? 'w-8 bg-green-600' 
-                        : 'w-2 bg-gray-400'
+                        ? 'w-8 bg-white' 
+                        : 'w-2 bg-white/50'
                     }`}
                   />
                 ))}
               </div>
             </div>
 
-            {/* Mitad Derecha - Categorías en Círculos */}
+            {/* Mitad Derecha - Texto sincronizado con la imagen del carrusel */}
             <div 
               className="w-full lg:w-1/2 bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 p-8 md:p-12 flex items-center justify-center"
               style={{ height: '500px' }}
             >
-              <div className="w-full max-w-2xl">
-                <h2 className="text-white text-3xl md:text-4xl font-bold mb-8 text-center">
-                  Nuestras Categorías
-                </h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  {categories.slice(0, 6).map((category, index) => {
-                    const config = categoryConfig[category] || categoryConfig['Otros']
-                    const Icon = config.icon
-                    return (
-                      <button
-                        key={category}
-                        onClick={() => goToCategory(category)}
-                        className="group flex flex-col items-center justify-center p-6 bg-white/10 backdrop-blur-sm rounded-2xl hover:bg-white/20 transition-all duration-300 transform hover:scale-110 hover:shadow-2xl"
-                        style={{ animationDelay: `${index * 100}ms` }}
+              <div className="w-full max-w-lg">
+                {heroTexts.map((text, index) => (
+                  <div
+                    key={index}
+                    className={`transition-all duration-1000 ${
+                      index === currentHeroImage 
+                        ? 'opacity-100 translate-y-0 block' 
+                        : 'opacity-0 translate-y-4 absolute pointer-events-none hidden'
+                    }`}
+                  >
+                    <div className="space-y-6">
+                      {/* Subtítulo */}
+                      <p className="text-green-200 text-sm md:text-base font-semibold uppercase tracking-wider">
+                        {text.subtitle}
+                      </p>
+                      
+                      {/* Título principal */}
+                      <h2 className="text-white text-4xl md:text-5xl font-bold leading-tight">
+                        {text.title}
+                      </h2>
+                      
+                      {/* Descripción */}
+                      <p className="text-green-100 text-lg md:text-xl leading-relaxed">
+                        {text.description}
+                      </p>
+                      
+                      {/* Características */}
+                      <div className="space-y-3 pt-4">
+                        {text.features.map((feature, idx) => (
+                          <div key={idx} className="flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-white"></div>
+                            <span className="text-white text-base md:text-lg">
+                              {feature}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Botón CTA */}
+                      <button 
+                        onClick={() => window.location.href = '/productos'}
+                        className="mt-6 w-full bg-white text-green-600 font-bold py-4 px-8 rounded-xl hover:bg-green-50 transition-all duration-300 transform hover:scale-105 shadow-lg"
                       >
-                        <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br ${config.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-                          <Icon className="text-white" size={32} />
-                        </div>
-                        <span className="text-white text-sm md:text-base font-semibold text-center group-hover:text-green-200 transition-colors">
-                          {category.length > 15 ? `${category.substring(0, 15)}...` : category}
-                        </span>
+                        Ver Productos
                       </button>
-                    )
-                  })}
-                </div>
-                {categories.length === 0 && (
-                  <div className="text-center text-white/80">
-                    <p>Cargando categorías...</p>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
             </div>
           </div>
