@@ -448,12 +448,40 @@ export default function AdminProductos() {
 
     setUpdatingImages(true)
     try {
+      // Timeout más largo ya que el proceso puede tomar varios minutos
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 15 * 60 * 1000) // 15 minutos
+      
       const res = await fetch('/api/productos/actualizar-imagenes', {
         method: 'POST',
         credentials: 'include',
+        signal: controller.signal,
       })
+      
+      clearTimeout(timeoutId)
 
-      const data = await res.json()
+      // Verificar el tipo de contenido antes de parsear JSON
+      const contentType = res.headers.get('content-type')
+      let data
+
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const text = await res.text()
+          if (!text || text.trim() === '') {
+            throw new Error('Respuesta vacía del servidor')
+          }
+          data = JSON.parse(text)
+        } catch (jsonError) {
+          console.error('Error parseando JSON:', jsonError)
+          console.error('Respuesta recibida:', await res.clone().text())
+          throw new Error(`Error al procesar respuesta del servidor: ${jsonError.message}`)
+        }
+      } else {
+        // Si no es JSON, intentar leer como texto para mostrar el error
+        const text = await res.text()
+        console.error('Respuesta no es JSON:', text)
+        throw new Error(`El servidor respondió con un formato inesperado. Estado: ${res.status}`)
+      }
 
       if (res.ok && data.success) {
         showNotification(
@@ -465,12 +493,23 @@ export default function AdminProductos() {
         fetchStats()
       } else {
         const errorMessage = data.error || data.message || 'Error al actualizar imágenes'
-        showNotification(`❌ ${errorMessage}`, 'error')
+        const details = data.details ? `\n\nDetalles: ${data.details}` : ''
+        showNotification(`❌ ${errorMessage}${details}`, 'error')
         console.error('Error del servidor:', data)
       }
     } catch (error) {
       console.error('Error updating images:', error)
-      showNotification(`❌ Error al actualizar imágenes: ${error.message || 'Error de conexión'}`, 'error')
+      let errorMsg = 'Error de conexión'
+      
+      if (error.name === 'AbortError') {
+        errorMsg = 'La operación tardó demasiado tiempo. El proceso puede estar ejecutándose en segundo plano.'
+      } else if (error.message) {
+        errorMsg = error.message
+      } else if (error instanceof TypeError && error.message.includes('fetch')) {
+        errorMsg = 'Error de red. Verifica tu conexión a internet.'
+      }
+      
+      showNotification(`❌ Error al actualizar imágenes: ${errorMsg}`, 'error')
     } finally {
       setUpdatingImages(false)
     }

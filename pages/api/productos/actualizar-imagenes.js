@@ -181,58 +181,65 @@ async function searchProductImage(productName) {
       return null
     }
     
-    if (unsplashAccessKey) {
-      try {
-        // BÚSQUEDA PRINCIPAL: Usar el término específico y obtener múltiples resultados
-        // Luego seleccionar uno diferente basado en el hash del nombre completo
-        const searchUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchTerm)}&per_page=20&orientation=landscape`
-        const response = await fetch(searchUrl, {
-          headers: {
-            'Authorization': `Client-ID ${unsplashAccessKey}`
-          }
-        })
-        
-        if (response.ok) {
-          const data = await response.json()
-          if (data.results && data.results.length > 0) {
-            // Usar un índice basado en el hash para seleccionar diferentes imágenes
-            // Esto asegura que productos similares no tengan la misma imagen
-            // Usar hasta 10 resultados para tener más variedad
-            const maxResults = Math.min(data.results.length, 10)
-            const imageIndex = Math.abs(nameHash) % maxResults
-            const selectedImage = data.results[imageIndex]
-            const imageUrl = selectedImage.urls?.regular || selectedImage.urls?.small
-            if (imageUrl) {
-              console.log(`✅ Imagen encontrada en Unsplash para "${productName}": "${searchTerm}" (índice ${imageIndex + 1}/${maxResults})`)
-              return imageUrl
-            }
-          } else {
-            console.log(`⚠️ No se encontraron imágenes en Unsplash para "${searchTerm}"`)
+    // Intentar buscar imagen en Unsplash
+    try {
+      // BÚSQUEDA PRINCIPAL: Usar el término específico y obtener múltiples resultados
+      // Luego seleccionar uno diferente basado en el hash del nombre completo
+      const searchUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchTerm)}&per_page=20&orientation=landscape`
+      const response = await fetch(searchUrl, {
+        headers: {
+          'Authorization': `Client-ID ${unsplashAccessKey}`
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.results && data.results.length > 0) {
+          // Usar un índice basado en el hash para seleccionar diferentes imágenes
+          // Esto asegura que productos similares no tengan la misma imagen
+          // Usar hasta 10 resultados para tener más variedad
+          const maxResults = Math.min(data.results.length, 10)
+          const imageIndex = Math.abs(nameHash) % maxResults
+          const selectedImage = data.results[imageIndex]
+          const imageUrl = selectedImage.urls?.regular || selectedImage.urls?.small
+          if (imageUrl) {
+            console.log(`✅ Imagen encontrada en Unsplash para "${productName}": "${searchTerm}" (índice ${imageIndex + 1}/${maxResults})`)
+            return imageUrl
           }
         } else {
-          let errorText = ''
-          try {
-            errorText = await response.text()
-          } catch (e) {
-            errorText = 'No se pudo leer el error'
-          }
-          console.log(`⚠️ Unsplash API error (${response.status}) para "${productName}": ${errorText.substring(0, 200)}`)
-          
-          // Si es un error de autenticación o rate limit, detener el proceso
-          if (response.status === 401 || response.status === 403) {
-            throw new Error(`Unsplash API: Error de autenticación (${response.status}). Verifica tu UNSPLASH_ACCESS_KEY.`)
-          }
-          if (response.status === 429) {
-            throw new Error(`Unsplash API: Rate limit excedido. Espera antes de intentar nuevamente.`)
-          }
+          console.log(`⚠️ No se encontraron imágenes en Unsplash para "${searchTerm}"`)
         }
-      } catch (unsplashError) {
-        console.log(`⚠️ Error con Unsplash API:`, unsplashError.message)
-        // Re-lanzar errores críticos
-        if (unsplashError.message.includes('autenticación') || unsplashError.message.includes('Rate limit')) {
-          throw unsplashError
+      } else {
+        let errorText = ''
+        try {
+          errorText = await response.text()
+        } catch (e) {
+          errorText = 'No se pudo leer el error'
         }
+        console.log(`⚠️ Unsplash API error (${response.status}) para "${productName}": ${errorText.substring(0, 200)}`)
+        
+        // Si es un error de autenticación o rate limit, lanzar error crítico
+        if (response.status === 401 || response.status === 403) {
+          throw new Error(`Unsplash API: Error de autenticación (${response.status}). Verifica tu UNSPLASH_ACCESS_KEY en Vercel.`)
+        }
+        if (response.status === 429) {
+          throw new Error(`Unsplash API: Rate limit excedido (429). Has alcanzado el límite de peticiones. Espera antes de intentar nuevamente.`)
+        }
+        // Para otros errores, solo loguear y continuar (retornar null)
       }
+    } catch (unsplashError) {
+      console.log(`⚠️ Error con Unsplash API para "${productName}":`, unsplashError.message)
+      // Re-lanzar solo errores críticos (autenticación o rate limit)
+      if (unsplashError.message && (
+        unsplashError.message.includes('autenticación') || 
+        unsplashError.message.includes('Rate limit') ||
+        unsplashError.message.includes('401') ||
+        unsplashError.message.includes('403') ||
+        unsplashError.message.includes('429')
+      )) {
+        throw unsplashError
+      }
+      // Para otros errores, continuar sin imagen
     }
     
     // Si Unsplash no funcionó, retornar null (no usar imágenes aleatorias)
@@ -246,6 +253,9 @@ async function searchProductImage(productName) {
 }
 
 export default async function handler(req, res) {
+  // Establecer Content-Type para todas las respuestas
+  res.setHeader('Content-Type', 'application/json')
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' })
   }
@@ -282,7 +292,7 @@ export default async function handler(req, res) {
     })
 
     if (productsToUpdate.length === 0) {
-      return res.json({ 
+      return res.status(200).json({ 
         success: true, 
         message: 'Todos los productos ya tienen imagen válida',
         updated: 0,
@@ -292,14 +302,29 @@ export default async function handler(req, res) {
 
     let updated = 0
     let errors = 0
+    let criticalError = null // Para errores críticos que deben detener el proceso
+
+    // Verificar que la API key esté configurada antes de empezar
+    const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY
+    if (!unsplashAccessKey) {
+      return res.status(400).json({
+        success: false,
+        error: 'UNSPLASH_ACCESS_KEY no está configurada',
+        message: 'Por favor configura la variable de entorno UNSPLASH_ACCESS_KEY en Vercel o tu archivo .env.local'
+      })
+    }
 
     // Actualizar cada producto que necesita imagen
     // Rate limiting: pausa entre peticiones para cumplir términos de Unsplash
-    const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY
-    const delayBetweenRequests = unsplashAccessKey ? 1000 : 0 // 1 segundo si usa Unsplash
+    const delayBetweenRequests = 1000 // 1 segundo entre peticiones
 
     for (const product of productsToUpdate) {
       try {
+        // Si hay un error crítico (rate limit o autenticación), detener el proceso
+        if (criticalError) {
+          break
+        }
+
         const imageUrl = await searchProductImage(product.name)
         
         // Si la búsqueda falla, dejar null (no asignar imagen aleatoria)
@@ -310,36 +335,73 @@ export default async function handler(req, res) {
           data: { image: finalImage }
         })
 
-        updated++
+        if (finalImage) {
+          updated++
+        }
         
         // Pausa entre peticiones para cumplir términos de Unsplash (máx 50 requests/hora por defecto)
         // Con 768 productos, esto tomará aproximadamente 13 minutos si usa Unsplash
-        if (updated < productsToUpdate.length) {
+        if (productsToUpdate.indexOf(product) < productsToUpdate.length - 1) {
           await new Promise(resolve => setTimeout(resolve, delayBetweenRequests))
         }
         
         // Log de progreso cada 50 productos
-        if (updated % 50 === 0) {
-          console.log(`Progreso: ${updated}/${productsToUpdate.length} productos actualizados`)
+        if ((updated + errors) % 50 === 0) {
+          console.log(`Progreso: ${updated} actualizados, ${errors} errores de ${productsToUpdate.length} productos`)
         }
       } catch (error) {
         console.error(`Error actualizando imagen para "${product.name}":`, error)
+        
+        // Detectar errores críticos que deben detener el proceso
+        if (error.message && (
+          error.message.includes('autenticación') || 
+          error.message.includes('Rate limit') ||
+          error.message.includes('401') ||
+          error.message.includes('403') ||
+          error.message.includes('429')
+        )) {
+          criticalError = error.message
+          console.error('❌ Error crítico detectado, deteniendo el proceso:', error.message)
+          break
+        }
+        
         errors++
         // Pausa también en caso de error
-        await new Promise(resolve => setTimeout(resolve, delayBetweenRequests))
+        if (productsToUpdate.indexOf(product) < productsToUpdate.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, delayBetweenRequests))
+        }
       }
     }
 
-    return res.json({
+    // Si hubo un error crítico, informarlo pero también reportar el progreso
+    if (criticalError) {
+      return res.status(500).json({
+        success: false,
+        error: 'Error crítico durante la actualización',
+        message: criticalError,
+        updated,
+        errors,
+        total: productsToUpdate.length,
+        partial: true,
+        note: `Se procesaron ${updated + errors} productos antes del error crítico.`
+      })
+    }
+
+    // Calcular productos sin imagen (que se actualizaron con null)
+    const productsWithoutImage = productsToUpdate.length - updated - errors
+
+    return res.status(200).json({
       success: true,
-      message: `✅ Imágenes actualizadas: ${updated} de ${productsToUpdate.length} productos. ${errors > 0 ? `${errors} errores.` : ''}`,
+      message: `✅ Proceso completado: ${updated} productos con imagen asignada, ${productsWithoutImage} productos sin imagen encontrada, ${errors} errores.`,
       updated,
+      withoutImage: productsWithoutImage,
       errors,
       total: productsToUpdate.length
     })
   } catch (error) {
     console.error('Error en actualizar-imagenes:', error)
     return res.status(500).json({ 
+      success: false,
       error: 'Error al actualizar imágenes',
       message: error.message || 'Error desconocido',
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
