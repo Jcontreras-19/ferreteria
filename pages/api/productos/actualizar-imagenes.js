@@ -273,37 +273,6 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Solo administradores pueden actualizar imágenes' })
     }
 
-    // Obtener TODOS los productos para verificar y actualizar si tienen URLs rotas
-    const allProducts = await prisma.product.findMany({
-      select: {
-        id: true,
-        name: true,
-        image: true
-      }
-    })
-
-    // Filtrar productos que necesitan actualización
-    const productsToUpdate = allProducts.filter(product => {
-      if (!product.image || product.image.trim() === '') return true
-      if (product.image.includes('via.placeholder.com')) return true
-      if (product.image.includes('source.unsplash.com')) return true
-      if (product.image.includes('unsplash.com') && !product.image.includes('images.unsplash.com')) return true
-      return false
-    })
-
-    if (productsToUpdate.length === 0) {
-      return res.status(200).json({ 
-        success: true, 
-        message: 'Todos los productos ya tienen imagen válida',
-        updated: 0,
-        total: 0
-      })
-    }
-
-    let updated = 0
-    let errors = 0
-    let criticalError = null // Para errores críticos que deben detener el proceso
-
     // Verificar que la API key esté configurada antes de empezar
     const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY
     if (!unsplashAccessKey) {
@@ -314,8 +283,66 @@ export default async function handler(req, res) {
       })
     }
 
-    // Actualizar cada producto que necesita imagen
-    // Rate limiting: pausa entre peticiones para cumplir términos de Unsplash
+    // Obtener parámetros del lote (batch processing)
+    const { batch = 1, batchSize = 15 } = req.body
+    const skip = (batch - 1) * batchSize
+    const take = batchSize
+
+    // Obtener productos que necesitan actualización (solo el lote actual)
+    const allProducts = await prisma.product.findMany({
+      select: {
+        id: true,
+        name: true,
+        image: true
+      },
+      orderBy: { id: 'asc' }
+    })
+
+    // Filtrar productos que necesitan actualización
+    const productsNeedingUpdate = allProducts.filter(product => {
+      if (!product.image || product.image.trim() === '') return true
+      if (product.image.includes('via.placeholder.com')) return true
+      if (product.image.includes('source.unsplash.com')) return true
+      if (product.image.includes('unsplash.com') && !product.image.includes('images.unsplash.com')) return true
+      return false
+    })
+
+    const totalNeedingUpdate = productsNeedingUpdate.length
+
+    if (totalNeedingUpdate === 0) {
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Todos los productos ya tienen imagen válida',
+        updated: 0,
+        total: 0,
+        hasMore: false,
+        currentBatch: batch,
+        totalBatches: 0
+      })
+    }
+
+    // Obtener solo el lote actual de productos a procesar
+    const productsToUpdate = productsNeedingUpdate.slice(skip, skip + take)
+    const totalBatches = Math.ceil(totalNeedingUpdate / batchSize)
+    const hasMore = batch < totalBatches
+
+    if (productsToUpdate.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'No hay más productos para procesar en este lote',
+        updated: 0,
+        total: totalNeedingUpdate,
+        hasMore: false,
+        currentBatch: batch,
+        totalBatches
+      })
+    }
+
+    let updated = 0
+    let errors = 0
+    let criticalError = null
+
+    // Actualizar cada producto del lote actual
     const delayBetweenRequests = 1000 // 1 segundo entre peticiones
 
     for (const product of productsToUpdate) {
@@ -339,15 +366,9 @@ export default async function handler(req, res) {
           updated++
         }
         
-        // Pausa entre peticiones para cumplir términos de Unsplash (máx 50 requests/hora por defecto)
-        // Con 768 productos, esto tomará aproximadamente 13 minutos si usa Unsplash
+        // Pausa entre peticiones para cumplir términos de Unsplash
         if (productsToUpdate.indexOf(product) < productsToUpdate.length - 1) {
           await new Promise(resolve => setTimeout(resolve, delayBetweenRequests))
-        }
-        
-        // Log de progreso cada 50 productos
-        if ((updated + errors) % 50 === 0) {
-          console.log(`Progreso: ${updated} actualizados, ${errors} errores de ${productsToUpdate.length} productos`)
         }
       } catch (error) {
         console.error(`Error actualizando imagen para "${product.name}":`, error)
@@ -361,7 +382,7 @@ export default async function handler(req, res) {
           error.message.includes('429')
         )) {
           criticalError = error.message
-          console.error('❌ Error crítico detectado, deteniendo el proceso:', error.message)
+          console.error('❌ Error crítico detectado:', error.message)
           break
         }
         
@@ -373,7 +394,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // Si hubo un error crítico, informarlo pero también reportar el progreso
+    // Si hubo un error crítico, informarlo
     if (criticalError) {
       return res.status(500).json({
         success: false,
@@ -381,22 +402,28 @@ export default async function handler(req, res) {
         message: criticalError,
         updated,
         errors,
-        total: productsToUpdate.length,
-        partial: true,
-        note: `Se procesaron ${updated + errors} productos antes del error crítico.`
+        total: totalNeedingUpdate,
+        processedInBatch: productsToUpdate.length,
+        hasMore,
+        currentBatch: batch,
+        totalBatches
       })
     }
 
-    // Calcular productos sin imagen (que se actualizaron con null)
+    // Calcular productos sin imagen en este lote
     const productsWithoutImage = productsToUpdate.length - updated - errors
 
     return res.status(200).json({
       success: true,
-      message: `✅ Proceso completado: ${updated} productos con imagen asignada, ${productsWithoutImage} productos sin imagen encontrada, ${errors} errores.`,
+      message: `✅ Lote ${batch}/${totalBatches} completado: ${updated} con imagen, ${productsWithoutImage} sin imagen, ${errors} errores.`,
       updated,
       withoutImage: productsWithoutImage,
       errors,
-      total: productsToUpdate.length
+      total: totalNeedingUpdate,
+      processedInBatch: productsToUpdate.length,
+      hasMore,
+      currentBatch: batch,
+      totalBatches
     })
   } catch (error) {
     console.error('Error en actualizar-imagenes:', error)

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { FiX } from 'react-icons/fi'
 import { useAuth } from '../contexts/AuthContext'
@@ -6,9 +7,18 @@ import { useAuth } from '../contexts/AuthContext'
 export default function ProductModal({ product, onClose, onAddToCart }) {
   const { isAuthenticated } = useAuth()
   const [imageError, setImageError] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // Asegurar que el modal se monte solo en el cliente
+  useEffect(() => {
+    setMounted(true)
+    return () => setMounted(false)
+  }, [])
 
   // Cerrar modal con ESC
   useEffect(() => {
+    if (!mounted) return
+    
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
         onClose()
@@ -21,13 +31,23 @@ export default function ProductModal({ product, onClose, onAddToCart }) {
       document.removeEventListener('keydown', handleEscape)
       document.body.style.overflow = 'unset'
     }
-  }, [onClose])
+  }, [onClose, mounted])
 
-  return (
+  // No renderizar hasta que esté montado
+  if (!mounted) return null
+
+  const modalContent = (
     <div
-      className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-fadeIn"
+      className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-[99999] p-4 animate-fadeIn"
       onClick={onClose}
-      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+      style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        bottom: 0,
+        zIndex: 99999
+      }}
     >
       <div
         className="bg-white rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden relative shadow-2xl animate-slideUp"
@@ -148,4 +168,7 @@ export default function ProductModal({ product, onClose, onAddToCart }) {
       </div>
     </div>
   )
+
+  // Renderizar usando Portal para asegurar que esté fuera del flujo del DOM
+  return createPortal(modalContent, document.body)
 }

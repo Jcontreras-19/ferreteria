@@ -442,74 +442,133 @@ export default function AdminProductos() {
   }
 
   const handleUpdateImages = async () => {
-    if (!confirm('¿Deseas asignar imágenes automáticamente a los productos que NO tienen imagen?\n\nEsto buscará imágenes en Unsplash basadas en el nombre de cada producto.\n\n⏱️ Este proceso puede tomar varios minutos dependiendo de la cantidad de productos sin imagen.\n\n¿Continuar?')) {
+    if (!confirm('¿Deseas asignar imágenes automáticamente a los productos que NO tienen imagen?\n\nEsto buscará imágenes en Unsplash basadas en el nombre de cada producto.\n\n⏱️ Este proceso se ejecutará en lotes pequeños para evitar timeouts.\n\n¿Continuar?')) {
       return
     }
 
     setUpdatingImages(true)
+    let totalUpdated = 0
+    let totalErrors = 0
+    let totalWithoutImage = 0
+    let currentBatch = 1
+    let totalBatches = 1
+    const batchSize = 15 // Procesar 15 productos por lote
+
     try {
-      // Timeout más largo ya que el proceso puede tomar varios minutos
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 15 * 60 * 1000) // 15 minutos
-      
-      const res = await fetch('/api/productos/actualizar-imagenes', {
-        method: 'POST',
-        credentials: 'include',
-        signal: controller.signal,
-      })
-      
-      clearTimeout(timeoutId)
+      // Procesar en lotes hasta que no haya más productos
+      while (true) {
+          // Mostrar progreso en consola y notificación
+          console.log(`🔄 Procesando lote ${currentBatch}... (${totalUpdated} actualizados hasta ahora)`)
+          showNotification(
+            `🔄 Procesando lote ${currentBatch}/${totalBatches}... (${totalUpdated} actualizados)`,
+            'success'
+          )
 
-      // Verificar el tipo de contenido antes de parsear JSON
-      const contentType = res.headers.get('content-type')
-      let data
+        const res = await fetch('/api/productos/actualizar-imagenes', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            batch: currentBatch,
+            batchSize: batchSize
+          }),
+        })
 
-      if (contentType && contentType.includes('application/json')) {
-        try {
-          const text = await res.text()
-          if (!text || text.trim() === '') {
-            throw new Error('Respuesta vacía del servidor')
+        // Verificar el tipo de contenido antes de parsear JSON
+        const contentType = res.headers.get('content-type')
+        let data
+
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const text = await res.text()
+            if (!text || text.trim() === '') {
+              throw new Error('Respuesta vacía del servidor')
+            }
+            data = JSON.parse(text)
+          } catch (jsonError) {
+            console.error('Error parseando JSON:', jsonError)
+            throw new Error(`Error al procesar respuesta del servidor: ${jsonError.message}`)
           }
-          data = JSON.parse(text)
-        } catch (jsonError) {
-          console.error('Error parseando JSON:', jsonError)
-          console.error('Respuesta recibida:', await res.clone().text())
-          throw new Error(`Error al procesar respuesta del servidor: ${jsonError.message}`)
+        } else {
+          const text = await res.text()
+          console.error('Respuesta no es JSON:', text)
+          throw new Error(`El servidor respondió con un formato inesperado. Estado: ${res.status}`)
         }
-      } else {
-        // Si no es JSON, intentar leer como texto para mostrar el error
-        const text = await res.text()
-        console.error('Respuesta no es JSON:', text)
-        throw new Error(`El servidor respondió con un formato inesperado. Estado: ${res.status}`)
-      }
 
-      if (res.ok && data.success) {
-        showNotification(
-          `✅ ${data.message || `Imágenes actualizadas: ${data.updated} productos`}`,
-          'success'
-        )
-        // Recargar productos para ver las nuevas imágenes
-        fetchProducts(currentPage)
-        fetchStats()
-      } else {
-        const errorMessage = data.error || data.message || 'Error al actualizar imágenes'
-        const details = data.details ? `\n\nDetalles: ${data.details}` : ''
-        showNotification(`❌ ${errorMessage}${details}`, 'error')
-        console.error('Error del servidor:', data)
+        if (res.ok && data.success) {
+          totalUpdated += data.updated || 0
+          totalErrors += data.errors || 0
+          totalWithoutImage += data.withoutImage || 0
+          totalBatches = data.totalBatches || 1
+
+          // Si no hay más productos, terminar
+          if (!data.hasMore) {
+            showNotification(
+              `✅ Proceso completado: ${totalUpdated} productos con imagen, ${totalWithoutImage} sin imagen encontrada, ${totalErrors} errores.`,
+              'success'
+            )
+            // Recargar productos para ver las nuevas imágenes
+            fetchProducts(currentPage)
+            fetchStats()
+            break
+          }
+
+          // Continuar con el siguiente lote
+          currentBatch++
+          
+          // Pequeña pausa entre lotes para no saturar
+          await new Promise(resolve => setTimeout(resolve, 500))
+        } else {
+          const errorMessage = data.error || data.message || 'Error al actualizar imágenes'
+          const details = data.details ? `\n\nDetalles: ${data.details}` : ''
+          
+          // Si es un error crítico, detener el proceso
+          if (data.message && (
+            data.message.includes('autenticación') || 
+            data.message.includes('Rate limit') ||
+            data.message.includes('401') ||
+            data.message.includes('403') ||
+            data.message.includes('429')
+          )) {
+            showNotification(
+              `❌ Error crítico: ${errorMessage}${details}\n\nProcesados: ${totalUpdated} productos antes del error.`,
+              'error',
+              10000
+            )
+            break
+          }
+          
+          showNotification(`❌ ${errorMessage}${details}`, 'error')
+          console.error('Error del servidor:', data)
+          
+          // Si no es crítico, intentar continuar con el siguiente lote
+          if (data.hasMore) {
+            currentBatch++
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            continue
+          } else {
+            break
+          }
+        }
       }
     } catch (error) {
       console.error('Error updating images:', error)
       let errorMsg = 'Error de conexión'
       
       if (error.name === 'AbortError') {
-        errorMsg = 'La operación tardó demasiado tiempo. El proceso puede estar ejecutándose en segundo plano.'
+        errorMsg = 'La operación fue cancelada.'
       } else if (error.message) {
         errorMsg = error.message
       } else if (error instanceof TypeError && error.message.includes('fetch')) {
         errorMsg = 'Error de red. Verifica tu conexión a internet.'
       }
       
-      showNotification(`❌ Error al actualizar imágenes: ${errorMsg}`, 'error')
+      showNotification(
+        `❌ Error al actualizar imágenes: ${errorMsg}\n\nProcesados: ${totalUpdated} productos antes del error.`,
+        'error'
+      )
     } finally {
       setUpdatingImages(false)
     }
