@@ -284,7 +284,7 @@ export default async function handler(req, res) {
     }
 
     // Obtener parámetros del lote (batch processing)
-    const { batch = 1, batchSize = 15 } = req.body
+    const { batch = 1, batchSize = 30 } = req.body
     const skip = (batch - 1) * batchSize
     const take = batchSize
 
@@ -357,6 +357,7 @@ export default async function handler(req, res) {
         // Si la búsqueda falla, dejar null (no asignar imagen aleatoria)
         const finalImage = imageUrl || null
 
+        // Actualizar el producto en la base de datos
         await prisma.product.update({
           where: { id: product.id },
           data: { image: finalImage }
@@ -364,6 +365,9 @@ export default async function handler(req, res) {
 
         if (finalImage) {
           updated++
+          console.log(`✅ Imagen asignada a "${product.name}": ${finalImage.substring(0, 50)}...`)
+        } else {
+          console.log(`⚠️ No se encontró imagen para "${product.name}"`)
         }
         
         // Pausa entre peticiones para cumplir términos de Unsplash

@@ -44,6 +44,7 @@ export default function AdminProductos() {
     highStock: 0,
   })
   const [updatingImages, setUpdatingImages] = useState(false)
+  const [progressNotificationId, setProgressNotificationId] = useState(null)
 
   useEffect(() => {
     checkAuth()
@@ -452,17 +453,57 @@ export default function AdminProductos() {
     let totalWithoutImage = 0
     let currentBatch = 1
     let totalBatches = 1
-    const batchSize = 15 // Procesar 15 productos por lote
+    const batchSize = 30 // Procesar 30 productos por lote
 
     try {
+      // Obtener información inicial para saber cuántos lotes hay
+      const initialRes = await fetch('/api/productos/actualizar-imagenes', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          batch: 1,
+          batchSize: batchSize
+        }),
+      })
+
+      let initialData = null
+      if (initialRes.ok) {
+        const text = await initialRes.text()
+        if (text) {
+          initialData = JSON.parse(text)
+          if (initialData.totalBatches) {
+            totalBatches = initialData.totalBatches
+          }
+        }
+      }
+
+      // Crear notificación persistente de progreso
+      const progressId = Date.now()
+      setProgressNotificationId(progressId)
+      
+      // Función para actualizar la notificación de progreso
+      const updateProgressNotification = (batch, total, updated) => {
+        setNotifications(prev => {
+          const filtered = prev.filter(n => n.id !== progressId)
+          return [...filtered, {
+            id: progressId,
+            message: `🔄 Procesando lote ${batch}/${total}... (${updated} actualizados)`,
+            type: 'success',
+            persistent: true
+          }]
+        })
+      }
+
+      updateProgressNotification(currentBatch, totalBatches, totalUpdated)
+
       // Procesar en lotes hasta que no haya más productos
       while (true) {
-          // Mostrar progreso en consola y notificación
-          console.log(`🔄 Procesando lote ${currentBatch}... (${totalUpdated} actualizados hasta ahora)`)
-          showNotification(
-            `🔄 Procesando lote ${currentBatch}/${totalBatches}... (${totalUpdated} actualizados)`,
-            'success'
-          )
+          // Actualizar notificación de progreso existente
+          console.log(`🔄 Procesando lote ${currentBatch}/${totalBatches}... (${totalUpdated} actualizados hasta ahora)`)
+          updateProgressNotification(currentBatch, totalBatches, totalUpdated)
 
         const res = await fetch('/api/productos/actualizar-imagenes', {
           method: 'POST',
@@ -498,13 +539,24 @@ export default function AdminProductos() {
         }
 
         if (res.ok && data.success) {
-          totalUpdated += data.updated || 0
-          totalErrors += data.errors || 0
-          totalWithoutImage += data.withoutImage || 0
-          totalBatches = data.totalBatches || 1
+          const batchUpdated = data.updated || 0
+          const batchErrors = data.errors || 0
+          const batchWithoutImage = data.withoutImage || 0
+          
+          totalUpdated += batchUpdated
+          totalErrors += batchErrors
+          totalWithoutImage += batchWithoutImage
+          totalBatches = data.totalBatches || totalBatches
+
+          console.log(`✅ Lote ${currentBatch} completado: ${batchUpdated} actualizados, ${batchWithoutImage} sin imagen, ${batchErrors} errores`)
+          updateProgressNotification(currentBatch, totalBatches, totalUpdated)
 
           // Si no hay más productos, terminar
           if (!data.hasMore) {
+            // Eliminar notificación de progreso y mostrar resultado final
+            setNotifications(prev => prev.filter(n => n.id !== progressId))
+            setProgressNotificationId(null)
+            
             showNotification(
               `✅ Proceso completado: ${totalUpdated} productos con imagen, ${totalWithoutImage} sin imagen encontrada, ${totalErrors} errores.`,
               'success'
@@ -555,6 +607,13 @@ export default function AdminProductos() {
       }
     } catch (error) {
       console.error('Error updating images:', error)
+      
+      // Eliminar notificación de progreso si existe
+      if (progressNotificationId) {
+        setNotifications(prev => prev.filter(n => n.id !== progressNotificationId))
+        setProgressNotificationId(null)
+      }
+      
       let errorMsg = 'Error de conexión'
       
       if (error.name === 'AbortError') {
@@ -571,6 +630,11 @@ export default function AdminProductos() {
       )
     } finally {
       setUpdatingImages(false)
+      // Asegurar que se elimine la notificación de progreso
+      if (progressNotificationId) {
+        setNotifications(prev => prev.filter(n => n.id !== progressNotificationId))
+        setProgressNotificationId(null)
+      }
     }
   }
 
@@ -639,12 +703,15 @@ export default function AdminProductos() {
     }
   }
 
-  const showNotification = (message, type = 'success') => {
+  const showNotification = (message, type = 'success', persistent = false) => {
     const id = Date.now()
-    setNotifications(prev => [...prev, { id, message, type }])
-    setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n.id !== id))
-    }, 5000)
+    setNotifications(prev => [...prev, { id, message, type, persistent }])
+    // Solo auto-eliminar si no es persistente
+    if (!persistent) {
+      setTimeout(() => {
+        setNotifications(prev => prev.filter(n => n.id !== id))
+      }, 5000)
+    }
   }
 
   const handleLogout = async () => {
