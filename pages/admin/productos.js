@@ -800,20 +800,29 @@ export default function AdminProductos() {
                         >
                           <td className="px-5 py-4">
                             <div className="w-16 h-16 relative bg-gray-200 rounded-lg overflow-hidden">
-                              {product.image && !product.image.includes('via.placeholder.com') ? (
-                                <Image
+                              {product.image && 
+                               product.image.trim() !== '' && 
+                               !product.image.includes('via.placeholder.com') &&
+                               !product.image.includes('source.unsplash.com') ? (
+                                <img
                                   src={product.image}
                                   alt={product.name}
-                                  fill
-                                  className="object-cover"
-                                  unoptimized
+                                  className="w-full h-full object-cover"
                                   onError={(e) => {
                                     e.target.style.display = 'none'
-                                    e.target.nextSibling?.classList.remove('hidden')
+                                    const fallback = e.target.nextElementSibling
+                                    if (fallback) fallback.classList.remove('hidden')
+                                  }}
+                                  onLoad={() => {
+                                    const fallback = e.target.nextElementSibling
+                                    if (fallback) fallback.classList.add('hidden')
                                   }}
                                 />
                               ) : null}
-                              <div className={`w-full h-full flex items-center justify-center text-gray-400 ${product.image && !product.image.includes('via.placeholder.com') ? 'hidden' : ''}`}>
+                              <div className={`w-full h-full flex items-center justify-center text-gray-400 ${product.image && 
+                               product.image.trim() !== '' && 
+                               !product.image.includes('via.placeholder.com') &&
+                               !product.image.includes('source.unsplash.com') ? 'hidden' : ''}`}>
                                 <FiPackage size={24} />
                               </div>
                             </div>
@@ -1015,18 +1024,29 @@ export default function AdminProductos() {
 
                       {/* Imagen del Producto - Mejorada */}
                       <div className="relative bg-gray-50 p-2">
-                        {product.image && !product.image.includes('via.placeholder.com') ? (
+                        {product.image && 
+                         product.image.trim() !== '' && 
+                         !product.image.includes('via.placeholder.com') &&
+                         !product.image.includes('source.unsplash.com') ? (
                           <img
                             src={product.image}
                             alt={product.name}
                             className="w-full h-28 object-cover rounded border border-gray-200"
                             onError={(e) => {
                               e.target.style.display = 'none'
-                              e.target.nextSibling?.classList.remove('hidden')
+                              const fallback = e.target.nextElementSibling
+                              if (fallback) fallback.classList.remove('hidden')
+                            }}
+                            onLoad={() => {
+                              const fallback = e.target.nextElementSibling
+                              if (fallback) fallback.classList.add('hidden')
                             }}
                           />
                         ) : null}
-                        <div className={`w-full h-28 bg-gray-100 rounded border border-gray-200 flex items-center justify-center ${product.image && !product.image.includes('via.placeholder.com') ? 'hidden' : ''}`}>
+                        <div className={`w-full h-28 bg-gray-100 rounded border border-gray-200 flex items-center justify-center ${product.image && 
+                         product.image.trim() !== '' && 
+                         !product.image.includes('via.placeholder.com') &&
+                         !product.image.includes('source.unsplash.com') ? 'hidden' : ''}`}>
                           <FiPackage size={32} className="text-gray-400" />
                         </div>
                       </div>
@@ -1488,23 +1508,37 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
                   </label>
                   <div className="space-y-3">
                     {/* Vista previa de la imagen actual */}
-                    {localFormData.image && (
+                    {localFormData.image && localFormData.image.trim() !== '' && (
                       <div className="border border-gray-300 rounded-lg p-3 bg-gray-50">
                         <p className="text-xs font-semibold text-gray-600 mb-2">Vista Previa:</p>
                         <div className="flex items-start gap-3">
-                          <img
-                            src={localFormData.image}
-                            alt="Preview"
-                            className="w-32 h-32 object-cover rounded-lg border-2 border-gray-300 shadow-sm"
-                            onError={(e) => {
-                              e.target.style.display = 'none'
-                            }}
-                          />
+                          <div className="relative w-32 h-32 bg-gray-200 rounded-lg border-2 border-gray-300 shadow-sm overflow-hidden">
+                            <img
+                              src={localFormData.image}
+                              alt="Preview"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none'
+                                const parent = e.target.parentElement
+                                if (parent) {
+                                  parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-400"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>'
+                                }
+                              }}
+                              onLoad={() => {
+                                console.log('✅ Imagen cargada exitosamente:', localFormData.image)
+                              }}
+                            />
+                          </div>
                           <div className="flex-1">
                             <p className="text-xs text-gray-500 break-all mb-2">
                               {localFormData.image.startsWith('/uploads/') 
                                 ? 'Imagen local' 
+                                : localFormData.image.includes('unsplash.com')
+                                ? 'Imagen de Unsplash'
                                 : 'Imagen del producto'}
+                            </p>
+                            <p className="text-xs text-gray-400 break-all mb-2 font-mono">
+                              {localFormData.image.length > 60 ? localFormData.image.substring(0, 60) + '...' : localFormData.image}
                             </p>
                             <button
                               type="button"

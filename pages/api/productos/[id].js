@@ -46,10 +46,16 @@ async function searchProductImage(productName) {
       searchTerm = words || cleanName.substring(0, 15)
     }
     
-    return `https://source.unsplash.com/400x400/?${encodeURIComponent(searchTerm)}`
+    // Usar Picsum Photos con seed basado en el término de búsqueda
+    const hash = searchTerm.split('').reduce((acc, char) => {
+      return ((acc << 5) - acc) + char.charCodeAt(0)
+    }, 0)
+    const imageId = Math.abs(hash) % 1000 + 1
+    return `https://picsum.photos/seed/${encodeURIComponent(searchTerm)}/400/400`
   } catch (error) {
-    // Fallback: usar Unsplash con término genérico
-    return `https://source.unsplash.com/400x400/?tool,hardware`
+    // Fallback: usar Picsum con ID aleatorio
+    const randomId = Math.floor(Math.random() * 1000) + 1
+    return `https://picsum.photos/400/400?random=${randomId}`
   }
 }
 import { generateQuotePDF } from '../../../lib/pdfGenerator'

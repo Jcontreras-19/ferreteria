@@ -142,19 +142,17 @@ async function searchProductImage(productName) {
       searchTerm = words || cleanName.substring(0, 15)
     }
     
-    // Usar Unsplash Source API (gratuita, no requiere API key)
-    // Formato: https://source.unsplash.com/400x400/?{search term}
-    // Nota: Unsplash Source puede ser lento, pero es más confiable que placeholder
-    const unsplashUrl = `https://source.unsplash.com/400x400/?${encodeURIComponent(searchTerm)}`
+    // Usar Picsum Photos con seed para imágenes consistentes
+    // El seed asegura que el mismo término siempre devuelva la misma imagen
+    const picsumUrl = `https://picsum.photos/seed/${encodeURIComponent(searchTerm)}/400/400`
     
-    return unsplashUrl
+    return picsumUrl
     
   } catch (error) {
     console.error('Error searching image:', error)
-    // Fallback: usar Unsplash con término genérico
-    const cleanName = productName.trim().substring(0, 20).replace(/[^a-zA-Z0-9\s]/g, '')
-    // Usar Unsplash en lugar de placeholder para evitar problemas de carga
-    return `https://source.unsplash.com/400x400/?tool,hardware`
+    // Fallback: usar Picsum con ID aleatorio
+    const randomId = Math.floor(Math.random() * 1000) + 1
+    return `https://picsum.photos/400/400?random=${randomId}`
   }
 }
 
@@ -176,20 +174,28 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Solo administradores pueden actualizar imágenes' })
     }
 
-    // Obtener todos los productos sin imagen
-    const productsWithoutImage = await prisma.product.findMany({
-      where: {
-        OR: [
-          { image: null },
-          { image: '' }
-        ]
+    // Obtener TODOS los productos para verificar y actualizar si tienen URLs rotas
+    const allProducts = await prisma.product.findMany({
+      select: {
+        id: true,
+        name: true,
+        image: true
       }
     })
 
-    if (productsWithoutImage.length === 0) {
+    // Filtrar productos que necesitan actualización
+    const productsToUpdate = allProducts.filter(product => {
+      if (!product.image || product.image.trim() === '') return true
+      if (product.image.includes('via.placeholder.com')) return true
+      if (product.image.includes('source.unsplash.com')) return true
+      if (product.image.includes('unsplash.com') && !product.image.includes('images.unsplash.com')) return true
+      return false
+    })
+
+    if (productsToUpdate.length === 0) {
       return res.json({ 
         success: true, 
-        message: 'Todos los productos ya tienen imagen',
+        message: 'Todos los productos ya tienen imagen válida',
         updated: 0,
         total: 0
       })
@@ -198,13 +204,13 @@ export default async function handler(req, res) {
     let updated = 0
     let errors = 0
 
-    // Actualizar cada producto sin imagen
-    for (const product of productsWithoutImage) {
+    // Actualizar cada producto que necesita imagen
+    for (const product of productsToUpdate) {
       try {
         const imageUrl = await searchProductImage(product.name)
         
-        // Si la búsqueda falla, usar Unsplash con término genérico
-        const finalImage = imageUrl || `https://source.unsplash.com/400x400/?tool,hardware`
+        // Si la búsqueda falla, usar Picsum con ID aleatorio
+        const finalImage = imageUrl || `https://picsum.photos/400/400?random=${Math.floor(Math.random() * 1000) + 1}`
 
         await prisma.product.update({
           where: { id: product.id },
@@ -212,6 +218,11 @@ export default async function handler(req, res) {
         })
 
         updated++
+        
+        // Pequeña pausa para no sobrecargar el servidor
+        if (updated % 10 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+        }
       } catch (error) {
         console.error(`Error actualizando imagen para "${product.name}":`, error)
         errors++
@@ -220,10 +231,10 @@ export default async function handler(req, res) {
 
     return res.json({
       success: true,
-      message: `Imágenes actualizadas: ${updated} productos. ${errors > 0 ? `${errors} errores.` : ''}`,
+      message: `✅ Imágenes actualizadas: ${updated} de ${productsToUpdate.length} productos. ${errors > 0 ? `${errors} errores.` : ''}`,
       updated,
       errors,
-      total: productsWithoutImage.length
+      total: productsToUpdate.length
     })
   } catch (error) {
     console.error('Error en actualizar-imagenes:', error)
