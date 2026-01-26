@@ -95,6 +95,10 @@ const keywordMapping = {
   'cemento': 'cement',
   'cal': 'lime',
   'arena': 'sand',
+  'arena fina': 'fine sand',
+  'arena zarandeada': 'sifted sand',
+  'arena cantera': 'quarry sand',
+  'arena tarrajeo': 'plastering sand',
   'grava': 'gravel',
   
   // Construcción
@@ -126,46 +130,62 @@ async function searchProductImage(productName) {
       return null
     }
     
+    // Palabras a excluir de la búsqueda
+    const stopWords = ['para', 'tipo', 'de', 'del', 'la', 'las', 'los', 'el', 'y', 'con', 'con', 'sin', 'un', 'una', 'unos', 'unas', 'en', 'por', 'sobre', 'entre', 'hasta', 'desde', 'hacia', 'según', 'durante', 'mediante', 'kg', 'ml', 'l', 'm3', 'm2', 'cm', 'mm', 'g', 'gr', 'pulg', 'pulgadas', 'saco', 'bolsa', 'unidad', 'unidades']
+    
     // Buscar palabra clave en el mapeo (buscar coincidencias más largas primero)
     let searchTerm = null
     const sortedKeywords = Object.entries(keywordMapping).sort((a, b) => b[0].length - a[0].length)
     
     for (const [keyword, term] of sortedKeywords) {
       if (cleanName.includes(keyword)) {
-        searchTerm = term
-        // Si encontramos una coincidencia, también buscar palabras adicionales del nombre
-        const remainingWords = cleanName
+        // Extraer palabras adicionales del nombre completo para hacer la búsqueda más específica
+        const nameWords = cleanName
           .replace(keyword, '')
-          .replace(/[#\d"]/g, '')
+          .replace(/[#\d"()]/g, '') // Remover números, comillas y paréntesis
           .split(' ')
-          .filter(w => w.length > 2 && !['para', 'tipo', 'de', 'del', 'la', 'las', 'los', 'el', 'y', 'con'].includes(w))
-          .slice(0, 1)
-          .join(' ')
+          .filter(w => w.length > 2 && !stopWords.includes(w))
+          .slice(0, 3) // Tomar hasta 3 palabras adicionales para mayor especificidad
         
-        if (remainingWords) {
-          searchTerm = `${term} ${remainingWords}`
+        if (nameWords.length > 0) {
+          // Combinar el término mapeado con palabras adicionales del nombre
+          searchTerm = `${term} ${nameWords.join(' ')}`
+        } else {
+          searchTerm = term
         }
         break
       }
     }
     
-    // Si no hay mapeo, usar las primeras palabras del nombre (más específicas)
+    // Si no hay mapeo, usar las palabras más relevantes del nombre completo
     if (!searchTerm) {
       const words = cleanName
-        .replace(/[#\d"]/g, '')
+        .replace(/[#\d"()]/g, '')
         .split(' ')
-        .filter(w => w.length > 2 && !['para', 'tipo', 'de', 'del', 'la', 'las', 'los', 'el', 'y', 'con'].includes(w))
-        .slice(0, 3) // Tomar hasta 3 palabras para ser más específico
+        .filter(w => w.length > 2 && !stopWords.includes(w))
+        .slice(0, 4) // Tomar hasta 4 palabras para ser más específico
         .join(' ')
-      searchTerm = words || cleanName.substring(0, 20)
+      searchTerm = words || cleanName.substring(0, 30)
     }
     
-    // Intentar usar Unsplash API primero (si está configurada)
+    // Crear un hash único del nombre completo para evitar repeticiones
+    // Este hash se usará para seleccionar diferentes imágenes de los resultados
+    const nameHash = productName.split('').reduce((acc, char) => {
+      return ((acc << 5) - acc) + char.charCodeAt(0)
+    }, 0)
+    
+    // Intentar usar Unsplash API (requerido)
     const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY
+    if (!unsplashAccessKey) {
+      console.log(`⚠️ UNSPLASH_ACCESS_KEY no está configurada para "${productName}"`)
+      return null
+    }
+    
     if (unsplashAccessKey) {
       try {
-        // Buscar imagen en Unsplash
-        const searchUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchTerm)}&per_page=1&orientation=landscape`
+        // BÚSQUEDA PRINCIPAL: Usar el término específico y obtener múltiples resultados
+        // Luego seleccionar uno diferente basado en el hash del nombre completo
+        const searchUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchTerm)}&per_page=20&orientation=landscape`
         const response = await fetch(searchUrl, {
           headers: {
             'Authorization': `Client-ID ${unsplashAccessKey}`
@@ -175,41 +195,43 @@ async function searchProductImage(productName) {
         if (response.ok) {
           const data = await response.json()
           if (data.results && data.results.length > 0) {
-            // Usar la primera imagen encontrada, tamaño regular para mejor calidad
-            const imageUrl = data.results[0].urls?.regular || data.results[0].urls?.small
+            // Usar un índice basado en el hash para seleccionar diferentes imágenes
+            // Esto asegura que productos similares no tengan la misma imagen
+            // Usar hasta 10 resultados para tener más variedad
+            const maxResults = Math.min(data.results.length, 10)
+            const imageIndex = Math.abs(nameHash) % maxResults
+            const selectedImage = data.results[imageIndex]
+            const imageUrl = selectedImage.urls?.regular || selectedImage.urls?.small
             if (imageUrl) {
-              console.log(`✅ Imagen encontrada en Unsplash para "${productName}": ${searchTerm}`)
+              console.log(`✅ Imagen encontrada en Unsplash para "${productName}": "${searchTerm}" (índice ${imageIndex + 1}/${maxResults})`)
               return imageUrl
             }
           } else {
-            console.log(`⚠️ No se encontraron imágenes en Unsplash para "${searchTerm}", intentando búsqueda más amplia...`)
-            // Intentar búsqueda más amplia si no hay resultados
-            const broaderSearch = searchTerm.split(' ')[0] // Solo la primera palabra
-            if (broaderSearch && broaderSearch.length > 2) {
-              const broaderUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(broaderSearch)}&per_page=1&orientation=landscape`
-              const broaderResponse = await fetch(broaderUrl, {
-                headers: {
-                  'Authorization': `Client-ID ${unsplashAccessKey}`
-                }
-              })
-              if (broaderResponse.ok) {
-                const broaderData = await broaderResponse.json()
-                if (broaderData.results && broaderData.results.length > 0) {
-                  const broaderImageUrl = broaderData.results[0].urls?.regular || broaderData.results[0].urls?.small
-                  if (broaderImageUrl) {
-                    console.log(`✅ Imagen encontrada en Unsplash (búsqueda amplia) para "${productName}": ${broaderSearch}`)
-                    return broaderImageUrl
-                  }
-                }
-              }
-            }
+            console.log(`⚠️ No se encontraron imágenes en Unsplash para "${searchTerm}"`)
           }
         } else {
-          const errorText = await response.text()
-          console.log(`⚠️ Unsplash API error (${response.status}): ${errorText.substring(0, 100)}`)
+          let errorText = ''
+          try {
+            errorText = await response.text()
+          } catch (e) {
+            errorText = 'No se pudo leer el error'
+          }
+          console.log(`⚠️ Unsplash API error (${response.status}) para "${productName}": ${errorText.substring(0, 200)}`)
+          
+          // Si es un error de autenticación o rate limit, detener el proceso
+          if (response.status === 401 || response.status === 403) {
+            throw new Error(`Unsplash API: Error de autenticación (${response.status}). Verifica tu UNSPLASH_ACCESS_KEY.`)
+          }
+          if (response.status === 429) {
+            throw new Error(`Unsplash API: Rate limit excedido. Espera antes de intentar nuevamente.`)
+          }
         }
       } catch (unsplashError) {
         console.log(`⚠️ Error con Unsplash API:`, unsplashError.message)
+        // Re-lanzar errores críticos
+        if (unsplashError.message.includes('autenticación') || unsplashError.message.includes('Rate limit')) {
+          throw unsplashError
+        }
       }
     }
     
@@ -317,6 +339,10 @@ export default async function handler(req, res) {
     })
   } catch (error) {
     console.error('Error en actualizar-imagenes:', error)
-    return res.status(500).json({ error: 'Error al actualizar imágenes' })
+    return res.status(500).json({ 
+      error: 'Error al actualizar imágenes',
+      message: error.message || 'Error desconocido',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    })
   }
 }

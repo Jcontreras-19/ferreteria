@@ -464,11 +464,13 @@ export default function AdminProductos() {
         fetchProducts(currentPage)
         fetchStats()
       } else {
-        showNotification(data.error || 'Error al actualizar imágenes', 'error')
+        const errorMessage = data.error || data.message || 'Error al actualizar imágenes'
+        showNotification(`❌ ${errorMessage}`, 'error')
+        console.error('Error del servidor:', data)
       }
     } catch (error) {
       console.error('Error updating images:', error)
-      showNotification('Error al actualizar imágenes', 'error')
+      showNotification(`❌ Error al actualizar imágenes: ${error.message || 'Error de conexión'}`, 'error')
     } finally {
       setUpdatingImages(false)
     }
