@@ -18,36 +18,49 @@ async function searchProductImage(productName) {
       return null
     }
     
-    // Usar Picsum Photos (más confiable que Unsplash Source)
-    // Genera imágenes placeholder de alta calidad
-    const imageId = Math.floor(Math.random() * 1000) + 1
-    const picsumUrl = `https://picsum.photos/400/400?random=${imageId}`
+    // Intentar usar Unsplash API (requerido)
+    const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY
+    if (!unsplashAccessKey) {
+      console.log('⚠️ UNSPLASH_ACCESS_KEY no está configurada')
+      return null
+    }
     
-    // Verificar que la URL sea accesible
     try {
-      const testResponse = await fetch(picsumUrl, { 
-        method: 'HEAD',
-        redirect: 'follow',
+      // Usar las primeras palabras del nombre como término de búsqueda
+      const words = cleanName.split(' ').filter(w => w.length > 2).slice(0, 2).join(' ')
+      const searchTerm = words || cleanName.substring(0, 15)
+      
+      const searchUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchTerm)}&per_page=1&orientation=landscape`
+      const response = await fetch(searchUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          'Authorization': `Client-ID ${unsplashAccessKey}`
         }
       })
       
-      if (testResponse.ok) {
-        return picsumUrl
+      if (response.ok) {
+        const data = await response.json()
+        if (data.results && data.results.length > 0) {
+          const imageUrl = data.results[0].urls?.regular || data.results[0].urls?.small
+          if (imageUrl) {
+            console.log(`✅ Imagen encontrada en Unsplash para "${productName}": ${searchTerm}`)
+            return imageUrl
+          }
+        } else {
+          console.log(`⚠️ No se encontraron imágenes en Unsplash para "${searchTerm}"`)
+        }
+      } else {
+        const errorText = await response.text()
+        console.log(`⚠️ Unsplash API error (${response.status}): ${errorText.substring(0, 100)}`)
       }
-    } catch (fetchError) {
-      console.log('Error verificando Picsum:', fetchError.message)
+    } catch (error) {
+      console.log('Error buscando imagen en Unsplash:', error.message)
     }
     
-    // Fallback: usar un placeholder con el nombre del producto
-    const placeholderUrl = `https://via.placeholder.com/400x400/22c55e/ffffff?text=${encodeURIComponent(cleanName.substring(0, 20))}`
-    
-    return placeholderUrl
+    // Si Unsplash no funcionó, retornar null (no usar imágenes aleatorias)
+    return null
   } catch (error) {
     console.error('Error searching image:', error)
-    // Retornar un placeholder genérico si todo falla
-    return `https://via.placeholder.com/400x400/22c55e/ffffff?text=Producto`
+    return null
   }
 }
 
@@ -164,21 +177,15 @@ export default async function handler(req, res) {
 
         const stockNum = parseInt(stock) || 0
 
-        // Buscar imagen automáticamente si no se proporcionó
+        // Buscar imagen automáticamente si no se proporcionó (solo Unsplash)
         let finalImage = image?.trim() || null
         if (!finalImage || finalImage === '') {
           try {
             finalImage = await searchProductImage(name.trim())
-            // Si la búsqueda falla, usar un placeholder con el nombre del producto
-            if (!finalImage) {
-              const cleanName = name.trim().substring(0, 20).replace(/[^a-zA-Z0-9\s]/g, '')
-              finalImage = `https://via.placeholder.com/400x400/22c55e/ffffff?text=${encodeURIComponent(cleanName || 'Producto')}`
-            }
+            // Si la búsqueda falla, dejar null (no usar imágenes aleatorias)
           } catch (error) {
             console.log(`No se pudo buscar imagen para "${name.trim()}":`, error.message)
-            // Usar placeholder si falla la búsqueda
-            const cleanName = name.trim().substring(0, 20).replace(/[^a-zA-Z0-9\s]/g, '')
-            finalImage = `https://via.placeholder.com/400x400/22c55e/ffffff?text=${encodeURIComponent(cleanName || 'Producto')}`
+            finalImage = null
           }
         }
 

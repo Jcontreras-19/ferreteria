@@ -48,34 +48,45 @@ async function searchProductImage(productName) {
       searchTerm = words || cleanName.substring(0, 15)
     }
     
-    // Intentar usar Unsplash API primero (si está configurada)
+    // Intentar usar Unsplash API (requerido)
     const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY
-    if (unsplashAccessKey) {
-      try {
-        const searchUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchTerm)}&per_page=1&orientation=landscape`
-        const response = await fetch(searchUrl, {
-          headers: {
-            'Authorization': `Client-ID ${unsplashAccessKey}`
-          }
-        })
-        
-        if (response.ok) {
-          const data = await response.json()
-          if (data.results && data.results.length > 0) {
-            const imageUrl = data.results[0].urls?.regular || data.results[0].urls?.small
-            if (imageUrl) return imageUrl
-          }
-        }
-      } catch (unsplashError) {
-        console.log(`Unsplash API error, usando fallback:`, unsplashError.message)
-      }
+    if (!unsplashAccessKey) {
+      console.log('⚠️ UNSPLASH_ACCESS_KEY no está configurada')
+      return null
     }
     
-    // Fallback: usar Picsum Photos
-    return `https://picsum.photos/seed/${encodeURIComponent(searchTerm)}/400/400`
+    try {
+      const searchUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchTerm)}&per_page=1&orientation=landscape`
+      const response = await fetch(searchUrl, {
+        headers: {
+          'Authorization': `Client-ID ${unsplashAccessKey}`
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.results && data.results.length > 0) {
+          const imageUrl = data.results[0].urls?.regular || data.results[0].urls?.small
+          if (imageUrl) {
+            console.log(`✅ Imagen encontrada en Unsplash para "${productName}": ${searchTerm}`)
+            return imageUrl
+          }
+        } else {
+          console.log(`⚠️ No se encontraron imágenes en Unsplash para "${searchTerm}"`)
+        }
+      } else {
+        const errorText = await response.text()
+        console.log(`⚠️ Unsplash API error (${response.status}): ${errorText.substring(0, 100)}`)
+      }
+    } catch (unsplashError) {
+      console.log(`⚠️ Error con Unsplash API:`, unsplashError.message)
+    }
+    
+    // Si Unsplash no funcionó, retornar null (no usar imágenes aleatorias)
+    return null
   } catch (error) {
-    const randomId = Math.floor(Math.random() * 1000) + 1
-    return `https://picsum.photos/400/400?random=${randomId}`
+    console.error('Error searching image:', error)
+    return null
   }
 }
 

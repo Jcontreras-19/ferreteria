@@ -37,6 +37,10 @@ const keywordMapping = {
   'tuerca': 'nut hardware',
   'arandela': 'washer hardware',
   'abrazadera': 'clamp hardware',
+  'abrazadera unicanal': 'pipe clamp',
+  'abrazadera cremallera': 'hose clamp',
+  'abrazadera omega': 'pvc clamp',
+  'abrazadera tipo u': 'u clamp',
   'perno': 'bolt hardware',
   'remache': 'rivet hardware',
   'grapa': 'staple hardware',
@@ -122,24 +126,38 @@ async function searchProductImage(productName) {
       return null
     }
     
-    // Buscar palabra clave en el mapeo
+    // Buscar palabra clave en el mapeo (buscar coincidencias más largas primero)
     let searchTerm = null
-    for (const [keyword, term] of Object.entries(keywordMapping)) {
+    const sortedKeywords = Object.entries(keywordMapping).sort((a, b) => b[0].length - a[0].length)
+    
+    for (const [keyword, term] of sortedKeywords) {
       if (cleanName.includes(keyword)) {
         searchTerm = term
+        // Si encontramos una coincidencia, también buscar palabras adicionales del nombre
+        const remainingWords = cleanName
+          .replace(keyword, '')
+          .replace(/[#\d"]/g, '')
+          .split(' ')
+          .filter(w => w.length > 2 && !['para', 'tipo', 'de', 'del', 'la', 'las', 'los', 'el', 'y', 'con'].includes(w))
+          .slice(0, 1)
+          .join(' ')
+        
+        if (remainingWords) {
+          searchTerm = `${term} ${remainingWords}`
+        }
         break
       }
     }
     
-    // Si no hay mapeo, usar las primeras palabras del nombre
+    // Si no hay mapeo, usar las primeras palabras del nombre (más específicas)
     if (!searchTerm) {
       const words = cleanName
         .replace(/[#\d"]/g, '')
         .split(' ')
-        .filter(w => w.length > 2)
-        .slice(0, 2)
+        .filter(w => w.length > 2 && !['para', 'tipo', 'de', 'del', 'la', 'las', 'los', 'el', 'y', 'con'].includes(w))
+        .slice(0, 3) // Tomar hasta 3 palabras para ser más específico
         .join(' ')
-      searchTerm = words || cleanName.substring(0, 15)
+      searchTerm = words || cleanName.substring(0, 20)
     }
     
     // Intentar usar Unsplash API primero (si está configurada)
@@ -157,30 +175,51 @@ async function searchProductImage(productName) {
         if (response.ok) {
           const data = await response.json()
           if (data.results && data.results.length > 0) {
-            // Usar la primera imagen encontrada, tamaño medium
+            // Usar la primera imagen encontrada, tamaño regular para mejor calidad
             const imageUrl = data.results[0].urls?.regular || data.results[0].urls?.small
             if (imageUrl) {
               console.log(`✅ Imagen encontrada en Unsplash para "${productName}": ${searchTerm}`)
               return imageUrl
             }
+          } else {
+            console.log(`⚠️ No se encontraron imágenes en Unsplash para "${searchTerm}", intentando búsqueda más amplia...`)
+            // Intentar búsqueda más amplia si no hay resultados
+            const broaderSearch = searchTerm.split(' ')[0] // Solo la primera palabra
+            if (broaderSearch && broaderSearch.length > 2) {
+              const broaderUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(broaderSearch)}&per_page=1&orientation=landscape`
+              const broaderResponse = await fetch(broaderUrl, {
+                headers: {
+                  'Authorization': `Client-ID ${unsplashAccessKey}`
+                }
+              })
+              if (broaderResponse.ok) {
+                const broaderData = await broaderResponse.json()
+                if (broaderData.results && broaderData.results.length > 0) {
+                  const broaderImageUrl = broaderData.results[0].urls?.regular || broaderData.results[0].urls?.small
+                  if (broaderImageUrl) {
+                    console.log(`✅ Imagen encontrada en Unsplash (búsqueda amplia) para "${productName}": ${broaderSearch}`)
+                    return broaderImageUrl
+                  }
+                }
+              }
+            }
           }
         } else {
-          console.log(`⚠️ Unsplash API error (${response.status}), usando fallback`)
+          const errorText = await response.text()
+          console.log(`⚠️ Unsplash API error (${response.status}): ${errorText.substring(0, 100)}`)
         }
       } catch (unsplashError) {
-        console.log(`⚠️ Error con Unsplash API, usando fallback:`, unsplashError.message)
+        console.log(`⚠️ Error con Unsplash API:`, unsplashError.message)
       }
     }
     
-    // Fallback: usar Picsum Photos con seed para imágenes consistentes
-    const picsumUrl = `https://picsum.photos/seed/${encodeURIComponent(searchTerm)}/400/400`
-    return picsumUrl
+    // Si Unsplash no funcionó, retornar null (no usar imágenes aleatorias)
+    console.log(`⚠️ No se pudo obtener imagen de Unsplash para "${productName}" con término "${searchTerm}"`)
+    return null
     
   } catch (error) {
     console.error('Error searching image:', error)
-    // Fallback final: usar Picsum con ID aleatorio
-    const randomId = Math.floor(Math.random() * 1000) + 1
-    return `https://picsum.photos/400/400?random=${randomId}`
+    return null
   }
 }
 
@@ -235,14 +274,14 @@ export default async function handler(req, res) {
     // Actualizar cada producto que necesita imagen
     // Rate limiting: pausa entre peticiones para cumplir términos de Unsplash
     const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY
-    const delayBetweenRequests = unsplashAccessKey ? 1000 : 100 // 1 segundo si usa Unsplash, 100ms si solo Picsum
+    const delayBetweenRequests = unsplashAccessKey ? 1000 : 0 // 1 segundo si usa Unsplash
 
     for (const product of productsToUpdate) {
       try {
         const imageUrl = await searchProductImage(product.name)
         
-        // Si la búsqueda falla, usar Picsum con ID aleatorio
-        const finalImage = imageUrl || `https://picsum.photos/400/400?random=${Math.floor(Math.random() * 1000) + 1}`
+        // Si la búsqueda falla, dejar null (no asignar imagen aleatoria)
+        const finalImage = imageUrl || null
 
         await prisma.product.update({
           where: { id: product.id },

@@ -139,7 +139,16 @@ export default function Home() {
     }
   }
 
-  const featuredProducts = products.filter(p => p.image && p.image.trim() !== '').slice(0, 8)
+  // Mostrar productos destacados: primero los que tienen imagen, luego los demás
+  const featuredProducts = [...products]
+    .sort((a, b) => {
+      const aHasImage = a.image && a.image.trim() !== ''
+      const bHasImage = b.image && b.image.trim() !== ''
+      if (aHasImage && !bHasImage) return -1
+      if (!aHasImage && bHasImage) return 1
+      return 0
+    })
+    .slice(0, 8)
   const displayProducts = featuredProducts.slice(0, 4)
 
   const nextSlide = () => {
