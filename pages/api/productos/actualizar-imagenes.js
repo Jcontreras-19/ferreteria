@@ -1,51 +1,164 @@
 import { prisma } from '../../../lib/prisma'
 import { getCurrentUser } from '../../../lib/auth'
 
+// Mapeo de palabras clave a términos de búsqueda de imágenes
+const keywordMapping = {
+  // Herramientas Manuales
+  'martillo': 'hammer tool',
+  'destornillador': 'screwdriver tool',
+  'taladro': 'drill tool',
+  'llave': 'wrench tool',
+  'alicate': 'pliers tool',
+  'sierra': 'saw tool',
+  'nivel': 'level tool',
+  'cinta métrica': 'measuring tape',
+  'metro': 'measuring tape',
+  'escalera': 'ladder',
+  'andamio': 'scaffolding',
+  'pala': 'shovel tool',
+  'azada': 'hoe tool',
+  'rastrillo': 'rake tool',
+  'machete': 'machete tool',
+  'hacha': 'axe tool',
+  'formón': 'chisel tool',
+  'lima': 'file tool',
+  
+  // Herramientas Eléctricas
+  'amoladora': 'angle grinder',
+  'lijadora': 'sander tool',
+  'pulidora': 'polisher tool',
+  'soldadora': 'welder tool',
+  'caladora': 'jigsaw tool',
+  'sierra circular': 'circular saw',
+  
+  // Materiales y Hardware
+  'tornillo': 'screw hardware',
+  'clavo': 'nail hardware',
+  'tuerca': 'nut hardware',
+  'arandela': 'washer hardware',
+  'abrazadera': 'clamp hardware',
+  'perno': 'bolt hardware',
+  'remache': 'rivet hardware',
+  'grapa': 'staple hardware',
+  'tachuela': 'tack hardware',
+  
+  // Pintura y Acabados
+  'pintura': 'paint bucket',
+  'brocha': 'paint brush',
+  'rodillo': 'paint roller',
+  'lija': 'sandpaper',
+  'masilla': 'putty',
+  'sellador': 'sealant',
+  'enduido': 'spackle',
+  'barniz': 'varnish',
+  'esmalte': 'enamel paint',
+  
+  // Electricidad
+  'cable': 'electrical wire',
+  'interruptor': 'light switch',
+  'enchufe': 'electrical plug',
+  'bombilla': 'light bulb',
+  'foco': 'light bulb',
+  'lámpara': 'lamp',
+  'portalámpara': 'lamp holder',
+  'fusible': 'fuse',
+  'caja': 'electrical box',
+  
+  // Fontanería
+  'tubería': 'pipe plumbing',
+  'grifo': 'faucet',
+  'válvula': 'valve',
+  'manguera': 'hose',
+  'llave': 'faucet',
+  'sifón': 'siphon',
+  'desagüe': 'drain',
+  'caño': 'pipe',
+  
+  // Seguridad
+  'casco': 'hard hat',
+  'guante': 'work gloves',
+  'gafas': 'safety glasses',
+  'mascarilla': 'safety mask',
+  'chaleco': 'safety vest',
+  'arnés': 'safety harness',
+  'botas': 'safety boots',
+  
+  // Adhesivos y Químicos
+  'pegamento': 'glue',
+  'silicona': 'silicone',
+  'adhesivo': 'adhesive',
+  'cola': 'glue',
+  'cemento': 'cement',
+  'cal': 'lime',
+  'arena': 'sand',
+  'grava': 'gravel',
+  
+  // Construcción
+  'ladrillo': 'brick',
+  'bloque': 'concrete block',
+  'cemento': 'cement',
+  'yeso': 'plaster',
+  'malla': 'mesh',
+  'alambre': 'wire',
+  'varilla': 'rebar',
+  
+  // Otros
+  'candado': 'padlock',
+  'bisagra': 'hinge',
+  'cerradura': 'lock',
+  'manija': 'handle',
+  'perilla': 'knob',
+}
+
 // Función para buscar imagen de producto automáticamente
 async function searchProductImage(productName) {
   try {
     // Limpiar el nombre del producto para la búsqueda
     const cleanName = productName
-      .replace(/[#\d"]/g, '') // Remover números y símbolos
+      .toLowerCase()
       .trim()
-      .split(' ')
-      .slice(0, 3) // Tomar las primeras 3 palabras
-      .join(' ')
     
     if (!cleanName || cleanName.length < 2) {
       return null
     }
     
-    // Usar Picsum Photos (más confiable que Unsplash Source)
-    // Genera imágenes placeholder de alta calidad
-    const imageId = Math.floor(Math.random() * 1000) + 1
-    const picsumUrl = `https://picsum.photos/400/400?random=${imageId}`
-    
-    // Verificar que la URL sea accesible
-    try {
-      const testResponse = await fetch(picsumUrl, { 
-        method: 'HEAD',
-        redirect: 'follow',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      })
-      
-      if (testResponse.ok) {
-        return picsumUrl
+    // Buscar palabra clave en el mapeo
+    let searchTerm = null
+    for (const [keyword, term] of Object.entries(keywordMapping)) {
+      if (cleanName.includes(keyword)) {
+        searchTerm = term
+        break
       }
-    } catch (fetchError) {
-      console.log('Error verificando Picsum:', fetchError.message)
     }
     
-    // Fallback: usar un placeholder con el nombre del producto
-    const placeholderUrl = `https://via.placeholder.com/400x400/22c55e/ffffff?text=${encodeURIComponent(cleanName.substring(0, 20))}`
+    // Si no hay mapeo, usar las primeras palabras del nombre
+    if (!searchTerm) {
+      const words = cleanName
+        .replace(/[#\d"]/g, '')
+        .split(' ')
+        .filter(w => w.length > 2)
+        .slice(0, 2)
+        .join(' ')
+      searchTerm = words || cleanName.substring(0, 15)
+    }
     
-    return placeholderUrl
+    // Usar Unsplash Source API (gratuita, no requiere API key)
+    // Formato: https://source.unsplash.com/400x400/?{search term}
+    const unsplashUrl = `https://source.unsplash.com/400x400/?${encodeURIComponent(searchTerm)}`
+    
+    // También podemos usar Pexels (pero requiere API key)
+    // Por ahora usamos Unsplash Source que es más simple
+    
+    // Verificar que la URL sea accesible (opcional, puede ser lento)
+    // Por ahora retornamos directamente la URL de Unsplash
+    
+    return unsplashUrl
+    
   } catch (error) {
     console.error('Error searching image:', error)
-    // Retornar un placeholder genérico si todo falla
-    return `https://via.placeholder.com/400x400/22c55e/ffffff?text=Producto`
+    // Fallback: usar un placeholder con el nombre del producto
+    const cleanName = productName.trim().substring(0, 20).replace(/[^a-zA-Z0-9\s]/g, '')
+    return `https://via.placeholder.com/400x400/22c55e/ffffff?text=${encodeURIComponent(cleanName || 'Producto')}`
   }
 }
 

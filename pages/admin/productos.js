@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import AdminLayout from '../../components/admin/AdminLayout'
-import { FiEdit, FiTrash2, FiPlus, FiDownload, FiSearch, FiFilter, FiGrid, FiList, FiEye, FiPackage, FiDollarSign, FiTrendingUp, FiAlertCircle, FiUpload, FiX, FiCheckCircle, FiXCircle, FiInfo, FiTag } from 'react-icons/fi'
+import { FiEdit, FiTrash2, FiPlus, FiDownload, FiSearch, FiFilter, FiGrid, FiList, FiEye, FiPackage, FiDollarSign, FiTrendingUp, FiAlertCircle, FiUpload, FiX, FiCheckCircle, FiXCircle, FiInfo, FiTag, FiImage } from 'react-icons/fi'
 import Image from 'next/image'
 import ExcelJS from 'exceljs'
 
@@ -36,10 +36,19 @@ export default function AdminProductos() {
   const [importFile, setImportFile] = useState(null)
   const [importing, setImporting] = useState(false)
   const [notifications, setNotifications] = useState([])
+  const [stats, setStats] = useState({
+    total: 0,
+    outOfStock: 0,
+    lowStock: 0,
+    mediumStock: 0,
+    highStock: 0,
+  })
+  const [updatingImages, setUpdatingImages] = useState(false)
 
   useEffect(() => {
     checkAuth()
     fetchProducts()
+    fetchStats()
   }, [])
 
   const checkAuth = async () => {
@@ -91,9 +100,36 @@ export default function AdminProductos() {
     }
   }
 
+  const fetchStats = async () => {
+    try {
+      // Obtener todos los productos sin paginación para calcular estadísticas reales
+      const res = await fetch('/api/productos?limit=10000')
+      if (res.ok) {
+        const data = await res.json()
+        const allProducts = data.products || (Array.isArray(data) ? data : [])
+        
+        const calculatedStats = {
+          total: allProducts.length,
+          outOfStock: allProducts.filter(p => (p.stock || 0) === 0).length,
+          lowStock: allProducts.filter(p => (p.stock || 0) > 0 && (p.stock || 0) < 10).length,
+          mediumStock: allProducts.filter(p => (p.stock || 0) >= 10 && (p.stock || 0) < 50).length,
+          highStock: allProducts.filter(p => (p.stock || 0) >= 50).length,
+        }
+        
+        setStats(calculatedStats)
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error)
+    }
+  }
+
   useEffect(() => {
     setCurrentPage(1) // Resetear a página 1 cuando cambia la búsqueda
     fetchProducts(1)
+    // Actualizar estadísticas cuando cambia la búsqueda (si no hay búsqueda, mostrar todas)
+    if (!searchQuery) {
+      fetchStats()
+    }
   }, [searchQuery])
 
   useEffect(() => {
@@ -512,14 +548,7 @@ export default function AdminProductos() {
   // Los productos ya vienen filtrados desde la API, no necesitamos filtrar de nuevo
   const filteredProducts = products
 
-  // Calcular estadísticas (igual que en inventario)
-  const stats = {
-    total: products.length,
-    outOfStock: products.filter(p => (p.stock || 0) === 0).length,
-    lowStock: products.filter(p => (p.stock || 0) > 0 && (p.stock || 0) < 10).length,
-    mediumStock: products.filter(p => (p.stock || 0) >= 10 && (p.stock || 0) < 50).length,
-    highStock: products.filter(p => (p.stock || 0) >= 50).length,
-  }
+  // Las estadísticas ahora se obtienen de fetchStats() que calcula sobre TODOS los productos
 
   return (
     <>
@@ -654,6 +683,15 @@ export default function AdminProductos() {
                 >
                   <FiDownload size={14} />
                   <span>Excel</span>
+                </button>
+                <button
+                  onClick={handleUpdateImages}
+                  disabled={updatingImages}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
+                  title="Actualizar imágenes automáticamente basándose en el nombre del producto"
+                >
+                  <FiImage size={14} />
+                  <span>{updatingImages ? 'Actualizando...' : 'Auto Imágenes'}</span>
                 </button>
                 <button
                   onClick={() => {

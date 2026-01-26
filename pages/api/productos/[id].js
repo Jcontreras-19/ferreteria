@@ -1,5 +1,57 @@
 import { prisma } from '../../../lib/prisma'
 import { getCurrentUser } from '../../../lib/auth'
+
+// Mapeo de palabras clave a términos de búsqueda de imágenes (mismo que en index.js)
+const keywordMapping = {
+  'martillo': 'hammer tool',
+  'destornillador': 'screwdriver tool',
+  'taladro': 'drill tool',
+  'llave': 'wrench tool',
+  'alicate': 'pliers tool',
+  'sierra': 'saw tool',
+  'nivel': 'level tool',
+  'cinta métrica': 'measuring tape',
+  'metro': 'measuring tape',
+  'tornillo': 'screw hardware',
+  'clavo': 'nail hardware',
+  'tuerca': 'nut hardware',
+  'abrazadera': 'clamp hardware',
+  'pintura': 'paint bucket',
+  'brocha': 'paint brush',
+  'cable': 'electrical wire',
+  'interruptor': 'light switch',
+  'tubería': 'pipe plumbing',
+  'grifo': 'faucet',
+  'casco': 'hard hat',
+  'guante': 'work gloves',
+  'pegamento': 'glue',
+  'silicona': 'silicone',
+}
+
+async function searchProductImage(productName) {
+  try {
+    const cleanName = productName.toLowerCase().trim()
+    if (!cleanName || cleanName.length < 2) return null
+    
+    let searchTerm = null
+    for (const [keyword, term] of Object.entries(keywordMapping)) {
+      if (cleanName.includes(keyword)) {
+        searchTerm = term
+        break
+      }
+    }
+    
+    if (!searchTerm) {
+      const words = cleanName.replace(/[#\d"]/g, '').split(' ').filter(w => w.length > 2).slice(0, 2).join(' ')
+      searchTerm = words || cleanName.substring(0, 15)
+    }
+    
+    return `https://source.unsplash.com/400x400/?${encodeURIComponent(searchTerm)}`
+  } catch (error) {
+    const cleanName = productName.trim().substring(0, 20).replace(/[^a-zA-Z0-9\s]/g, '')
+    return `https://via.placeholder.com/400x400/22c55e/ffffff?text=${encodeURIComponent(cleanName || 'Producto')}`
+  }
+}
 import { generateQuotePDF } from '../../../lib/pdfGenerator'
 
 export default async function handler(req, res) {
@@ -54,6 +106,17 @@ export default async function handler(req, res) {
       const oldPrice = currentProduct.price
       const priceChanged = oldPrice !== newPrice
 
+      // Si no se proporciona imagen o está vacía, buscar una automáticamente
+      let finalImage = image
+      if (!finalImage || finalImage.trim() === '') {
+        try {
+          finalImage = await searchProductImage(name || currentProduct.name)
+        } catch (error) {
+          console.error('Error buscando imagen automática:', error)
+          finalImage = currentProduct.image // Mantener la imagen actual si existe
+        }
+      }
+
       // Actualizar el producto
       const product = await prisma.product.update({
         where: { id },
@@ -61,7 +124,7 @@ export default async function handler(req, res) {
           name,
           description: description || null,
           price: newPrice,
-          image: image || null,
+          image: finalImage || null,
           stock: parseInt(stock) || 0,
           category: category || null,
         },
