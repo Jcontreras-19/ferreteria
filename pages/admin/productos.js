@@ -445,6 +445,39 @@ export default function AdminProductos() {
     }
   }
 
+  const handleUpdateImages = async () => {
+    if (!confirm('¿Deseas actualizar automáticamente las imágenes de todos los productos sin imagen? Esto puede tomar unos minutos.')) {
+      return
+    }
+
+    setUpdatingImages(true)
+    try {
+      const res = await fetch('/api/productos/actualizar-imagenes', {
+        method: 'POST',
+        credentials: 'include',
+      })
+
+      const data = await res.json()
+
+      if (res.ok && data.success) {
+        showNotification(
+          `✅ ${data.message || `Imágenes actualizadas: ${data.updated} productos`}`,
+          'success'
+        )
+        // Recargar productos para ver las nuevas imágenes
+        fetchProducts(currentPage)
+        fetchStats()
+      } else {
+        showNotification(data.error || 'Error al actualizar imágenes', 'error')
+      }
+    } catch (error) {
+      console.error('Error updating images:', error)
+      showNotification('Error al actualizar imágenes', 'error')
+    } finally {
+      setUpdatingImages(false)
+    }
+  }
+
   const handleImportFile = (e) => {
     const file = e.target.files[0]
     if (file) {
@@ -767,19 +800,22 @@ export default function AdminProductos() {
                         >
                           <td className="px-5 py-4">
                             <div className="w-16 h-16 relative bg-gray-200 rounded-lg overflow-hidden">
-                              {product.image ? (
+                              {product.image && !product.image.includes('via.placeholder.com') ? (
                                 <Image
                                   src={product.image}
                                   alt={product.name}
                                   fill
                                   className="object-cover"
                                   unoptimized
+                                  onError={(e) => {
+                                    e.target.style.display = 'none'
+                                    e.target.nextSibling?.classList.remove('hidden')
+                                  }}
                                 />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                  <FiPackage size={24} />
-                                </div>
-                              )}
+                              ) : null}
+                              <div className={`w-full h-full flex items-center justify-center text-gray-400 ${product.image && !product.image.includes('via.placeholder.com') ? 'hidden' : ''}`}>
+                                <FiPackage size={24} />
+                              </div>
                             </div>
                           </td>
                           <td className="px-5 py-4">
@@ -979,21 +1015,20 @@ export default function AdminProductos() {
 
                       {/* Imagen del Producto - Mejorada */}
                       <div className="relative bg-gray-50 p-2">
-                        {product.image ? (
+                        {product.image && !product.image.includes('via.placeholder.com') ? (
                           <img
                             src={product.image}
                             alt={product.name}
                             className="w-full h-28 object-cover rounded border border-gray-200"
                             onError={(e) => {
-                              e.target.onerror = null
-                              e.target.src = '/placeholder-product.png'
+                              e.target.style.display = 'none'
+                              e.target.nextSibling?.classList.remove('hidden')
                             }}
                           />
-                        ) : (
-                          <div className="w-full h-28 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
-                            <FiPackage size={32} className="text-gray-400" />
-                          </div>
-                        )}
+                        ) : null}
+                        <div className={`w-full h-28 bg-gray-100 rounded border border-gray-200 flex items-center justify-center ${product.image && !product.image.includes('via.placeholder.com') ? 'hidden' : ''}`}>
+                          <FiPackage size={32} className="text-gray-400" />
+                        </div>
                       </div>
 
                       {/* Contenido de la Card - Más Compacto */}
