@@ -147,7 +147,6 @@ export default function AdminProductos() {
         stock: editingProduct.stock != null ? String(editingProduct.stock) : '0',
         category: editingProduct.category || '',
       }
-      console.log('🟢 useEffect - Cargando datos del producto:', productData)
       // Forzar actualización de formData
       setFormData(productData)
     } else if (showModal && !editingProduct) {
@@ -157,7 +156,6 @@ export default function AdminProductos() {
   }, [showModal, editingProduct])
 
   const handleEdit = (product) => {
-    console.log('🔵 handleEdit - Producto recibido:', product)
     // Preparar los datos del producto para el formulario
     const productData = {
       name: product.name || '',
@@ -167,14 +165,12 @@ export default function AdminProductos() {
       stock: product.stock != null ? String(product.stock) : '0',
       category: product.category || '',
     }
-    console.log('🔵 handleEdit - Datos preparados:', productData)
     
-    // CRÍTICO: Establecer los datos del formulario PRIMERO
+    // Establecer los datos del formulario PRIMERO
     setFormData(productData)
     // Luego establecer el producto a editar
     setEditingProduct(product)
-    console.log('🔵 handleEdit - Estados establecidos, abriendo modal...')
-    // Abrir el modal - los datos ya están en formData
+    // Abrir el modal
     setShowModal(true)
   }
 
@@ -446,7 +442,7 @@ export default function AdminProductos() {
   }
 
   const handleUpdateImages = async () => {
-    if (!confirm('¿Deseas actualizar automáticamente las imágenes de todos los productos sin imagen? Esto puede tomar unos minutos.')) {
+    if (!confirm('¿Deseas asignar imágenes automáticamente a los productos que NO tienen imagen?\n\nEsto buscará imágenes en Unsplash basadas en el nombre de cada producto.\n\n⏱️ Este proceso puede tomar varios minutos dependiendo de la cantidad de productos sin imagen.\n\n¿Continuar?')) {
       return
     }
 
@@ -721,10 +717,10 @@ export default function AdminProductos() {
                   onClick={handleUpdateImages}
                   disabled={updatingImages}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
-                  title="Actualizar imágenes automáticamente basándose en el nombre del producto"
+                  title="Asignar imágenes automáticamente solo a productos que NO tienen imagen usando Unsplash"
                 >
                   <FiImage size={14} />
-                  <span>{updatingImages ? 'Actualizando...' : 'Auto Imágenes'}</span>
+                  <span>{updatingImages ? 'Asignando...' : 'Auto Imágenes'}</span>
                 </button>
                 <button
                   onClick={() => {
@@ -1314,7 +1310,6 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
         stock: editingProduct.stock != null ? String(editingProduct.stock) : '0',
         category: editingProduct.category || '',
       }
-      console.log('🟡 ProductModal useMemo - Datos calculados:', data)
       return data
     }
     return { name: '', description: '', price: '', image: '', stock: '', category: '' }
@@ -1326,8 +1321,6 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
 
   // Sincronizar cuando cambia computedFormData (cuando cambia el producto)
   useEffect(() => {
-    console.log('🟡 ProductModal useEffect - computedFormData:', computedFormData)
-    console.log('🟡 ProductModal useEffect - Reseteando hasUserEdited y actualizando localFormData')
     setHasUserEdited(false)
     setLocalFormData(computedFormData)
   }, [computedFormData])
@@ -1401,12 +1394,6 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
             </p>
           )}
         </div>
-        {(() => {
-          console.log('🟡 RENDER FORM - localFormData:', localFormData)
-          console.log('🟡 RENDER FORM - computedFormData:', computedFormData)
-          console.log('🟡 RENDER FORM - editingProduct:', editingProduct)
-          return null
-        })()}
         <form 
           onSubmit={handleLocalSubmit} 
           className="space-y-4"

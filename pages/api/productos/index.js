@@ -48,14 +48,32 @@ async function searchProductImage(productName) {
       searchTerm = words || cleanName.substring(0, 15)
     }
     
-    // Usar Picsum Photos con seed basado en el término de búsqueda
-    const hash = searchTerm.split('').reduce((acc, char) => {
-      return ((acc << 5) - acc) + char.charCodeAt(0)
-    }, 0)
-    const imageId = Math.abs(hash) % 1000 + 1
+    // Intentar usar Unsplash API primero (si está configurada)
+    const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY
+    if (unsplashAccessKey) {
+      try {
+        const searchUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchTerm)}&per_page=1&orientation=landscape`
+        const response = await fetch(searchUrl, {
+          headers: {
+            'Authorization': `Client-ID ${unsplashAccessKey}`
+          }
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.results && data.results.length > 0) {
+            const imageUrl = data.results[0].urls?.regular || data.results[0].urls?.small
+            if (imageUrl) return imageUrl
+          }
+        }
+      } catch (unsplashError) {
+        console.log(`Unsplash API error, usando fallback:`, unsplashError.message)
+      }
+    }
+    
+    // Fallback: usar Picsum Photos
     return `https://picsum.photos/seed/${encodeURIComponent(searchTerm)}/400/400`
   } catch (error) {
-    // Fallback: usar Picsum con ID aleatorio
     const randomId = Math.floor(Math.random() * 1000) + 1
     return `https://picsum.photos/400/400?random=${randomId}`
   }

@@ -110,7 +110,7 @@ const keywordMapping = {
   'perilla': 'knob',
 }
 
-// Función para buscar imagen de producto automáticamente
+// Función para buscar imagen de producto automáticamente usando Unsplash API
 async function searchProductImage(productName) {
   try {
     // Limpiar el nombre del producto para la búsqueda
@@ -142,15 +142,43 @@ async function searchProductImage(productName) {
       searchTerm = words || cleanName.substring(0, 15)
     }
     
-    // Usar Picsum Photos con seed para imágenes consistentes
-    // El seed asegura que el mismo término siempre devuelva la misma imagen
-    const picsumUrl = `https://picsum.photos/seed/${encodeURIComponent(searchTerm)}/400/400`
+    // Intentar usar Unsplash API primero (si está configurada)
+    const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY
+    if (unsplashAccessKey) {
+      try {
+        // Buscar imagen en Unsplash
+        const searchUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchTerm)}&per_page=1&orientation=landscape`
+        const response = await fetch(searchUrl, {
+          headers: {
+            'Authorization': `Client-ID ${unsplashAccessKey}`
+          }
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.results && data.results.length > 0) {
+            // Usar la primera imagen encontrada, tamaño medium
+            const imageUrl = data.results[0].urls?.regular || data.results[0].urls?.small
+            if (imageUrl) {
+              console.log(`✅ Imagen encontrada en Unsplash para "${productName}": ${searchTerm}`)
+              return imageUrl
+            }
+          }
+        } else {
+          console.log(`⚠️ Unsplash API error (${response.status}), usando fallback`)
+        }
+      } catch (unsplashError) {
+        console.log(`⚠️ Error con Unsplash API, usando fallback:`, unsplashError.message)
+      }
+    }
     
+    // Fallback: usar Picsum Photos con seed para imágenes consistentes
+    const picsumUrl = `https://picsum.photos/seed/${encodeURIComponent(searchTerm)}/400/400`
     return picsumUrl
     
   } catch (error) {
     console.error('Error searching image:', error)
-    // Fallback: usar Picsum con ID aleatorio
+    // Fallback final: usar Picsum con ID aleatorio
     const randomId = Math.floor(Math.random() * 1000) + 1
     return `https://picsum.photos/400/400?random=${randomId}`
   }
@@ -205,6 +233,10 @@ export default async function handler(req, res) {
     let errors = 0
 
     // Actualizar cada producto que necesita imagen
+    // Rate limiting: pausa entre peticiones para cumplir términos de Unsplash
+    const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY
+    const delayBetweenRequests = unsplashAccessKey ? 1000 : 100 // 1 segundo si usa Unsplash, 100ms si solo Picsum
+
     for (const product of productsToUpdate) {
       try {
         const imageUrl = await searchProductImage(product.name)
@@ -219,13 +251,21 @@ export default async function handler(req, res) {
 
         updated++
         
-        // Pequeña pausa para no sobrecargar el servidor
-        if (updated % 10 === 0) {
-          await new Promise(resolve => setTimeout(resolve, 100))
+        // Pausa entre peticiones para cumplir términos de Unsplash (máx 50 requests/hora por defecto)
+        // Con 768 productos, esto tomará aproximadamente 13 minutos si usa Unsplash
+        if (updated < productsToUpdate.length) {
+          await new Promise(resolve => setTimeout(resolve, delayBetweenRequests))
+        }
+        
+        // Log de progreso cada 50 productos
+        if (updated % 50 === 0) {
+          console.log(`Progreso: ${updated}/${productsToUpdate.length} productos actualizados`)
         }
       } catch (error) {
         console.error(`Error actualizando imagen para "${product.name}":`, error)
         errors++
+        // Pausa también en caso de error
+        await new Promise(resolve => setTimeout(resolve, delayBetweenRequests))
       }
     }
 
