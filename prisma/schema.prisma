@@ -61,3 +61,15 @@ model Quote {
   // rejectedByUser User? @relation("RejectedQuotes", fields: [rejectedBy], references: [id])
 }
 
+model ReportSchedule {
+  id          String   @id @default(cuid())
+  email       String   // Correo destinatario del reporte
+  scheduleType String   // 'daily', 'weekly', 'monthly'
+  time        String   // Hora en formato HH:mm (ej: "18:00")
+  isActive    Boolean  @default(true) // Si está activo o no
+  lastSent    DateTime? // Última vez que se envió
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?  // ID del usuario que creó la programación
+}
+

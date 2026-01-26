@@ -13,7 +13,8 @@ import {
   FiUser,
   FiChevronDown,
   FiCheckCircle,
-  FiFileText
+  FiFileText,
+  FiCalendar
 } from 'react-icons/fi'
 
 export default function AdminLayout({ children, user, onLogout }) {
@@ -77,6 +78,7 @@ export default function AdminLayout({ children, user, onLogout }) {
     { href: '/admin/cotizaciones', icon: FiBarChart2, label: 'Cotizaciones' },
     { href: '/admin/autorizar-despachos', icon: FiCheckCircle, label: 'Autorizar Despachos' },
     { href: '/admin/boletas-facturas', icon: FiFileText, label: 'Boletas y Facturas' },
+    { href: '/admin/reportes-programados', icon: FiCalendar, label: 'Reportes Programados' },
     { href: '/admin/administradores', icon: FiUsers, label: 'Administradores' },
     { href: '/admin/configuracion', icon: FiSettings, label: 'Configuración' },
   ]
