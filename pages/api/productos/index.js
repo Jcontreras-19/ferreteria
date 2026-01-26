@@ -50,8 +50,8 @@ async function searchProductImage(productName) {
     
     return `https://source.unsplash.com/400x400/?${encodeURIComponent(searchTerm)}`
   } catch (error) {
-    const cleanName = productName.trim().substring(0, 20).replace(/[^a-zA-Z0-9\s]/g, '')
-    return `https://via.placeholder.com/400x400/22c55e/ffffff?text=${encodeURIComponent(cleanName || 'Producto')}`
+    // Fallback: usar Unsplash con término genérico
+    return `https://source.unsplash.com/400x400/?tool,hardware`
   }
 }
 

@@ -144,21 +144,17 @@ async function searchProductImage(productName) {
     
     // Usar Unsplash Source API (gratuita, no requiere API key)
     // Formato: https://source.unsplash.com/400x400/?{search term}
+    // Nota: Unsplash Source puede ser lento, pero es más confiable que placeholder
     const unsplashUrl = `https://source.unsplash.com/400x400/?${encodeURIComponent(searchTerm)}`
-    
-    // También podemos usar Pexels (pero requiere API key)
-    // Por ahora usamos Unsplash Source que es más simple
-    
-    // Verificar que la URL sea accesible (opcional, puede ser lento)
-    // Por ahora retornamos directamente la URL de Unsplash
     
     return unsplashUrl
     
   } catch (error) {
     console.error('Error searching image:', error)
-    // Fallback: usar un placeholder con el nombre del producto
+    // Fallback: usar Unsplash con término genérico
     const cleanName = productName.trim().substring(0, 20).replace(/[^a-zA-Z0-9\s]/g, '')
-    return `https://via.placeholder.com/400x400/22c55e/ffffff?text=${encodeURIComponent(cleanName || 'Producto')}`
+    // Usar Unsplash en lugar de placeholder para evitar problemas de carga
+    return `https://source.unsplash.com/400x400/?tool,hardware`
   }
 }
 
@@ -207,11 +203,8 @@ export default async function handler(req, res) {
       try {
         const imageUrl = await searchProductImage(product.name)
         
-        // Si la búsqueda falla, usar un placeholder con el nombre del producto
-        const finalImage = imageUrl || (() => {
-          const cleanName = product.name.trim().substring(0, 20).replace(/[^a-zA-Z0-9\s]/g, '')
-          return `https://via.placeholder.com/400x400/22c55e/ffffff?text=${encodeURIComponent(cleanName || 'Producto')}`
-        })()
+        // Si la búsqueda falla, usar Unsplash con término genérico
+        const finalImage = imageUrl || `https://source.unsplash.com/400x400/?tool,hardware`
 
         await prisma.product.update({
           where: { id: product.id },
