@@ -35,24 +35,12 @@ export default function AdminLayout({ children, user, onLogout }) {
   }
   
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebarCollapsed')
-      return saved ? JSON.parse(saved) : true // Por defecto colapsado
-    }
-    return true // Por defecto colapsado
-  })
+  // Sidebar siempre expandido, no se puede colapsar
+  const sidebarCollapsed = false
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef(null)
-
-  // Guardar estado en localStorage cuando cambie
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('sidebarCollapsed', JSON.stringify(sidebarCollapsed))
-    }
-  }, [sidebarCollapsed])
 
   // Cerrar menú de usuario al hacer clic fuera
   useEffect(() => {
@@ -101,27 +89,11 @@ export default function AdminLayout({ children, user, onLogout }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Overlay para cerrar sidebar cuando está expandido */}
-      {!sidebarCollapsed && (
-        <div
-          className="fixed inset-0 z-30 lg:block hidden"
-          style={{ pointerEvents: 'auto' }}
-          onClick={(e) => {
-            // Solo colapsar si el click no fue en el sidebar
-            if (e.target === e.currentTarget) {
-              setSidebarCollapsed(true)
-            }
-          }}
-        />
-      )}
-      
-      {/* Sidebar Desktop */}
+      {/* Sidebar Desktop - Siempre visible y expandido */}
       <aside
         className={`fixed top-0 left-0 z-40 h-screen transition-all duration-300 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } bg-gray-900 text-white ${
-          sidebarCollapsed ? 'w-20' : 'w-64'
-        } lg:translate-x-0`}
+        } bg-gray-900 text-white w-64 lg:translate-x-0`}
         onMouseLeave={() => setHoveredItem(null)}
         onClick={(e) => e.stopPropagation()}
       >
@@ -141,39 +113,23 @@ export default function AdminLayout({ children, user, onLogout }) {
             {menuItems.map((item) => {
               const Icon = item.icon
               const active = isActive(item.href, item.exact)
-              const isHovered = hoveredItem === item.href
-              const showTooltip = sidebarCollapsed && isHovered
               
               return (
                 <div key={item.href} className="relative">
                   <Link
                     href={item.href}
-                    onMouseEnter={() => setHoveredItem(item.href)}
-                    className={`flex items-center ${
-                      sidebarCollapsed ? 'justify-center' : 'space-x-3'
-                    } px-4 py-3 rounded-lg transition-colors relative ${
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                       active
                         ? 'bg-blue-600 text-white'
                         : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                     }`}
                     onClick={() => {
                       setMobileMenuOpen(false)
-                      // Expandir automáticamente si está colapsado
-                      if (sidebarCollapsed) {
-                        setSidebarCollapsed(false)
-                      }
                     }}
                   >
                     <Icon size={20} />
-                    {!sidebarCollapsed && <span>{item.label}</span>}
+                    <span>{item.label}</span>
                   </Link>
-                  {/* Tooltip cuando está colapsado */}
-                  {showTooltip && (
-                    <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 z-50 bg-gray-800 text-white px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
-                      {item.label}
-                      <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-800"></div>
-                    </div>
-                  )}
                 </div>
               )
             })}
@@ -189,10 +145,8 @@ export default function AdminLayout({ children, user, onLogout }) {
         />
       )}
 
-      {/* Main Content */}
-      <div className={`transition-all duration-300 ${
-        sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
-      }`}>
+      {/* Main Content - Siempre con padding para sidebar expandido */}
+      <div className="transition-all duration-300 lg:pl-64">
         {/* Header Mobile */}
         <header className="lg:hidden bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
           <div className="flex items-center justify-between p-4">
