@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      line-height: 1.6; 
+      color: #333; 
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+    .header { 
+      background-color: #22c55e; 
+      color: white; 
+      padding: 30px 20px; 
+      text-align: center; 
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .content { 
+      padding: 30px 20px; 
+    }
+    .info-box { 
+      background-color: #f0f9ff; 
+      border-left: 4px solid #22c55e; 
+      padding: 20px; 
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .info-box h3 {
+      margin-top: 0;
+      color: #0a6fb7;
+    }
+    .price-change { 
+      font-size: 20px; 
+      font-weight: bold; 
+      color: #22c55e; 
+      margin: 10px 0;
+    }
+    .price-old {
+      text-decoration: line-through;
+      color: #999;
+      font-size: 16px;
+    }
+    .footer { 
+      background-color: #f3f4f6; 
+      padding: 20px; 
+      text-align: center; 
+      font-size: 12px; 
+      color: #6b7280; 
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #22c55e;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>CORPORACIÓN GRC</h1>
+      <p style="margin: 5px 0 0 0; font-size: 14px;">SERVICIOS GENERALES</p>
+    </div>
+    
+    <div class="content">
+      <h2 style="color: #0a6fb7; margin-top: 0;">Cotización Actualizada</h2>
+      
+      <p>Hola <strong>{{ $json["body"]["name"] }}</strong>,</p>
+      
+      <p>Le informamos que el precio de uno de los productos incluidos en su cotización ha sido actualizado.</p>
+      
+      <div class="info-box">
+        <h3>Detalles del Cambio:</h3>
+        <p><strong>Producto:</strong> {{ $json["body"]["productName"] }}</p>
+        <p><strong>Precio Anterior:</strong> <span class="price-old">S/. {{ $json["body"]["oldPrice"] }}</span></p>
+        <p class="price-change">Precio Nuevo: S/. {{ $json["body"]["newPrice"] }}</p>
+        <p><strong>Cotización:</strong> #{{ $json["body"]["quoteNumber"] }}</p>
+      </div>
+      
+      <p>Se ha generado una nueva cotización actualizada con el precio modificado, la cual encontrará adjunta en este correo en formato PDF.</p>
+      
+      <p>Si tiene alguna consulta o desea realizar algún cambio, no dude en contactarnos.</p>
+      
+      <p>Atentamente,<br>
+      <strong>CORPORACIÓN GRC - SERVICIOS GENERALES</strong><br>
+      <span style="font-size: 12px; color: #6b7280;">SERVICIOS DE APOYO A LAS EMPRESAS</span></p>
+    </div>
+    
+    <div class="footer">
+      <p>Este es un correo automático. Por favor no responda a este mensaje.</p>
+      <p style="margin-top: 10px;">Av. José Gálvez 1322 Dpto. 302 La Perla - Callao</p>
+    </div>
+  </div>
+</body>
+</html>

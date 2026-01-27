@@ -122,10 +122,19 @@ export default async function handler(req, res) {
         return res.status(403).json({ error: 'Solo administradores pueden editar productos' })
       }
 
-      const { name, description, price, image, stock, category } = req.body
+      const { name, description, price, image, stock, category, notificationDays } = req.body
 
       if (!name || !price) {
         return res.status(400).json({ error: 'Nombre y precio son requeridos' })
+      }
+
+      // Validar notificationDays si se proporciona (debe ser un número positivo)
+      const daysToNotify = notificationDays !== undefined 
+        ? parseInt(notificationDays) 
+        : null
+      
+      if (daysToNotify !== null && (isNaN(daysToNotify) || daysToNotify < 0)) {
+        return res.status(400).json({ error: 'notificationDays debe ser un número positivo o null para notificar a todos' })
       }
 
       // Obtener el producto actual antes de actualizarlo
@@ -181,9 +190,30 @@ export default async function handler(req, res) {
           
           console.log('   Webhook seleccionado:', n8nWebhookUrl ? `✅ ${n8nWebhookUrl}` : '❌ NINGUNO')
           
-          // Buscar todas las cotizaciones que contengan este producto
-          const allQuotes = await prisma.quote.findMany()
+          // Calcular fecha límite para filtrar cotizaciones por antigüedad
+          let dateFilter = null
+          if (daysToNotify !== null && daysToNotify > 0) {
+            const limitDate = new Date()
+            limitDate.setDate(limitDate.getDate() - daysToNotify)
+            limitDate.setHours(0, 0, 0, 0)
+            dateFilter = limitDate
+            console.log(`📅 Filtrando cotizaciones de los últimos ${daysToNotify} días (desde ${limitDate.toLocaleDateString('es-PE')})`)
+          } else {
+            console.log('📅 Notificando TODAS las cotizaciones (sin filtro de fecha)')
+          }
+
+          // Buscar cotizaciones que contengan este producto (con filtro de fecha si se especifica)
+          const whereClause = dateFilter 
+            ? { createdAt: { gte: dateFilter } }
+            : {}
+          
+          const allQuotes = await prisma.quote.findMany({
+            where: whereClause,
+            orderBy: { createdAt: 'desc' }
+          })
+          
           const affectedQuotes = []
+          const totalQuotesFound = allQuotes.length
 
           for (const quote of allQuotes) {
             try {
@@ -201,6 +231,15 @@ export default async function handler(req, res) {
             } catch (parseError) {
               console.error('Error parsing products in quote:', quote.id, parseError)
             }
+          }
+
+          console.log(`📊 Resumen de cotizaciones afectadas:`)
+          console.log(`   Total cotizaciones revisadas: ${totalQuotesFound}`)
+          console.log(`   Cotizaciones con este producto: ${affectedQuotes.length}`)
+          if (dateFilter) {
+            console.log(`   Filtro aplicado: últimos ${daysToNotify} días`)
+          } else {
+            console.log(`   Filtro aplicado: NINGUNO (todas las fechas)`)
           }
 
           if (n8nWebhookUrl && affectedQuotes.length > 0) {
@@ -249,24 +288,48 @@ export default async function handler(req, res) {
                   products: updatedProducts, // Usar productos actualizados directamente
                 })
 
-                // Crear FormData para enviar al webhook (igual que el webhook de cotizaciones)
+                // Crear FormData para enviar al webhook (formato compatible con N8N)
                 const formData = new FormData()
                 
-                // Agregar campos del cliente
+                // Crear payload con estructura que N8N espera (dentro de body)
+                const bodyPayload = {
+                  name: quote.name,
+                  email: quote.email,
+                  phone: quote.whatsapp || '',
+                  event: 'product_price_changed',
+                  productId: product.id,
+                  productName: product.name,
+                  oldPrice: oldPrice,
+                  newPrice: newPrice,
+                  quoteId: quote.id,
+                  quoteNumber: quote.quoteNumber || null,
+                  quoteCreatedAt: quote.createdAt.toISOString(),
+                  notificationDays: daysToNotify !== null ? daysToNotify : 'all',
+                  dateFilterApplied: daysToNotify !== null,
+                  dateFilterFrom: dateFilter ? dateFilter.toISOString() : null,
+                  totalQuotesFound: totalQuotesFound,
+                  totalAffectedQuotes: affectedQuotes.length,
+                }
+                
+                // Enviar el body como JSON string (N8N lo parseará automáticamente)
+                formData.append('body', JSON.stringify(bodyPayload))
+                
+                // También agregar campos directamente para acceso fácil (compatibilidad)
                 formData.append('name', quote.name)
                 formData.append('email', quote.email)
                 formData.append('phone', quote.whatsapp || '')
-                
-                // Agregar información del cambio de precio
                 formData.append('event', 'product_price_changed')
                 formData.append('productId', product.id)
                 formData.append('productName', product.name)
                 formData.append('oldPrice', oldPrice.toString())
                 formData.append('newPrice', newPrice.toString())
                 formData.append('quoteId', quote.id)
+                formData.append('quoteNumber', quote.quoteNumber ? quote.quoteNumber.toString() : '')
                 
                 // Agregar el PDF actualizado como archivo adjunto
-                const pdfBlob = new Blob([pdfBuffer], { type: 'application/pdf' })
+                // Convertir Buffer a Blob para FormData (Node.js 18+ tiene Blob global)
+                const pdfUint8Array = new Uint8Array(pdfBuffer)
+                const pdfBlob = new Blob([pdfUint8Array], { type: 'application/pdf' })
                 const pdfFileName = `cotizacion-actualizada-${quote.id.slice(0, 8)}.pdf`
                 formData.append('pdf', pdfBlob, pdfFileName)
 

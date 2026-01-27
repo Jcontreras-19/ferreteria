@@ -29,6 +29,7 @@ export default function AdminProductos() {
     image: '',
     stock: '',
     category: '',
+    notificationDays: '', // Días de antigüedad para notificar cambios de precio
   })
   const [uploading, setUploading] = useState(false)
   const [viewMode, setViewMode] = useState('table') // 'cards' or 'table'
@@ -147,12 +148,13 @@ export default function AdminProductos() {
         image: editingProduct.image || '',
         stock: editingProduct.stock != null ? String(editingProduct.stock) : '0',
         category: editingProduct.category || '',
+        notificationDays: '', // Campo para configurar tiempo de notificación
       }
       // Forzar actualización de formData
       setFormData(productData)
     } else if (showModal && !editingProduct) {
       // Limpiar formulario para nuevo producto
-      setFormData({ name: '', description: '', price: '', image: '', stock: '' })
+      setFormData({ name: '', description: '', price: '', image: '', stock: '', category: '', notificationDays: '' })
     }
   }, [showModal, editingProduct])
 
@@ -254,11 +256,14 @@ export default function AdminProductos() {
           ...dataToSend,
           price: parseFloat(dataToSend.price),
           stock: parseInt(dataToSend.stock) || 0,
+          notificationDays: editingProduct && dataToSend.notificationDays 
+            ? (dataToSend.notificationDays === '' ? null : parseInt(dataToSend.notificationDays))
+            : undefined, // Solo enviar si se está editando y se especificó un valor
         }),
       })
 
       if (res.ok) {
-        const emptyData = { name: '', description: '', price: '', image: '', stock: '' }
+        const emptyData = { name: '', description: '', price: '', image: '', stock: '', category: '', notificationDays: '' }
         setFormData(emptyData)
         setEditingProduct(null)
         setShowModal(false)
@@ -1344,7 +1349,7 @@ export default function AdminProductos() {
             handleImageUpload={handleImageUpload}
             handleSubmit={handleSubmit}
             onClose={() => {
-              setFormData({ name: '', description: '', price: '', image: '', stock: '' })
+              setFormData({ name: '', description: '', price: '', image: '', stock: '', category: '', notificationDays: '' })
               setEditingProduct(null)
               setShowModal(false)
             }}
@@ -1476,10 +1481,11 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
         image: editingProduct.image || '',
         stock: editingProduct.stock != null ? String(editingProduct.stock) : '0',
         category: editingProduct.category || '',
+        notificationDays: '', // Por defecto vacío (notificar todas)
       }
       return data
     }
-    return { name: '', description: '', price: '', image: '', stock: '', category: '' }
+    return { name: '', description: '', price: '', image: '', stock: '', category: '', notificationDays: '' }
   }, [editingProduct?.id, editingProduct?.name, editingProduct?.description, editingProduct?.price, editingProduct?.image, editingProduct?.stock, editingProduct?.category])
 
   // Estado local para las ediciones del usuario
@@ -1655,6 +1661,38 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   />
                 </div>
+
+                {/* Campo de tiempo de notificación solo cuando se edita un producto */}
+                {editingProduct && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <label htmlFor="edit-notification-days" className="block text-sm font-medium text-blue-900 mb-2">
+                      <span className="flex items-center gap-2">
+                        <FiAlertCircle className="text-blue-600" />
+                        Notificar cambios de precio
+                      </span>
+                    </label>
+                    <div className="space-y-2">
+                      <input
+                        id="edit-notification-days"
+                        name="notificationDays"
+                        type="number"
+                        min="0"
+                        value={hasUserEdited ? localFormData?.notificationDays ?? '' : computedFormData?.notificationDays ?? ''}
+                        onChange={(e) => {
+                          setHasUserEdited(true)
+                          setLocalFormData({ ...localFormData, notificationDays: e.target.value })
+                        }}
+                        placeholder="Ej: 3, 7, 30 (días)"
+                        className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                      />
+                      <p className="text-xs text-blue-700">
+                        💡 Deja vacío para notificar a <strong>todas</strong> las cotizaciones con este producto.
+                        <br />
+                        O ingresa el número de días (ej: 3 = últimos 3 días, 7 = última semana, 30 = último mes).
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
