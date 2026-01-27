@@ -3,7 +3,7 @@ const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('🔍 Buscando cotizaciones con productos que ya no existen...\n')
+  console.log('🔍 Buscando y eliminando cotizaciones con productos que ya no existen...\n')
 
   try {
     // Obtener todas las cotizaciones
@@ -38,7 +38,6 @@ async function main() {
         
         // Asegurarse de que es un array
         if (!Array.isArray(products) || products.length === 0) {
-          // Si no hay productos válidos, también la eliminamos
           quotesToDelete.push({
             id: quote.id,
             quoteNumber: quote.quoteNumber,
@@ -57,7 +56,6 @@ async function main() {
         if (productIds.length === 0) {
           const notFoundProducts = productsData.notFoundProducts || []
           if (Array.isArray(notFoundProducts) && notFoundProducts.length > 0) {
-            // Tiene productos no encontrados pero no productos válidos
             quotesToDelete.push({
               id: quote.id,
               quoteNumber: quote.quoteNumber,
@@ -87,7 +85,6 @@ async function main() {
         }
       } catch (error) {
         console.error(`❌ Error procesando cotización ${quote.id}:`, error.message)
-        // Si hay error al parsear, también la eliminamos
         quotesToDelete.push({
           id: quote.id,
           quoteNumber: quote.quoteNumber,
@@ -105,41 +102,7 @@ async function main() {
       return
     }
 
-    // Mostrar resumen de cotizaciones a eliminar
-    console.log('📋 Resumen de cotizaciones a eliminar:\n')
-    quotesToDelete.forEach((quote, index) => {
-      const quoteNum = quote.quoteNumber ? `#${String(quote.quoteNumber).padStart(7, '0')}` : 'Sin número'
-      console.log(`${index + 1}. ${quoteNum} - ${quote.name}`)
-      console.log(`   Razón: ${quote.reason}`)
-      if (quote.missingProductIds && quote.missingProductIds.length > 0) {
-        console.log(`   IDs faltantes: ${quote.missingProductIds.slice(0, 5).join(', ')}${quote.missingProductIds.length > 5 ? '...' : ''}`)
-      }
-      console.log('')
-    })
-
-    // Verificar si se debe ejecutar la eliminación
-    // En npm scripts, los argumentos después de -- se pasan al script
-    const shouldDelete = process.argv.some(arg => 
-      arg === '--delete' || 
-      arg === '-d' || 
-      arg.includes('delete')
-    )
-    
-    // Debug: mostrar argumentos recibidos
-    if (process.env.DEBUG) {
-      console.log('🔍 Argumentos recibidos:', process.argv)
-      console.log('🔍 shouldDelete:', shouldDelete)
-    }
-    
-    if (!shouldDelete) {
-      console.log('⚠️  ADVERTENCIA: Esta acción eliminará permanentemente las cotizaciones listadas arriba.')
-      console.log('💡 Para ejecutar la eliminación, ejecuta el script con el flag --delete:')
-      console.log('   npm run clean-quotes -- --delete')
-      console.log('   O directamente: node scripts/eliminar-cotizaciones-productos-inexistentes.js --delete\n')
-      return
-    }
-
-    // ELIMINAR COTIZACIONES
+    // ELIMINAR COTIZACIONES DIRECTAMENTE
     console.log('🗑️  Eliminando cotizaciones...\n')
     
     let deleted = 0
@@ -152,7 +115,9 @@ async function main() {
         })
         deleted++
         const quoteNum = quote.quoteNumber ? `#${String(quote.quoteNumber).padStart(7, '0')}` : 'Sin número'
-        console.log(`✅ Eliminada: ${quoteNum} - ${quote.name}`)
+        if (deleted <= 10 || deleted % 10 === 0) {
+          console.log(`✅ Eliminada ${deleted}/${quotesToDelete.length}: ${quoteNum} - ${quote.name}`)
+        }
       } catch (error) {
         errors++
         console.error(`❌ Error eliminando cotización ${quote.id}:`, error.message)

@@ -13,6 +13,8 @@
     "prisma:studio": "prisma studio",
     "create-cotizador": "node scripts/create-cotizador.js",
     "clean-quotes": "node scripts/eliminar-cotizaciones-productos-inexistentes.js",
+    "clean-quotes-directo": "node scripts/eliminar-cotizaciones-productos-inexistentes-directo.js",
+    "clean-quotes-date": "node scripts/eliminar-cotizaciones-por-fecha.js",
     "deploy": "vercel --prod --yes",
     "deploy:auto": "npm run build && vercel --prod --yes"
   },
