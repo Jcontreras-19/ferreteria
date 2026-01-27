@@ -74,6 +74,7 @@ export default async function handler(req, res) {
         data: {
           email,
           scheduleType: 'daily', // Valor por defecto para compatibilidad
+          sendDate: sendDateObj, // Fecha de envío programada
           time,
           dateFrom: dateFromDate,
           dateTo: dateToDate,

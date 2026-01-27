@@ -65,6 +65,7 @@ model ReportSchedule {
   id          String   @id @default(cuid())
   email       String   // Correo destinatario del reporte
   scheduleType String   // 'daily', 'weekly', 'monthly'
+  sendDate    DateTime? // Fecha de envío programada (opcional)
   time        String   // Hora en formato HH:mm (ej: "18:00")
   dateFrom    DateTime? // Fecha desde (opcional, para reportes personalizados)
   dateTo      DateTime? // Fecha hasta (opcional, para reportes personalizados)

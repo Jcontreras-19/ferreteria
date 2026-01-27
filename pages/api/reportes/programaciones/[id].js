@@ -20,7 +20,7 @@ export default async function handler(req, res) {
 
     // PUT: Actualizar programación
     if (req.method === 'PUT') {
-      const { email, scheduleType, time, isActive, dateFrom, dateTo } = req.body
+      const { email, scheduleType, sendDate, time, isActive, dateFrom, dateTo } = req.body
 
       const updateData = {}
       if (email !== undefined) {
@@ -37,6 +37,18 @@ export default async function handler(req, res) {
           return res.status(400).json({ error: 'Tipo de programación inválido' })
         }
         updateData.scheduleType = scheduleType
+      }
+
+      if (sendDate !== undefined) {
+        if (sendDate === null || sendDate === '') {
+          updateData.sendDate = null
+        } else {
+          const sendDateObj = new Date(sendDate)
+          if (isNaN(sendDateObj.getTime())) {
+            return res.status(400).json({ error: 'Fecha de envío inválida' })
+          }
+          updateData.sendDate = sendDateObj
+        }
       }
 
       if (time !== undefined) {

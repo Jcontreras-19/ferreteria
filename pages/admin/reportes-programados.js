@@ -165,7 +165,7 @@ export default function ReportesProgramados() {
         )
         setShowModal(false)
         setEditingSchedule(null)
-        setFormData({ email: '', scheduleType: 'daily', time: '18:00', dateFrom: getTodayDate(), dateTo: getTodayDate() })
+        setFormData({ email: '', sendDate: getTodayDate(), time: '18:00', dateFrom: getTodayDate(), dateTo: getTodayDate() })
         fetchSchedules()
       } else {
         const data = await res.json()
