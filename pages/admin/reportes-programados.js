@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/router'
 import Head from 'next/head'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { 
   FiCalendar, FiClock, FiMail, FiPlus, FiEdit, FiTrash2, 
-  FiCheckCircle, FiXCircle, FiRefreshCw, FiFileText
+  FiCheckCircle, FiXCircle, FiFileText, FiX
 } from 'react-icons/fi'
 
 export default function ReportesProgramados() {
-  const router = useRouter()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [schedules, setSchedules] = useState([])
