@@ -1206,8 +1206,19 @@ export default function AdminCotizaciones() {
                           <FiTag size={10} />
                           Estado
                         </span>
-                        <div className="w-5 h-5 bg-purple-100 rounded flex items-center justify-center">
-                          <FiCheckCircle className="text-purple-600" size={12} />
+                        <div className={`w-5 h-5 rounded flex items-center justify-center ${
+                          selectedQuote.status === 'rejected' ? 'bg-red-100' :
+                          selectedQuote.status === 'approved' || selectedQuote.status === 'completed' ? 'bg-green-100' :
+                          selectedQuote.status === 'pending' ? 'bg-yellow-100' :
+                          'bg-blue-100'
+                        }`}>
+                          {selectedQuote.status === 'rejected' ? (
+                            <FiXCircle className="text-red-600" size={12} />
+                          ) : selectedQuote.status === 'approved' || selectedQuote.status === 'completed' ? (
+                            <FiCheckCircle className="text-green-600" size={12} />
+                          ) : (
+                            <FiClock className="text-yellow-600" size={12} />
+                          )}
                         </div>
                       </div>
                       <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-lg shadow-sm ${getStatusColor(selectedQuote.status)}`}>
@@ -1215,6 +1226,19 @@ export default function AdminCotizaciones() {
                         {getStatusLabel(selectedQuote.status)}
                       </span>
                     </div>
+
+                    {/* Motivo del Rechazo */}
+                    {selectedQuote.status === 'rejected' && selectedQuote.rejectionReason && (
+                      <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-lg border-2 border-red-200 shadow-md p-2">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <FiXCircle className="text-red-600" size={12} />
+                          <span className="text-xs text-red-700 font-semibold">Motivo del Rechazo</span>
+                        </div>
+                        <div className="p-1.5 bg-red-50 rounded border border-red-100">
+                          <p className="text-xs text-gray-900 font-medium leading-relaxed">{selectedQuote.rejectionReason}</p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Cliente con Color Azul - Más Compacto */}
                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 shadow-md p-2">

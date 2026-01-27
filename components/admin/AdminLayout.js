@@ -14,7 +14,9 @@ import {
   FiChevronDown,
   FiCheckCircle,
   FiFileText,
-  FiCalendar
+  FiCalendar,
+  FiHome,
+  FiShoppingCart
 } from 'react-icons/fi'
 
 export default function AdminLayout({ children, user, onLogout }) {
@@ -181,6 +183,16 @@ export default function AdminLayout({ children, user, onLogout }) {
                       {getProfileName(user?.role)}
                     </p>
                   </div>
+                  {user?.role === 'superadmin' && (
+                    <Link
+                      href="/"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <FiShoppingCart size={16} />
+                      Generar Cotización
+                    </Link>
+                  )}
                   <button
                     onClick={() => {
                       handleLogout()
@@ -237,6 +249,16 @@ export default function AdminLayout({ children, user, onLogout }) {
                       {getProfileName(user?.role)}
                     </p>
                   </div>
+                  {user?.role === 'superadmin' && (
+                    <Link
+                      href="/"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <FiShoppingCart size={16} />
+                      Generar Cotización
+                    </Link>
+                  )}
                   <button
                     onClick={() => {
                       handleLogout()

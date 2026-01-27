@@ -97,10 +97,29 @@ export default async function handler(req, res) {
       // Generar PDF
       const pdfBuffer = generateQuotesSummaryPDF(quotes, schedule.scheduleType, startDate, endDate)
 
-      // Enviar a N8N
-      const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL
+      // Enviar a N8N - Usar webhook específico para reportes programados
+      const n8nWebhookUrl = process.env.N8N_REPORTES_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL
       if (n8nWebhookUrl) {
         try {
+          // Calcular estadísticas del reporte
+          const totalAmount = quotes.reduce((sum, q) => sum + (q.total || 0), 0)
+          const approvedQuotes = quotes.filter(q => q.status === 'approved' || q.status === 'authorized' || q.status === 'completed').length
+          const pendingQuotes = quotes.filter(q => q.status === 'pending' || q.status === 'sent').length
+          
+          // Formatear período
+          const periodFrom = startDate.toLocaleDateString('es-PE', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          })
+          const periodTo = endDate.toLocaleDateString('es-PE', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          })
+          const period = `${periodFrom} - ${periodTo}`
+          
+          // Crear FormData
           const formData = new FormData()
           
           // Convertir Buffer a Blob para FormData (Node.js 18+ tiene Blob global)
@@ -108,12 +127,39 @@ export default async function handler(req, res) {
           const pdfBlob = new Blob([pdfUint8Array], { type: 'application/pdf' })
           const fileName = `reporte-cotizaciones-${schedule.scheduleType}-${startDate.toISOString().split('T')[0]}.pdf`
           
-          formData.append('pdf', pdfBlob, fileName)
+          // Estructurar datos como objeto body (similar a cambio de precios)
+          const bodyPayload = {
+            event: 'scheduled_report',
+            email: schedule.email,
+            reportType: schedule.scheduleType,
+            reportTypeLabel: schedule.scheduleType === 'daily' ? 'Diario' : schedule.scheduleType === 'weekly' ? 'Semanal' : 'Mensual',
+            period: period,
+            periodFrom: periodFrom,
+            periodTo: periodTo,
+            dateFrom: startDate.toISOString(),
+            dateTo: endDate.toISOString(),
+            totalQuotes: quotes.length,
+            totalAmount: totalAmount.toFixed(2),
+            approvedQuotes: approvedQuotes,
+            pendingQuotes: pendingQuotes,
+            sendDate: schedule.sendDate ? new Date(schedule.sendDate).toLocaleDateString('es-PE') : null,
+            sendTime: schedule.time,
+            scheduleId: schedule.id,
+            createdAt: schedule.createdAt ? new Date(schedule.createdAt).toISOString() : null
+          }
+          
+          // Agregar el body como JSON stringificado
+          formData.append('body', JSON.stringify(bodyPayload))
+          
+          // También agregar campos individuales para compatibilidad
           formData.append('email', schedule.email)
           formData.append('reportType', schedule.scheduleType)
-          formData.append('period', `${startDate.toLocaleDateString('es-PE')} - ${endDate.toLocaleDateString('es-PE')}`)
+          formData.append('period', period)
           formData.append('totalQuotes', quotes.length.toString())
-          formData.append('totalAmount', quotes.reduce((sum, q) => sum + (q.total || 0), 0).toFixed(2))
+          formData.append('totalAmount', totalAmount.toFixed(2))
+          
+          // Agregar el PDF
+          formData.append('pdf', pdfBlob, fileName)
 
           const webhookResponse = await fetch(n8nWebhookUrl, {
             method: 'POST',
@@ -155,7 +201,7 @@ export default async function handler(req, res) {
           scheduleId: schedule.id,
           email: schedule.email,
           status: 'error',
-          error: 'N8N_WEBHOOK_URL no configurada'
+          error: 'N8N_REPORTES_WEBHOOK_URL o N8N_WEBHOOK_URL no configurada'
         })
       }
     }

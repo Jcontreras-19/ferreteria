@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma'
 import { generateQuotePDF } from '../../lib/pdfGenerator'
+import { getCurrentUser } from '../../lib/auth'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -7,6 +8,10 @@ export default async function handler(req, res) {
   }
 
   const { name, email, whatsapp, products, total, documentType, ruc, businessName, address, notFoundProducts, skipWebhook } = req.body
+
+  // Obtener usuario actual para verificar si es Super Admin
+  const currentUser = await getCurrentUser(req)
+  const isSuperAdmin = currentUser?.role === 'superadmin'
 
   if (!name || !email || !whatsapp || !products || products.length === 0) {
     return res.status(400).json({ error: 'Todos los campos son requeridos' })
@@ -46,6 +51,10 @@ export default async function handler(req, res) {
         : null,
     }
     
+    // Si es Super Admin, crear la cotización con status 'approved' para que vaya directo a "Autorizar Despachos"
+    // Si no es Super Admin, crear con status 'pending' (flujo normal: espera aprobación del cotizador)
+    const initialStatus = isSuperAdmin ? 'approved' : 'pending'
+    
     const quote = await prisma.quote.create({
       data: {
         quoteNumber: nextQuoteNumber,
@@ -54,7 +63,9 @@ export default async function handler(req, res) {
         whatsapp,
         products: JSON.stringify(productsWithMetadata),
         total: parseFloat(total),
-        status: 'pending',
+        status: initialStatus,
+        // Si es Super Admin, marcar como aprobado por él mismo
+        ...(isSuperAdmin && { approvedBy: currentUser.id }),
       },
     })
 
