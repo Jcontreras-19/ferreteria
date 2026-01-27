@@ -1555,230 +1555,240 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="mb-4">
-          <h3 className="text-2xl font-bold text-gray-900">
-            {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
-          </h3>
-          {editingProduct && (
-            <p className="text-sm text-gray-500 mt-1">
-              Editando: <span className="font-semibold">{editingProduct.name}</span>
-            </p>
-          )}
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-6xl mx-auto">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+              {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
+            </h3>
+            {editingProduct && (
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                Editando: <span className="font-semibold">{editingProduct.name}</span>
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <FiX size={24} />
+          </button>
         </div>
         <form 
           onSubmit={handleLocalSubmit} 
-          className="space-y-4"
+          className="space-y-3 sm:space-y-4"
         >
-                <div>
-                  <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre *
-                  </label>
-                  <input
-                    id="edit-name"
-                    name="name"
-                    type="text"
-                    value={hasUserEdited ? localFormData?.name ?? '' : computedFormData?.name ?? ''}
-                    onChange={(e) => {
-                      console.log('🟡 onChange name - nuevo valor:', e.target.value)
-                      setHasUserEdited(true)
-                      setLocalFormData({ ...localFormData, name: e.target.value })
-                    }}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                  />
-                </div>
+          {/* Primera fila: Nombre y Descripción en columnas */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+            <div>
+              <label htmlFor="edit-name" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                Nombre *
+              </label>
+              <input
+                id="edit-name"
+                name="name"
+                type="text"
+                value={hasUserEdited ? localFormData?.name ?? '' : computedFormData?.name ?? ''}
+                onChange={(e) => {
+                  console.log('🟡 onChange name - nuevo valor:', e.target.value)
+                  setHasUserEdited(true)
+                  setLocalFormData({ ...localFormData, name: e.target.value })
+                }}
+                required
+                className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+              />
+            </div>
+            <div>
+              <label htmlFor="edit-description" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                Descripción
+              </label>
+              <textarea
+                id="edit-description"
+                name="description"
+                value={hasUserEdited ? localFormData?.description ?? '' : computedFormData?.description ?? ''}
+                onChange={(e) => {
+                  setHasUserEdited(true)
+                  setLocalFormData({ ...localFormData, description: e.target.value })
+                }}
+                rows="2"
+                className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white resize-none"
+              />
+            </div>
+          </div>
 
-                <div>
-                  <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700 mb-2">
-                    Descripción
-                  </label>
-                  <textarea
-                    id="edit-description"
-                    name="description"
-                    value={hasUserEdited ? localFormData?.description ?? '' : computedFormData?.description ?? ''}
-                    onChange={(e) => {
-                      setHasUserEdited(true)
-                      setLocalFormData({ ...localFormData, description: e.target.value })
-                    }}
-                    rows="3"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                  />
-                </div>
+          {/* Segunda fila: Precio, Stock, Categoría */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div>
+              <label htmlFor="edit-price" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                Precio *
+              </label>
+              <input
+                id="edit-price"
+                name="price"
+                type="number"
+                step="0.01"
+                value={hasUserEdited ? localFormData?.price ?? '' : computedFormData?.price ?? ''}
+                onChange={(e) => {
+                  setHasUserEdited(true)
+                  setLocalFormData({ ...localFormData, price: e.target.value })
+                }}
+                required
+                className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+              />
+            </div>
+            <div>
+              <label htmlFor="edit-stock" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                Stock
+              </label>
+              <input
+                id="edit-stock"
+                name="stock"
+                type="number"
+                value={hasUserEdited ? localFormData?.stock ?? '' : computedFormData?.stock ?? ''}
+                onChange={(e) => {
+                  setHasUserEdited(true)
+                  setLocalFormData({ ...localFormData, stock: e.target.value })
+                }}
+                className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+              />
+            </div>
+            <div>
+              <label htmlFor="edit-category" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                Categoría
+              </label>
+              <input
+                id="edit-category"
+                name="category"
+                type="text"
+                value={hasUserEdited ? localFormData?.category ?? '' : computedFormData?.category ?? ''}
+                onChange={(e) => {
+                  setHasUserEdited(true)
+                  setLocalFormData({ ...localFormData, category: e.target.value })
+                }}
+                placeholder="Ej: Herramientas"
+                className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+              />
+            </div>
+          </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="edit-price" className="block text-sm font-medium text-gray-700 mb-2">
-                      Precio *
-                    </label>
-                    <input
-                      id="edit-price"
-                      name="price"
-                      type="number"
-                      step="0.01"
-                      value={hasUserEdited ? localFormData?.price ?? '' : computedFormData?.price ?? ''}
-                      onChange={(e) => {
-                        setHasUserEdited(true)
-                        setLocalFormData({ ...localFormData, price: e.target.value })
-                      }}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="edit-stock" className="block text-sm font-medium text-gray-700 mb-2">
-                      Stock
-                    </label>
-                    <input
-                      id="edit-stock"
-                      name="stock"
-                      type="number"
-                      value={hasUserEdited ? localFormData?.stock ?? '' : computedFormData?.stock ?? ''}
-                      onChange={(e) => {
-                        setHasUserEdited(true)
-                        setLocalFormData({ ...localFormData, stock: e.target.value })
-                      }}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                    />
-                  </div>
-                </div>
+          {/* Tercera fila: Notificación y Imagen lado a lado en pantallas grandes */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+            {/* Campo de tiempo de notificación solo cuando se edita un producto */}
+            {editingProduct && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <label htmlFor="edit-notification-days" className="block text-xs sm:text-sm font-medium text-blue-900 mb-1.5">
+                  <span className="flex items-center gap-1.5">
+                    <FiAlertCircle className="text-blue-600" size={14} />
+                    Notificar cambios de precio
+                  </span>
+                </label>
+                <input
+                  id="edit-notification-days"
+                  name="notificationDays"
+                  type="number"
+                  min="0"
+                  value={hasUserEdited ? localFormData?.notificationDays ?? '' : computedFormData?.notificationDays ?? ''}
+                  onChange={(e) => {
+                    setHasUserEdited(true)
+                    setLocalFormData({ ...localFormData, notificationDays: e.target.value })
+                  }}
+                  placeholder="Ej: 3, 7, 30 (días)"
+                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white mb-1.5"
+                />
+                <p className="text-xs text-blue-700 leading-tight">
+                  💡 Deja vacío para notificar a <strong>todas</strong> las cotizaciones.
+                  <br />
+                  O ingresa días (ej: 3 = últimos 3 días).
+                </p>
+              </div>
+            )}
 
-                <div>
-                  <label htmlFor="edit-category" className="block text-sm font-medium text-gray-700 mb-2">
-                    Categoría
-                  </label>
-                  <input
-                    id="edit-category"
-                    name="category"
-                    type="text"
-                    value={hasUserEdited ? localFormData?.category ?? '' : computedFormData?.category ?? ''}
-                    onChange={(e) => {
-                      setHasUserEdited(true)
-                      setLocalFormData({ ...localFormData, category: e.target.value })
-                    }}
-                    placeholder="Ej: Herramientas, Materiales, etc."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                  />
-                </div>
-
-                {/* Campo de tiempo de notificación solo cuando se edita un producto */}
-                {editingProduct && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <label htmlFor="edit-notification-days" className="block text-sm font-medium text-blue-900 mb-2">
-                      <span className="flex items-center gap-2">
-                        <FiAlertCircle className="text-blue-600" />
-                        Notificar cambios de precio
-                      </span>
-                    </label>
-                    <div className="space-y-2">
-                      <input
-                        id="edit-notification-days"
-                        name="notificationDays"
-                        type="number"
-                        min="0"
-                        value={hasUserEdited ? localFormData?.notificationDays ?? '' : computedFormData?.notificationDays ?? ''}
-                        onChange={(e) => {
-                          setHasUserEdited(true)
-                          setLocalFormData({ ...localFormData, notificationDays: e.target.value })
-                        }}
-                        placeholder="Ej: 3, 7, 30 (días)"
-                        className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                      />
-                      <p className="text-xs text-blue-700">
-                        💡 Deja vacío para notificar a <strong>todas</strong> las cotizaciones con este producto.
-                        <br />
-                        O ingresa el número de días (ej: 3 = últimos 3 días, 7 = última semana, 30 = último mes).
-                      </p>
+            {/* Imagen del Producto */}
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                Imagen del Producto
+              </label>
+              <div className="space-y-2">
+                {/* Vista previa de la imagen actual */}
+                {localFormData.image && localFormData.image.trim() !== '' && (
+                  <div className="border border-gray-300 rounded-lg p-2 bg-gray-50">
+                    <div className="flex items-start gap-2">
+                      <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-gray-200 rounded-lg border-2 border-gray-300 shadow-sm overflow-hidden flex-shrink-0">
+                        <img
+                          src={localFormData.image}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none'
+                            const parent = e.target.parentElement
+                            if (parent) {
+                              parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-400"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>'
+                            }
+                          }}
+                          onLoad={() => {
+                            console.log('✅ Imagen cargada exitosamente:', localFormData.image)
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-gray-500 mb-1 truncate">
+                          {localFormData.image.startsWith('/uploads/') 
+                            ? 'Imagen local' 
+                            : localFormData.image.includes('unsplash.com')
+                            ? 'Imagen de Unsplash'
+                            : 'Imagen del producto'}
+                        </p>
+                        <p className="text-xs text-gray-400 break-all mb-1 font-mono truncate">
+                          {localFormData.image.length > 40 ? localFormData.image.substring(0, 40) + '...' : localFormData.image}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setLocalFormData({ ...localFormData, image: '' })}
+                          className="text-xs text-red-600 hover:text-red-700 font-semibold"
+                        >
+                          ✕ Eliminar imagen
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
 
+                {/* Subir archivo */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Imagen del Producto
-                  </label>
-                  <div className="space-y-3">
-                    {/* Vista previa de la imagen actual */}
-                    {localFormData.image && localFormData.image.trim() !== '' && (
-                      <div className="border border-gray-300 rounded-lg p-3 bg-gray-50">
-                        <p className="text-xs font-semibold text-gray-600 mb-2">Vista Previa:</p>
-                        <div className="flex items-start gap-3">
-                          <div className="relative w-32 h-32 bg-gray-200 rounded-lg border-2 border-gray-300 shadow-sm overflow-hidden">
-                            <img
-                              src={localFormData.image}
-                              alt="Preview"
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none'
-                                const parent = e.target.parentElement
-                                if (parent) {
-                                  parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-400"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>'
-                                }
-                              }}
-                              onLoad={() => {
-                                console.log('✅ Imagen cargada exitosamente:', localFormData.image)
-                              }}
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-xs text-gray-500 break-all mb-2">
-                              {localFormData.image.startsWith('/uploads/') 
-                                ? 'Imagen local' 
-                                : localFormData.image.includes('unsplash.com')
-                                ? 'Imagen de Unsplash'
-                                : 'Imagen del producto'}
-                            </p>
-                            <p className="text-xs text-gray-400 break-all mb-2 font-mono">
-                              {localFormData.image.length > 60 ? localFormData.image.substring(0, 60) + '...' : localFormData.image}
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => setLocalFormData({ ...localFormData, image: '' })}
-                              className="text-xs text-red-600 hover:text-red-700 font-semibold"
-                            >
-                              ✕ Eliminar imagen
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Subir archivo */}
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Subir imagen desde tu computadora
-                      </label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleLocalImageUpload}
-                        className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer hover:border-blue-400 transition-colors"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Formatos: JPG, PNG, GIF. Tamaño máximo: 5MB
-                      </p>
-                    </div>
-                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLocalImageUpload}
+                    className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border-2 border-dashed border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer hover:border-blue-400 transition-colors"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Formatos: JPG, PNG, GIF. Máx: 5MB
+                  </p>
                 </div>
-
-                <div className="flex gap-2 pt-4">
-                  <button
-                    type="submit"
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors font-semibold"
-                  >
-                    Guardar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 rounded-lg transition-colors font-semibold"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </form>
+              </div>
             </div>
           </div>
+
+          {/* Botones */}
+          <div className="flex gap-2 sm:gap-3 pt-2 sm:pt-4 border-t border-gray-200">
+            <button
+              type="submit"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 sm:py-2.5 rounded-lg transition-colors font-semibold text-sm sm:text-base"
+            >
+              Guardar
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 sm:py-2.5 rounded-lg transition-colors font-semibold text-sm sm:text-base"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   )
 }

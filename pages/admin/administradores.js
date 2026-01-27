@@ -82,7 +82,9 @@ export default function AdminAdministradores() {
       const res = await fetch('/api/users')
       if (res.ok) {
         const data = await res.json()
-        setUsers(data)
+        // Filtrar solo Super Admin, Admin y Cotizadores (excluir clientes)
+        const filteredData = data.filter(u => u.role !== 'customer')
+        setUsers(filteredData)
       }
     } catch (error) {
       console.error('Error fetching users:', error)
@@ -140,10 +142,13 @@ export default function AdminAdministradores() {
 
   const exportToExcel = async () => {
     try {
+      // Filtrar usuarios (ya excluye clientes) y aplicar búsqueda
       const filteredUsers = users.filter(u => 
-        !searchQuery || 
-        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchQuery.toLowerCase())
+        u.role !== 'customer' && (
+          !searchQuery || 
+          u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          u.email.toLowerCase().includes(searchQuery.toLowerCase())
+        )
       )
 
       // Crear nuevo workbook
@@ -406,7 +411,7 @@ export default function AdminAdministradores() {
             </div>
 
             {/* Estadísticas Compactas */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border-2 border-blue-300 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-blue-800 text-xs font-semibold">Total</span>
@@ -425,23 +430,14 @@ export default function AdminAdministradores() {
                 </div>
                 <p className="text-2xl font-bold text-purple-900">{users.filter(u => u.role === 'superadmin').length}</p>
               </div>
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border-2 border-green-300 shadow-sm">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-green-800 text-xs font-semibold">Admin</span>
-                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-md">
-                    <FiShield className="text-white" size={16} />
-                  </div>
-                </div>
-                <p className="text-2xl font-bold text-green-900">{users.filter(u => u.role === 'admin').length}</p>
-              </div>
               <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-3 border-2 border-orange-300 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-orange-800 text-xs font-semibold">Otros</span>
+                  <span className="text-orange-800 text-xs font-semibold">Cotizadores</span>
                   <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center shadow-md">
                     <FiUsers className="text-white" size={16} />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-orange-900">{users.filter(u => !['superadmin', 'admin'].includes(u.role)).length}</p>
+                <p className="text-2xl font-bold text-orange-900">{users.filter(u => u.role === 'cotizador').length}</p>
               </div>
             </div>
           </div>
@@ -795,7 +791,7 @@ export default function AdminAdministradores() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                     style={{ color: '#111827' }}
                   >
-                    {ROLES.map((role) => (
+                    {ROLES.filter(role => role.value !== 'customer').map((role) => (
                       <option key={role.value} value={role.value} style={{ color: '#111827', backgroundColor: '#ffffff' }}>
                         {role.label}
                       </option>

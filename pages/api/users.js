@@ -16,6 +16,11 @@ export default async function handler(req, res) {
       }
 
       const users = await prisma.user.findMany({
+        where: {
+          role: {
+            not: 'customer' // Excluir clientes del panel de administradores
+          }
+        },
         select: {
           id: true,
           name: true,
@@ -50,6 +55,11 @@ export default async function handler(req, res) {
 
       if (!name || !email || !password) {
         return res.status(400).json({ error: 'Nombre, email y contraseña son requeridos' })
+      }
+
+      // No permitir crear usuarios con rol 'customer' desde este panel
+      if (role === 'customer') {
+        return res.status(400).json({ error: 'No se pueden crear clientes desde este panel. Use la sección de Clientes.' })
       }
 
       // Verificar si el email ya existe
