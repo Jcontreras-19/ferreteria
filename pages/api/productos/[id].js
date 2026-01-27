@@ -330,7 +330,9 @@ export default async function handler(req, res) {
                 // Convertir Buffer a Blob para FormData (Node.js 18+ tiene Blob global)
                 const pdfUint8Array = new Uint8Array(pdfBuffer)
                 const pdfBlob = new Blob([pdfUint8Array], { type: 'application/pdf' })
-                const pdfFileName = `cotizacion-actualizada-${quote.id.slice(0, 8)}.pdf`
+                // Usar el número de cotización en el nombre del archivo (sin ceros a la izquierda)
+                const quoteNum = quote.quoteNumber ? quote.quoteNumber.toString() : quote.id.slice(0, 8)
+                const pdfFileName = `cotizacion-actualizada-${quoteNum}.pdf`
                 formData.append('pdf', pdfBlob, pdfFileName)
 
                 // Debug: confirmar URL antes de enviar
