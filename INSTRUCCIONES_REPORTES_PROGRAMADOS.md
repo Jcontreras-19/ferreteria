@@ -109,7 +109,7 @@ En N8N, configura el webhook para recibir:
 ## 🔧 Notas Técnicas
 
 ### Cron Schedule
-- Actualmente configurado para ejecutarse cada 5 minutos (`*/5 * * * *`)
+- Actualmente configurado para ejecutarse una vez al día (`0 0 * * *`, medianoche UTC)
 - El endpoint verifica internamente si es la hora correcta para cada programación
 - Esto permite múltiples programaciones con diferentes horarios
 
@@ -134,7 +134,7 @@ Si no tienes acceso a Vercel Cron, puedes usar un servicio externo:
    ```
    https://tu-dominio.vercel.app/api/reportes/ejecutar-programados?secret=TU_SECRET
    ```
-3. Programa la ejecución cada 5 minutos
+3. Programa la ejecución una vez al día (por ejemplo, a medianoche)
 
 ## ✅ Próximos Pasos
 

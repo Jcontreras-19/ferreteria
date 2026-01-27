@@ -19,9 +19,9 @@ Ve a **Vercel Dashboard** → Tu Proyecto → **Settings** → **Environment Var
 ### 3. **DATABASE_URL** (Ya configurado ✅)
 - Ya lo tienes configurado, perfecto.
 
-## 🔧 Configuración del Cron Job
+## 🔧 Configuración del Cron Job (una vez al día)
 
-El archivo `vercel.json` ya está configurado para ejecutar el cron job cada 5 minutos:
+El archivo `vercel.json` ya está configurado para ejecutar el cron job una vez al día (a medianoche UTC):
 
 ```json
 {
@@ -29,7 +29,7 @@ El archivo `vercel.json` ya está configurado para ejecutar el cron job cada 5 m
   "crons": [
     {
       "path": "/api/reportes/ejecutar-programados",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
