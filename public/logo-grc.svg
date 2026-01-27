@@ -1,0 +1,19 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Círculo exterior -->
+  <circle cx="60" cy="60" r="55" fill="#2d3748" stroke="#00C853" stroke-width="3"/>
+  
+  <!-- Círculo interior con G -->
+  <circle cx="60" cy="60" r="40" fill="none" stroke="#00C853" stroke-width="2.5"/>
+  
+  <!-- Letra G estilizada -->
+  <path d="M 45 60 Q 45 50 50 50 L 65 50 Q 70 50 70 55 L 70 65 Q 70 70 65 70 L 55 70 L 55 60" 
+        fill="none" stroke="#2d3748" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Letra R estilizada -->
+  <path d="M 75 45 L 75 70 M 75 45 Q 80 45 80 50 Q 80 55 75 55 L 80 70" 
+        fill="none" stroke="#00C853" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Letra C estilizada -->
+  <path d="M 85 50 Q 90 50 90 60 Q 90 70 85 70" 
+        fill="none" stroke="#2d3748" stroke-width="3.5" stroke-linecap="round"/>
+</svg>

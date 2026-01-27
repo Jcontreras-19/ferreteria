@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  role      String   @default("admin") // admin, superadmin, viewer, editor, cotizador, vendedor
+  permissions String @default("[]") // JSON array de permisos: ["view", "create", "edit", "delete"]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  image       String?
+  stock       Int      @default(0)
+  category    String?  // Categoría del producto
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Quote {
+  id              String   @id @default(cuid())
+  quoteNumber     Int?     @unique // Número secuencial de cotización (Cotización 0000001)
+  name            String
+  email           String
+  whatsapp        String
+  products        String   // JSON string of products
+  total           Float
+  status          String   @default("pending") // pending, approved, authorized, dispatched, completed, rejected
+  approvedBy      String?  // ID del usuario que aprobó (cotizador)
+  rejectedBy      String?  // ID del usuario que rechazó
+  rejectionReason String?  // Razón del rechazo
+  estimatedDelivery Int?   // Días estimados de entrega
+  notes           String?  // Notas del cotizador
+  authorizedBy    String?  // ID del admin que autorizó el despacho
+  authorizedAt    DateTime? // Fecha de autorización
+  documentType    String?  // 'boleta' o 'factura'
+  documentNumber  String?  // Número de boleta/factura
+  dispatchedAt    DateTime? // Fecha de despacho
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relaciones (opcionales, para cuando se necesiten)
+  // approvedByUser User? @relation("ApprovedQuotes", fields: [approvedBy], references: [id])
+  // rejectedByUser User? @relation("RejectedQuotes", fields: [rejectedBy], references: [id])
+}
+
+model ReportSchedule {
+  id          String   @id @default(cuid())
+  email       String   // Correo destinatario del reporte
+  scheduleType String   // 'daily', 'weekly', 'monthly'
+  time        String   // Hora en formato HH:mm (ej: "18:00")
+  isActive    Boolean  @default(true) // Si está activo o no
+  lastSent    DateTime? // Última vez que se envió
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?  // ID del usuario que creó la programación
+}
+
