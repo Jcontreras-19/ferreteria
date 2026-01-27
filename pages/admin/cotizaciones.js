@@ -90,12 +90,7 @@ export default function AdminCotizaciones() {
     total: quotes.length,
     pending: quotes.filter(q => q.status === 'pending').length,
     sent: quotes.filter(q => q.status === 'sent').length,
-    approved: quotes.filter(q => q.status === 'approved').length,
-    authorized: quotes.filter(q => q.status === 'authorized').length,
-    dispatched: quotes.filter(q => q.status === 'dispatched').length,
     completed: quotes.filter(q => q.status === 'completed').length,
-    rejected: quotes.filter(q => q.status === 'rejected').length,
-    other: quotes.filter(q => !['pending', 'sent', 'approved', 'authorized', 'dispatched', 'completed', 'rejected'].includes(q.status)).length,
     totalAmount: quotes.reduce((sum, q) => sum + (q.total || 0), 0),
     avgAmount: quotes.length > 0 ? quotes.reduce((sum, q) => sum + (q.total || 0), 0) / quotes.length : 0,
   }
@@ -685,7 +680,7 @@ export default function AdminCotizaciones() {
             </div>
 
             {/* Estadísticas Compactas con Mejor Contraste */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-3 border-2 border-yellow-300 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-yellow-800 text-xs font-semibold">Pendientes</span>
@@ -703,33 +698,6 @@ export default function AdminCotizaciones() {
                   </div>
                 </div>
                 <p className="text-2xl font-bold text-blue-900">{stats.sent}</p>
-              </div>
-              <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-3 border-2 border-indigo-300 shadow-sm">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-indigo-800 text-xs font-semibold">Aprobadas</span>
-                  <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center shadow-md">
-                    <FiCheckCircle className="text-white" size={16} />
-                  </div>
-                </div>
-                <p className="text-2xl font-bold text-indigo-900">{stats.approved}</p>
-              </div>
-              <div className="bg-gradient-to-br from-violet-50 to-violet-100 rounded-lg p-3 border-2 border-violet-300 shadow-sm">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-violet-800 text-xs font-semibold">Autorizadas</span>
-                  <div className="w-8 h-8 bg-violet-500 rounded-full flex items-center justify-center shadow-md">
-                    <FiCheckCircle className="text-white" size={16} />
-                  </div>
-                </div>
-                <p className="text-2xl font-bold text-violet-900">{stats.authorized}</p>
-              </div>
-              <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-lg p-3 border-2 border-cyan-300 shadow-sm">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-cyan-800 text-xs font-semibold">Despachadas</span>
-                  <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center shadow-md">
-                    <FiPackage className="text-white" size={16} />
-                  </div>
-                </div>
-                <p className="text-2xl font-bold text-cyan-900">{stats.dispatched}</p>
               </div>
               <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border-2 border-green-300 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
@@ -750,33 +718,6 @@ export default function AdminCotizaciones() {
                 <p className="text-lg font-bold text-purple-900">S/. {stats.totalAmount.toFixed(2)}</p>
               </div>
             </div>
-            {/* Tarjeta adicional para estados no contemplados si existen */}
-            {(stats.rejected > 0 || stats.other > 0) && (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 mt-2">
-                {stats.rejected > 0 && (
-                  <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-3 border-2 border-red-300 shadow-sm">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-red-800 text-xs font-semibold">Rechazadas</span>
-                      <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center shadow-md">
-                        <FiX className="text-white" size={16} />
-                      </div>
-                    </div>
-                    <p className="text-2xl font-bold text-red-900">{stats.rejected}</p>
-                  </div>
-                )}
-                {stats.other > 0 && (
-                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 border-2 border-gray-300 shadow-sm">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-gray-800 text-xs font-semibold">Otros</span>
-                      <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center shadow-md">
-                        <FiInfo className="text-white" size={16} />
-                      </div>
-                    </div>
-                    <p className="text-2xl font-bold text-gray-900">{stats.other}</p>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Filtros Compactos en una sola fila */}
