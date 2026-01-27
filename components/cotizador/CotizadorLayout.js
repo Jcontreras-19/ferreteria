@@ -72,9 +72,10 @@ export default function CotizadorLayout({ children, user, onLogout }) {
     { href: '/cotizador', icon: FiFileText, label: 'Todas las Cotizaciones', exact: true },
     { href: '/cotizador?status=pending', icon: FiFileText, label: 'Pendientes' },
     { href: '/cotizador?status=approved', icon: FiCheckCircle, label: 'Aprobadas' },
+    { href: '/cotizador?status=completed', icon: FiCheckCircle, label: 'Completadas' },
     { href: '/cotizador?status=rejected', icon: FiXCircle, label: 'Rechazadas' },
     { href: '/cotizador/productos', icon: FiBox, label: 'Inventario' },
-    { href: '/cotizador/boletas-facturas', icon: FiCreditCard, label: 'Boletas y Facturas' },
+    // { href: '/cotizador/boletas-facturas', icon: FiCreditCard, label: 'Boletas y Facturas' }, // Ocultado temporalmente
   ]
 
   const isActive = (href, exact = false) => {

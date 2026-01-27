@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "ReportSchedule" ADD COLUMN IF NOT EXISTS "dateFrom" TIMESTAMP(3),
+ADD COLUMN IF NOT EXISTS "dateTo" TIMESTAMP(3);

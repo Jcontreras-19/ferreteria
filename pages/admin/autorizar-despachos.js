@@ -21,7 +21,6 @@ export default function AutorizarDespachos() {
   const [selectedQuote, setSelectedQuote] = useState(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showActionModal, setShowActionModal] = useState(false)
-  const [documentType, setDocumentType] = useState('boleta')
   const [clientEmail, setClientEmail] = useState('')
   const [processing, setProcessing] = useState(false)
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null)
@@ -115,23 +114,27 @@ export default function AutorizarDespachos() {
   }
 
   const getStatusColor = (status) => {
+    // Mapear estados para consistencia
+    const mappedStatus = status === 'authorized' ? 'approved' : status === 'dispatched' ? 'completed' : status
     const colors = {
       pending: 'bg-yellow-50 text-yellow-700 border-2 border-yellow-300',
-      approved: 'bg-purple-50 text-purple-700 border-2 border-purple-300',
-      authorized: 'bg-blue-50 text-blue-700 border-2 border-blue-300',
-      dispatched: 'bg-indigo-50 text-indigo-700 border-2 border-indigo-300',
+      sent: 'bg-blue-50 text-blue-700 border-2 border-blue-300',
+      approved: 'bg-green-50 text-green-700 border-2 border-green-300',
+      authorized: 'bg-green-50 text-green-700 border-2 border-green-300', // Mapeado a verde como approved
+      dispatched: 'bg-green-50 text-green-700 border-2 border-green-300', // Mapeado a verde como completed
       completed: 'bg-green-50 text-green-700 border-2 border-green-300',
       rejected: 'bg-red-50 text-red-700 border-2 border-red-300',
     }
-    return colors[status] || 'bg-gray-50 text-gray-700 border-2 border-gray-300'
+    return colors[mappedStatus] || colors[status] || 'bg-gray-50 text-gray-700 border-2 border-gray-300'
   }
 
   const getStatusIcon = (status) => {
     const icons = {
       pending: <FiClock size={12} />,
+      sent: <FiFileText size={12} />,
       approved: <FiCheckCircle size={12} />,
       authorized: <FiCheckCircle size={12} />,
-      dispatched: <FiPackage size={12} />,
+      dispatched: <FiCheckCircle size={12} />,
       completed: <FiCheckCircle size={12} />,
       rejected: <FiXCircle size={12} />,
     }
@@ -139,15 +142,24 @@ export default function AutorizarDespachos() {
   }
 
   const getStatusLabel = (status) => {
-    const labels = {
-      pending: 'Pendiente',
-      approved: 'Aprobada',
-      authorized: 'Autorizada',
-      dispatched: 'Despachada',
-      completed: 'Completada',
-      rejected: 'Rechazada',
+    switch (status) {
+      case 'completed':
+        return 'Completada'
+      case 'sent':
+        return 'Enviada'
+      case 'approved':
+        return 'Aprobada'
+      case 'authorized':
+        return 'Aprobada' // Mapeado a Aprobada para consistencia
+      case 'dispatched':
+        return 'Completada' // Mapeado a Completada para consistencia
+      case 'rejected':
+        return 'Rechazada'
+      case 'pending':
+        return 'Pendiente'
+      default:
+        return status || 'Sin estado'
     }
-    return labels[status] || status
   }
 
   const filteredQuotes = quotes.filter(quote => {
@@ -207,7 +219,6 @@ export default function AutorizarDespachos() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ 
-          documentType,
           clientEmail: clientEmail.trim(),
         }),
       })
@@ -233,7 +244,6 @@ export default function AutorizarDespachos() {
 
   const openActionModal = (quote) => {
     setSelectedQuote(quote)
-    setDocumentType('boleta')
     setClientEmail(quote.email || '')
     setShowActionModal(true)
   }
@@ -1479,37 +1489,30 @@ export default function AutorizarDespachos() {
                 </p>
               </div>
 
-              {/* Campo de Tipo de Documento */}
-              <div className="bg-white rounded-lg border-2 border-purple-200 shadow-sm p-4">
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
-                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <FiFileText className="text-purple-600" size={16} />
-                  </div>
-                  <span>Tipo de Documento</span>
-                </label>
-                <select
-                  value={documentType}
-                  onChange={(e) => setDocumentType(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 transition-all"
-                >
-                  <option value="boleta">Boleta</option>
-                  <option value="factura">Factura</option>
-                </select>
-              </div>
-
               {/* Información de advertencia */}
-              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-lg p-4">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-5 shadow-sm">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <FiAlertCircle className="text-yellow-600" size={18} />
+                  <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                    <FiCheckCircle className="text-white" size={20} />
                   </div>
-                  <div className="text-sm text-yellow-800">
-                    <p className="font-semibold mb-2">Al autorizar este despacho:</p>
-                    <ul className="list-disc list-inside space-y-1.5">
-                      <li>Se generará automáticamente la {documentType === 'factura' ? 'factura' : 'boleta'}</li>
-                      <li>Se descontará el stock de los productos</li>
-                      <li>La cotización cambiará a estado "Autorizada"</li>
-                      <li>Se enviará un correo al cliente con la cotización</li>
+                  <div className="text-sm text-green-800 flex-1">
+                    <p className="font-bold text-base mb-3 flex items-center gap-2">
+                      <FiInfo size={16} />
+                      Al autorizar este despacho:
+                    </p>
+                    <ul className="list-disc list-inside space-y-2 text-gray-700">
+                      <li className="flex items-start gap-2">
+                        <FiPackage className="text-green-600 mt-0.5 flex-shrink-0" size={14} />
+                        <span><strong>Se descontará el stock</strong> de los productos de la cotización</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <FiCheckCircle className="text-green-600 mt-0.5 flex-shrink-0" size={14} />
+                        <span>La cotización cambiará a estado <strong>"Completada"</strong></span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <FiMail className="text-green-600 mt-0.5 flex-shrink-0" size={14} />
+                        <span>Se enviará un correo al cliente con la cotización autorizada</span>
+                      </li>
                     </ul>
                   </div>
                 </div>

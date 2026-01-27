@@ -57,19 +57,28 @@ export default async function handler(req, res) {
         }
       }
 
-      // Calcular rango de fechas según el tipo
+      // Calcular rango de fechas según el tipo o usar fechas personalizadas
       let startDate = new Date()
       let endDate = new Date()
       endDate.setHours(23, 59, 59, 999)
 
-      if (schedule.scheduleType === 'daily') {
+      // Si hay fechas personalizadas, usarlas; si no, calcular según el tipo
+      if (schedule.dateFrom && schedule.dateTo) {
+        startDate = new Date(schedule.dateFrom)
         startDate.setHours(0, 0, 0, 0)
-      } else if (schedule.scheduleType === 'weekly') {
-        startDate.setDate(startDate.getDate() - 7)
-        startDate.setHours(0, 0, 0, 0)
-      } else if (schedule.scheduleType === 'monthly') {
-        startDate.setMonth(startDate.getMonth() - 1)
-        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(schedule.dateTo)
+        endDate.setHours(23, 59, 59, 999)
+      } else {
+        // Lógica original basada en el tipo
+        if (schedule.scheduleType === 'daily') {
+          startDate.setHours(0, 0, 0, 0)
+        } else if (schedule.scheduleType === 'weekly') {
+          startDate.setDate(startDate.getDate() - 7)
+          startDate.setHours(0, 0, 0, 0)
+        } else if (schedule.scheduleType === 'monthly') {
+          startDate.setMonth(startDate.getMonth() - 1)
+          startDate.setHours(0, 0, 0, 0)
+        }
       }
 
       // Obtener cotizaciones en el rango

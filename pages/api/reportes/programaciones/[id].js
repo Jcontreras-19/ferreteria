@@ -20,7 +20,7 @@ export default async function handler(req, res) {
 
     // PUT: Actualizar programación
     if (req.method === 'PUT') {
-      const { email, scheduleType, time, isActive } = req.body
+      const { email, scheduleType, time, isActive, dateFrom, dateTo } = req.body
 
       const updateData = {}
       if (email !== undefined) {
@@ -45,6 +45,35 @@ export default async function handler(req, res) {
           return res.status(400).json({ error: 'Formato de hora inválido. Debe ser HH:mm' })
         }
         updateData.time = time
+      }
+
+      if (dateFrom !== undefined) {
+        if (dateFrom === null || dateFrom === '') {
+          updateData.dateFrom = null
+        } else {
+          const dateFromDate = new Date(dateFrom)
+          if (isNaN(dateFromDate.getTime())) {
+            return res.status(400).json({ error: 'Fecha desde inválida' })
+          }
+          updateData.dateFrom = dateFromDate
+        }
+      }
+
+      if (dateTo !== undefined) {
+        if (dateTo === null || dateTo === '') {
+          updateData.dateTo = null
+        } else {
+          const dateToDate = new Date(dateTo)
+          if (isNaN(dateToDate.getTime())) {
+            return res.status(400).json({ error: 'Fecha hasta inválida' })
+          }
+          updateData.dateTo = dateToDate
+        }
+      }
+
+      // Validar que dateFrom no sea mayor que dateTo si ambos están presentes
+      if (updateData.dateFrom && updateData.dateTo && updateData.dateFrom > updateData.dateTo) {
+        return res.status(400).json({ error: 'La fecha desde no puede ser mayor que la fecha hasta' })
       }
 
       if (isActive !== undefined) {

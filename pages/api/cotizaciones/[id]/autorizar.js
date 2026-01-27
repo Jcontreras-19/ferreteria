@@ -47,11 +47,10 @@ export default async function handler(req, res) {
     }
 
     const { id } = req.query
-    const { documentType, clientEmail } = req.body
+    const { clientEmail } = req.body
 
-    if (!documentType || !['boleta', 'factura'].includes(documentType)) {
-      return res.status(400).json({ error: 'Tipo de documento inválido. Debe ser "boleta" o "factura"' })
-    }
+    // Usar 'boleta' como tipo de documento por defecto
+    const documentType = 'boleta'
 
     // Validar que se proporcione el correo del cliente
     if (!clientEmail || !clientEmail.trim()) {
@@ -125,7 +124,7 @@ export default async function handler(req, res) {
       prisma.quote.update({
         where: { id },
         data: {
-          status: 'authorized',
+          status: 'completed',
           authorizedBy: user.id,
           authorizedAt: new Date(),
           documentType: documentType,
@@ -289,7 +288,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       ...updatedQuote,
-      message: `Despacho autorizado. ${documentType === 'factura' ? 'Factura' : 'Boleta'} generada: ${documentNumber}`,
+      message: `Despacho autorizado exitosamente. Stock descontado y cotización completada.`,
     })
   } catch (error) {
     console.error('Error authorizing dispatch:', error)

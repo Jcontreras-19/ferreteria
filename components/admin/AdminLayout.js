@@ -77,7 +77,7 @@ export default function AdminLayout({ children, user, onLogout }) {
     { href: '/admin/clientes', icon: FiUser, label: 'Clientes' },
     { href: '/admin/cotizaciones', icon: FiBarChart2, label: 'Cotizaciones' },
     { href: '/admin/autorizar-despachos', icon: FiCheckCircle, label: 'Autorizar Despachos' },
-    { href: '/admin/boletas-facturas', icon: FiFileText, label: 'Boletas y Facturas' },
+    // { href: '/admin/boletas-facturas', icon: FiFileText, label: 'Boletas y Facturas' }, // Ocultado temporalmente
     { href: '/admin/reportes-programados', icon: FiCalendar, label: 'Reportes Programados' },
     { href: '/admin/administradores', icon: FiUsers, label: 'Administradores' },
     { href: '/admin/configuracion', icon: FiSettings, label: 'Configuración' },

@@ -3,7 +3,7 @@ import Head from 'next/head'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { 
   FiCalendar, FiClock, FiMail, FiPlus, FiEdit, FiTrash2, 
-  FiCheckCircle, FiXCircle, FiFileText, FiX
+  FiCheckCircle, FiXCircle, FiFileText, FiX, FiSend, FiUser, FiEye
 } from 'react-icons/fi'
 
 export default function ReportesProgramados() {
@@ -12,12 +12,23 @@ export default function ReportesProgramados() {
   const [schedules, setSchedules] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [editingSchedule, setEditingSchedule] = useState(null)
+  // Función para obtener fecha de hoy en formato YYYY-MM-DD
+  const getTodayDate = () => {
+    const today = new Date()
+    return today.toISOString().split('T')[0]
+  }
+
   const [formData, setFormData] = useState({
     email: '',
     scheduleType: 'daily',
-    time: '18:00'
+    time: '18:00',
+    dateFrom: getTodayDate(),
+    dateTo: getTodayDate()
   })
   const [notifications, setNotifications] = useState([])
+  const [showPdfPreview, setShowPdfPreview] = useState(false)
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null)
+  const [loadingPreview, setLoadingPreview] = useState(false)
 
   useEffect(() => {
     checkAuth()
@@ -77,6 +88,59 @@ export default function ReportesProgramados() {
     }, 5000)
   }
 
+  const handlePreviewPDF = async () => {
+    // Validar que las fechas estén completas
+    if (!formData.dateFrom || !formData.dateTo) {
+      showNotification('Por favor completa las fechas antes de previsualizar', 'error')
+      return
+    }
+
+    // Validar que fecha hasta no sea menor que fecha desde
+    if (new Date(formData.dateTo) < new Date(formData.dateFrom)) {
+      showNotification('La fecha "Hasta" no puede ser anterior a "Desde"', 'error')
+      return
+    }
+
+    setLoadingPreview(true)
+    try {
+      const res = await fetch('/api/reportes/generar-resumen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          periodType: formData.scheduleType,
+          startDate: formData.dateFrom,
+          endDate: formData.dateTo
+        })
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'Error al generar el PDF' }))
+        showNotification(errorData.error || 'Error al generar la previsualización', 'error')
+        return
+      }
+
+      // Convertir la respuesta del PDF a blob y crear URL
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      setPdfPreviewUrl(url)
+      setShowPdfPreview(true)
+    } catch (error) {
+      console.error('Error generando preview:', error)
+      showNotification('Error al generar la previsualización del PDF', 'error')
+    } finally {
+      setLoadingPreview(false)
+    }
+  }
+
+  const closePdfPreview = () => {
+    if (pdfPreviewUrl) {
+      URL.revokeObjectURL(pdfPreviewUrl)
+      setPdfPreviewUrl(null)
+    }
+    setShowPdfPreview(false)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
@@ -101,7 +165,7 @@ export default function ReportesProgramados() {
         )
         setShowModal(false)
         setEditingSchedule(null)
-        setFormData({ email: '', scheduleType: 'daily', time: '18:00' })
+        setFormData({ email: '', scheduleType: 'daily', time: '18:00', dateFrom: getTodayDate(), dateTo: getTodayDate() })
         fetchSchedules()
       } else {
         const data = await res.json()
@@ -115,10 +179,19 @@ export default function ReportesProgramados() {
 
   const handleEdit = (schedule) => {
     setEditingSchedule(schedule)
+    const dateFrom = schedule.dateFrom 
+      ? new Date(schedule.dateFrom).toISOString().split('T')[0]
+      : getTodayDate()
+    const dateTo = schedule.dateTo
+      ? new Date(schedule.dateTo).toISOString().split('T')[0]
+      : getTodayDate()
+    
     setFormData({
       email: schedule.email,
       scheduleType: schedule.scheduleType,
-      time: schedule.time
+      time: schedule.time,
+      dateFrom: dateFrom,
+      dateTo: dateTo
     })
     setShowModal(true)
   }
@@ -207,12 +280,20 @@ export default function ReportesProgramados() {
             <button
               onClick={() => {
                 setEditingSchedule(null)
-                setFormData({ email: '', scheduleType: 'daily', time: '18:00' })
+                setFormData({ 
+                  email: '', 
+                  scheduleType: 'daily', 
+                  time: '18:00',
+                  dateFrom: getTodayDate(),
+                  dateTo: getTodayDate()
+                })
                 setShowModal(true)
               }}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+              className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
             >
-              <FiPlus size={20} />
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <FiPlus size={18} />
+              </div>
               Nueva Programación
             </button>
           </div>
@@ -312,91 +393,228 @@ export default function ReportesProgramados() {
             )}
           </div>
 
-          {/* Modal para crear/editar programación */}
+          {/* Modal para crear/editar programación - Diseño Mejorado */}
           {showModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg max-w-md w-full p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold text-gray-900">
-                    {editingSchedule ? 'Editar Programación' : 'Nueva Programación'}
-                  </h2>
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+              <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border-2 border-gray-200 overflow-hidden animate-slideUp">
+                {/* Header con Gradiente */}
+                <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center ring-2 ring-white/30">
+                      <FiCalendar className="text-white" size={24} />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">
+                        {editingSchedule ? 'Editar Programación' : 'Nueva Programación'}
+                      </h2>
+                      <p className="text-green-100 text-sm">Configura el envío automático de reportes</p>
+                    </div>
+                  </div>
                   <button
                     onClick={() => {
+                      closePdfPreview()
                       setShowModal(false)
                       setEditingSchedule(null)
-                      setFormData({ email: '', scheduleType: 'daily', time: '18:00' })
+                      setFormData({ email: '', scheduleType: 'daily', time: '18:00', dateFrom: getTodayDate(), dateTo: getTodayDate() })
                     }}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg flex items-center justify-center transition-all hover:scale-110 ring-2 ring-white/30"
                   >
-                    <FiX size={24} />
+                    <FiX className="text-white" size={20} />
                   </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Correo Electrónico *
+                <form onSubmit={handleSubmit} className="p-6 space-y-5 bg-gradient-to-br from-gray-50 to-white">
+                  {/* Campo Email con Icono */}
+                  <div className="bg-white rounded-xl border-2 border-blue-200 shadow-sm p-4">
+                    <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <FiMail className="text-blue-600" size={18} />
+                      </div>
+                      <span>Correo Electrónico</span>
+                      <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="ejemplo@correo.com"
-                    />
+                    <div className="relative">
+                      <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        placeholder="ejemplo@correo.com"
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tipo de Reporte *
+                  {/* Campo Tipo de Reporte con Icono */}
+                  <div className="bg-white rounded-xl border-2 border-purple-200 shadow-sm p-4">
+                    <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3">
+                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <FiFileText className="text-purple-600" size={18} />
+                      </div>
+                      <span>Tipo de Reporte</span>
+                      <span className="text-red-500">*</span>
                     </label>
-                    <select
-                      required
-                      value={formData.scheduleType}
-                      onChange={(e) => setFormData({ ...formData, scheduleType: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    <div className="relative">
+                      <FiCalendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+                      <select
+                        required
+                        value={formData.scheduleType}
+                        onChange={(e) => setFormData({ ...formData, scheduleType: e.target.value })}
+                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 appearance-none bg-white transition-all"
+                      >
+                        <option value="daily">📅 Diario</option>
+                        <option value="weekly">📆 Semanal</option>
+                        <option value="monthly">🗓️ Mensual</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Campos de Fecha Desde/Hasta */}
+                  <div className="bg-white rounded-xl border-2 border-indigo-200 shadow-sm p-4">
+                    <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3">
+                      <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                        <FiCalendar className="text-indigo-600" size={18} />
+                      </div>
+                      <span>Rango de Fechas</span>
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-2">Desde</label>
+                        <div className="relative">
+                          <FiCalendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                          <input
+                            type="date"
+                            required
+                            value={formData.dateFrom}
+                            onChange={(e) => setFormData({ ...formData, dateFrom: e.target.value })}
+                            className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-2">Hasta</label>
+                        <div className="relative">
+                          <FiCalendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                          <input
+                            type="date"
+                            required
+                            value={formData.dateTo}
+                            onChange={(e) => setFormData({ ...formData, dateTo: e.target.value })}
+                            min={formData.dateFrom}
+                            className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-indigo-600 mt-2 flex items-center gap-1">
+                      <FiClock size={12} />
+                      Las fechas por defecto son el día de hoy
+                    </p>
+                  </div>
+
+                  {/* Campo Hora con Icono */}
+                  <div className="bg-white rounded-xl border-2 border-orange-200 shadow-sm p-4">
+                    <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3">
+                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <FiClock className="text-orange-600" size={18} />
+                      </div>
+                      <span>Hora de Envío</span>
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <FiClock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                      <input
+                        type="time"
+                        required
+                        value={formData.time}
+                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                      />
+                    </div>
+                    <p className="text-xs text-orange-600 mt-2 flex items-center gap-1">
+                      <FiSend size={12} />
+                      El reporte se enviará automáticamente a esta hora
+                    </p>
+                  </div>
+
+                  {/* Botón de Previsualización */}
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 p-4">
+                    <button
+                      type="button"
+                      onClick={handlePreviewPDF}
+                      disabled={loadingPreview || !formData.dateFrom || !formData.dateTo}
+                      className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:transform-none flex items-center justify-center gap-2"
                     >
-                      <option value="daily">Diario</option>
-                      <option value="weekly">Semanal</option>
-                      <option value="monthly">Mensual</option>
-                    </select>
+                      {loadingPreview ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Generando PDF...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FiEye size={20} />
+                          <span>Previsualizar Reporte PDF</span>
+                        </>
+                      )}
+                    </button>
+                    <p className="text-xs text-blue-600 mt-2 text-center flex items-center justify-center gap-1">
+                      <FiFileText size={12} />
+                      Ver cómo se verá el reporte antes de programarlo
+                    </p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Hora de Envío *
-                    </label>
-                    <input
-                      type="time"
-                      required
-                      value={formData.time}
-                      onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">La fecha se establece automáticamente según el tipo de reporte</p>
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
+                  {/* Botones con Diseño Mejorado */}
+                  <div className="flex gap-3 pt-4 border-t-2 border-gray-200">
                     <button
                       type="button"
                       onClick={() => {
+                        closePdfPreview()
                         setShowModal(false)
                         setEditingSchedule(null)
-                        setFormData({ email: '', scheduleType: 'daily', time: '18:00' })
+                        setFormData({ email: '', scheduleType: 'daily', time: '18:00', dateFrom: getTodayDate(), dateTo: getTodayDate() })
                       }}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+                      className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-semibold transition-all shadow-sm hover:shadow"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium"
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2"
                     >
-                      {editingSchedule ? 'Actualizar' : 'Crear'}
+                      <FiCheckCircle size={20} />
+                      {editingSchedule ? 'Actualizar' : 'Crear Programación'}
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          )}
+
+          {/* Modal de Previsualización PDF */}
+          {showPdfPreview && pdfPreviewUrl && (
+            <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4">
+              <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between">
+                  <h3 className="text-white font-bold text-xl flex items-center gap-2">
+                    <FiEye size={24} />
+                    Previsualización del Reporte PDF
+                  </h3>
+                  <button
+                    onClick={closePdfPreview}
+                    className="w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg flex items-center justify-center transition-all hover:scale-110"
+                  >
+                    <FiX className="text-white" size={20} />
+                  </button>
+                </div>
+                <div className="h-[calc(90vh-80px)] overflow-auto bg-gray-100 p-4">
+                  <iframe
+                    src={pdfPreviewUrl}
+                    className="w-full h-full border-0 rounded-lg shadow-lg"
+                    title="Vista previa del PDF"
+                  />
+                </div>
               </div>
             </div>
           )}

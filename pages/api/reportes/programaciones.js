@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 
     // POST: Crear nueva programación
     if (req.method === 'POST') {
-      const { email, scheduleType, time } = req.body
+      const { email, scheduleType, time, dateFrom, dateTo } = req.body
 
       if (!email || !scheduleType || !time) {
         return res.status(400).json({ error: 'Email, tipo de programación y hora son requeridos' })
@@ -50,11 +50,32 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Formato de hora inválido. Debe ser HH:mm (ej: 18:00)' })
       }
 
+      // Validar fechas si están presentes
+      let dateFromDate = null
+      let dateToDate = null
+      if (dateFrom) {
+        dateFromDate = new Date(dateFrom)
+        if (isNaN(dateFromDate.getTime())) {
+          return res.status(400).json({ error: 'Fecha desde inválida' })
+        }
+      }
+      if (dateTo) {
+        dateToDate = new Date(dateTo)
+        if (isNaN(dateToDate.getTime())) {
+          return res.status(400).json({ error: 'Fecha hasta inválida' })
+        }
+      }
+      if (dateFromDate && dateToDate && dateFromDate > dateToDate) {
+        return res.status(400).json({ error: 'La fecha desde no puede ser mayor que la fecha hasta' })
+      }
+
       const schedule = await prisma.reportSchedule.create({
         data: {
           email,
           scheduleType,
           time,
+          dateFrom: dateFromDate,
+          dateTo: dateToDate,
           isActive: true,
           createdBy: user.id
         }

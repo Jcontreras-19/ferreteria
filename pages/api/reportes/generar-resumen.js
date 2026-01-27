@@ -3,27 +3,29 @@ import { getCurrentUser } from '../../../lib/auth'
 import { generateQuotesSummaryPDF } from '../../../lib/pdfGenerator'
 
 export default async function handler(req, res) {
-  res.setHeader('Content-Type', 'application/json')
-
   if (req.method !== 'POST') {
+    res.setHeader('Content-Type', 'application/json')
     return res.status(405).json({ error: 'Método no permitido' })
   }
 
   try {
     const user = await getCurrentUser(req)
     if (!user) {
+      res.setHeader('Content-Type', 'application/json')
       return res.status(401).json({ error: 'No autorizado' })
     }
 
     // Solo admin y superadmin pueden generar reportes
     const adminRoles = ['admin', 'superadmin']
     if (!adminRoles.includes(user.role?.toLowerCase())) {
+      res.setHeader('Content-Type', 'application/json')
       return res.status(403).json({ error: 'Solo administradores pueden generar reportes' })
     }
 
     const { periodType, startDate, endDate } = req.body
 
     if (!periodType || !startDate || !endDate) {
+      res.setHeader('Content-Type', 'application/json')
       return res.status(400).json({ error: 'Tipo de período, fecha inicio y fecha fin son requeridos' })
     }
 
@@ -48,12 +50,13 @@ export default async function handler(req, res) {
     // Generar PDF
     const pdfBuffer = generateQuotesSummaryPDF(quotes, periodType, start, end)
 
-    // Retornar PDF como base64 o buffer
+    // Retornar PDF como buffer
     res.setHeader('Content-Type', 'application/pdf')
-    res.setHeader('Content-Disposition', `attachment; filename="reporte-cotizaciones-${periodType}-${startDate}.pdf"`)
+    res.setHeader('Content-Disposition', `inline; filename="reporte-cotizaciones-${periodType}-${startDate}.pdf"`)
     return res.send(pdfBuffer)
   } catch (error) {
     console.error('Error generando resumen:', error)
+    res.setHeader('Content-Type', 'application/json')
     return res.status(500).json({ 
       error: 'Error al generar el reporte',
       message: error.message 

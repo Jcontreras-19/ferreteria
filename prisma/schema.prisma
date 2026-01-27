@@ -66,6 +66,8 @@ model ReportSchedule {
   email       String   // Correo destinatario del reporte
   scheduleType String   // 'daily', 'weekly', 'monthly'
   time        String   // Hora en formato HH:mm (ej: "18:00")
+  dateFrom    DateTime? // Fecha desde (opcional, para reportes personalizados)
+  dateTo      DateTime? // Fecha hasta (opcional, para reportes personalizados)
   isActive    Boolean  @default(true) // Si está activo o no
   lastSent    DateTime? // Última vez que se envió
   createdAt   DateTime @default(now())

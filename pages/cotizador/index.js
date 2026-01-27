@@ -84,6 +84,19 @@ export default function CotizadorPanel() {
   }
 
   const filteredQuotes = quotes.filter(quote => {
+    // Filtro por estado (consistente con admin)
+    if (statusFilter && statusFilter !== 'all') {
+      const matchesStatus =
+        statusFilter === 'approved' &&
+          (quote.status === 'approved' || quote.status === 'authorized') ||
+        statusFilter === 'completed' &&
+          (quote.status === 'completed' || quote.status === 'dispatched') ||
+        (statusFilter !== 'approved' &&
+          statusFilter !== 'completed' &&
+          quote.status === statusFilter)
+      if (!matchesStatus) return false
+    }
+
     // Filtro por búsqueda
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
@@ -623,6 +636,7 @@ export default function CotizadorPanel() {
     total: quotes.length,
     pending: quotes.filter(q => q.status === 'pending').length,
     approved: quotes.filter(q => q.status === 'approved' || q.status === 'authorized').length,
+    completed: quotes.filter(q => q.status === 'completed' || q.status === 'dispatched').length,
     rejected: quotes.filter(q => q.status === 'rejected').length,
     totalAmount: quotes.reduce((sum, q) => sum + (q.total || 0), 0),
   }
@@ -749,7 +763,7 @@ export default function CotizadorPanel() {
             </div>
 
             {/* Estadísticas Compactas */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
               <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-3 border-2 border-yellow-300 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-yellow-800 text-xs font-semibold">Pendientes</span>
@@ -767,6 +781,15 @@ export default function CotizadorPanel() {
                   </div>
                 </div>
                 <p className="text-2xl font-bold text-green-900">{stats.approved}</p>
+              </div>
+              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-3 border-2 border-emerald-300 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-emerald-800 text-xs font-semibold">Completadas</span>
+                  <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shadow-md">
+                    <FiCheckCircle className="text-white" size={16} />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-emerald-900">{stats.completed}</p>
               </div>
               <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-3 border-2 border-red-300 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
