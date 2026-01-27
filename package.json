@@ -12,6 +12,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "create-cotizador": "node scripts/create-cotizador.js",
+    "clean-quotes": "node scripts/eliminar-cotizaciones-productos-inexistentes.js",
     "deploy": "vercel --prod --yes",
     "deploy:auto": "npm run build && vercel --prod --yes"
   },
