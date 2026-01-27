@@ -250,12 +250,24 @@ export default function ReportesProgramados() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
+    
+    // Si es un string ISO (YYYY-MM-DD), formatearlo directamente sin conversión de zona horaria
+    if (typeof dateString === 'string' && dateString.match(/^\d{4}-\d{2}-\d{2}/)) {
+      const [year, month, day] = dateString.split('T')[0].split('-')
+      return `${day}/${month}/${year}`
+    }
+    
+    // Si es una fecha completa (Date object o ISO string con hora)
     const date = new Date(dateString)
-    return date.toLocaleDateString('es-PE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
+    if (isNaN(date.getTime())) return 'N/A'
+    
+    // Obtener los componentes de la fecha en UTC para evitar problemas de zona horaria
+    // Esto asegura que la fecha mostrada sea la misma que se ingresó
+    const year = date.getUTCFullYear()
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+    const day = String(date.getUTCDate()).padStart(2, '0')
+    
+    return `${day}/${month}/${year}`
   }
 
   if (loading) {

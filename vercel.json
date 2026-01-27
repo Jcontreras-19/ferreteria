@@ -3,7 +3,7 @@
   "crons": [
     {
       "path": "/api/reportes/ejecutar-programados",
-      "schedule": "0 0 * * *"
+      "schedule": "*/5 * * * *"
     }
   ]
 }

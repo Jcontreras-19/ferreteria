@@ -43,10 +43,13 @@ export default async function handler(req, res) {
         if (sendDate === null || sendDate === '') {
           updateData.sendDate = null
         } else {
-          const sendDateObj = new Date(sendDate)
+          // Crear fecha en zona horaria local para evitar problemas de UTC
+          const sendDateObj = new Date(sendDate + 'T12:00:00') // Agregar hora del mediodía para evitar problemas de zona horaria
           if (isNaN(sendDateObj.getTime())) {
             return res.status(400).json({ error: 'Fecha de envío inválida' })
           }
+          // Ajustar a UTC medianoche para guardar correctamente
+          sendDateObj.setUTCHours(0, 0, 0, 0)
           updateData.sendDate = sendDateObj
         }
       }
