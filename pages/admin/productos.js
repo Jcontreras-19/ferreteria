@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import AdminLayout from '../../components/admin/AdminLayout'
-import { FiEdit, FiTrash2, FiPlus, FiDownload, FiSearch, FiFilter, FiGrid, FiList, FiEye, FiPackage, FiDollarSign, FiTrendingUp, FiAlertCircle, FiUpload, FiX, FiCheckCircle, FiXCircle, FiInfo, FiTag, FiImage } from 'react-icons/fi'
+import { FiEdit, FiTrash2, FiPlus, FiDownload, FiSearch, FiFilter, FiGrid, FiList, FiEye, FiPackage, FiDollarSign, FiTrendingUp, FiAlertCircle, FiUpload, FiX, FiCheckCircle, FiXCircle, FiInfo, FiTag, FiImage, FiType, FiFileText, FiBox, FiSave, FiCamera } from 'react-icons/fi'
 import Image from 'next/image'
 import ExcelJS from 'exceljs'
 
@@ -1555,36 +1555,58 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-6xl mx-auto">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
-              {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
-            </h3>
-            {editingProduct && (
-              <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                Editando: <span className="font-semibold">{editingProduct.name}</span>
-              </p>
-            )}
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm">
+      <div className="bg-white rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-6xl mx-auto border border-gray-200">
+        {/* Header con gradiente */}
+        <div className="mb-5 flex items-center justify-between pb-4 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center shadow-lg">
+              <FiPackage className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                {editingProduct ? (
+                  <>
+                    <FiEdit className="text-blue-600" size={20} />
+                    Editar Producto
+                  </>
+                ) : (
+                  <>
+                    <FiPlus className="text-green-600" size={20} />
+                    Nuevo Producto
+                  </>
+                )}
+              </h3>
+              {editingProduct && (
+                <p className="text-xs sm:text-sm text-gray-500 mt-1 flex items-center gap-1">
+                  <FiInfo size={12} />
+                  <span className="font-semibold text-gray-700">{editingProduct.name}</span>
+                </p>
+              )}
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
           >
-            <FiX size={24} />
+            <FiX size={20} />
           </button>
         </div>
+
         <form 
           onSubmit={handleLocalSubmit} 
-          className="space-y-3 sm:space-y-4"
+          className="space-y-4 sm:space-y-5"
         >
           {/* Primera fila: Nombre y Descripción en columnas */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label htmlFor="edit-name" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                Nombre *
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Nombre */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
+              <label htmlFor="edit-name" className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <FiType className="text-white" size={16} />
+                </div>
+                Nombre <span className="text-red-500">*</span>
               </label>
               <input
                 id="edit-name"
@@ -1597,11 +1619,17 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
                   setLocalFormData({ ...localFormData, name: e.target.value })
                 }}
                 required
-                className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                className="w-full px-4 py-2.5 text-sm border-2 border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white shadow-sm transition-all"
+                placeholder="Nombre del producto"
               />
             </div>
-            <div>
-              <label htmlFor="edit-description" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+
+            {/* Descripción */}
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-100">
+              <label htmlFor="edit-description" className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                  <FiFileText className="text-white" size={16} />
+                </div>
                 Descripción
               </label>
               <textarea
@@ -1613,33 +1641,47 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
                   setLocalFormData({ ...localFormData, description: e.target.value })
                 }}
                 rows="2"
-                className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white resize-none"
+                className="w-full px-4 py-2.5 text-sm border-2 border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 bg-white shadow-sm resize-none transition-all"
+                placeholder="Descripción detallada del producto"
               />
             </div>
           </div>
 
           {/* Segunda fila: Precio, Stock, Categoría */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            <div>
-              <label htmlFor="edit-price" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                Precio *
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Precio */}
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-100">
+              <label htmlFor="edit-price" className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                  <FiDollarSign className="text-white" size={16} />
+                </div>
+                Precio <span className="text-red-500">*</span>
               </label>
-              <input
-                id="edit-price"
-                name="price"
-                type="number"
-                step="0.01"
-                value={hasUserEdited ? localFormData?.price ?? '' : computedFormData?.price ?? ''}
-                onChange={(e) => {
-                  setHasUserEdited(true)
-                  setLocalFormData({ ...localFormData, price: e.target.value })
-                }}
-                required
-                className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">S/.</span>
+                <input
+                  id="edit-price"
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  value={hasUserEdited ? localFormData?.price ?? '' : computedFormData?.price ?? ''}
+                  onChange={(e) => {
+                    setHasUserEdited(true)
+                    setLocalFormData({ ...localFormData, price: e.target.value })
+                  }}
+                  required
+                  className="w-full pl-10 pr-4 py-2.5 text-sm border-2 border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white shadow-sm transition-all"
+                  placeholder="0.00"
+                />
+              </div>
             </div>
-            <div>
-              <label htmlFor="edit-stock" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+
+            {/* Stock */}
+            <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg p-4 border border-orange-100">
+              <label htmlFor="edit-stock" className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
+                  <FiBox className="text-white" size={16} />
+                </div>
                 Stock
               </label>
               <input
@@ -1651,11 +1693,17 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
                   setHasUserEdited(true)
                   setLocalFormData({ ...localFormData, stock: e.target.value })
                 }}
-                className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                className="w-full px-4 py-2.5 text-sm border-2 border-orange-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 bg-white shadow-sm transition-all"
+                placeholder="0"
               />
             </div>
-            <div>
-              <label htmlFor="edit-category" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+
+            {/* Categoría */}
+            <div className="bg-gradient-to-br from-indigo-50 to-violet-50 rounded-lg p-4 border border-indigo-100">
+              <label htmlFor="edit-category" className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                  <FiTag className="text-white" size={16} />
+                </div>
                 Categoría
               </label>
               <input
@@ -1668,21 +1716,21 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
                   setLocalFormData({ ...localFormData, category: e.target.value })
                 }}
                 placeholder="Ej: Herramientas"
-                className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                className="w-full px-4 py-2.5 text-sm border-2 border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white shadow-sm transition-all"
               />
             </div>
           </div>
 
           {/* Tercera fila: Notificación y Imagen lado a lado en pantallas grandes */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Campo de tiempo de notificación solo cuando se edita un producto */}
             {editingProduct && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <label htmlFor="edit-notification-days" className="block text-xs sm:text-sm font-medium text-blue-900 mb-1.5">
-                  <span className="flex items-center gap-1.5">
-                    <FiAlertCircle className="text-blue-600" size={14} />
-                    Notificar cambios de precio
-                  </span>
+              <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg p-4 border-2 border-cyan-200 shadow-sm">
+                <label htmlFor="edit-notification-days" className="flex items-center gap-2 text-sm font-semibold text-cyan-900 mb-2">
+                  <div className="w-8 h-8 bg-cyan-600 rounded-lg flex items-center justify-center">
+                    <FiAlertCircle className="text-white" size={16} />
+                  </div>
+                  Notificar cambios de precio
                 </label>
                 <input
                   id="edit-notification-days"
@@ -1695,27 +1743,32 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
                     setLocalFormData({ ...localFormData, notificationDays: e.target.value })
                   }}
                   placeholder="Ej: 3, 7, 30 (días)"
-                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white mb-1.5"
+                  className="w-full px-4 py-2.5 text-sm border-2 border-cyan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-gray-900 bg-white mb-2 shadow-sm transition-all"
                 />
-                <p className="text-xs text-blue-700 leading-tight">
-                  💡 Deja vacío para notificar a <strong>todas</strong> las cotizaciones.
-                  <br />
-                  O ingresa días (ej: 3 = últimos 3 días).
-                </p>
+                <div className="flex items-start gap-2 text-xs text-cyan-700 leading-tight bg-cyan-100/50 rounded p-2">
+                  <FiInfo className="text-cyan-600 flex-shrink-0 mt-0.5" size={14} />
+                  <div>
+                    <p>Deja vacío para notificar a <strong>todas</strong> las cotizaciones.</p>
+                    <p className="mt-1">O ingresa días (ej: 3 = últimos 3 días).</p>
+                  </div>
+                </div>
               </div>
             )}
 
             {/* Imagen del Producto */}
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+            <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-lg p-4 border border-pink-100">
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <div className="w-8 h-8 bg-pink-600 rounded-lg flex items-center justify-center">
+                  <FiCamera className="text-white" size={16} />
+                </div>
                 Imagen del Producto
               </label>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {/* Vista previa de la imagen actual */}
                 {localFormData.image && localFormData.image.trim() !== '' && (
-                  <div className="border border-gray-300 rounded-lg p-2 bg-gray-50">
-                    <div className="flex items-start gap-2">
-                      <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-gray-200 rounded-lg border-2 border-gray-300 shadow-sm overflow-hidden flex-shrink-0">
+                  <div className="border-2 border-pink-200 rounded-lg p-3 bg-white shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="relative w-24 h-24 sm:w-28 sm:h-28 bg-gray-100 rounded-lg border-2 border-pink-300 shadow-md overflow-hidden flex-shrink-0">
                         <img
                           src={localFormData.image}
                           alt="Preview"
@@ -1724,7 +1777,7 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
                             e.target.style.display = 'none'
                             const parent = e.target.parentElement
                             if (parent) {
-                              parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-400"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>'
+                              parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-400"><svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>'
                             }
                           }}
                           onLoad={() => {
@@ -1733,22 +1786,26 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-gray-500 mb-1 truncate">
-                          {localFormData.image.startsWith('/uploads/') 
-                            ? 'Imagen local' 
-                            : localFormData.image.includes('unsplash.com')
-                            ? 'Imagen de Unsplash'
-                            : 'Imagen del producto'}
-                        </p>
-                        <p className="text-xs text-gray-400 break-all mb-1 font-mono truncate">
-                          {localFormData.image.length > 40 ? localFormData.image.substring(0, 40) + '...' : localFormData.image}
+                        <div className="flex items-center gap-2 mb-1">
+                          <FiImage className="text-pink-600" size={14} />
+                          <p className="text-xs font-semibold text-gray-600 truncate">
+                            {localFormData.image.startsWith('/uploads/') 
+                              ? 'Imagen local' 
+                              : localFormData.image.includes('unsplash.com')
+                              ? 'Imagen de Unsplash'
+                              : 'Imagen del producto'}
+                          </p>
+                        </div>
+                        <p className="text-xs text-gray-400 break-all mb-2 font-mono truncate">
+                          {localFormData.image.length > 50 ? localFormData.image.substring(0, 50) + '...' : localFormData.image}
                         </p>
                         <button
                           type="button"
                           onClick={() => setLocalFormData({ ...localFormData, image: '' })}
-                          className="text-xs text-red-600 hover:text-red-700 font-semibold"
+                          className="flex items-center gap-1 text-xs text-red-600 hover:text-red-700 font-semibold bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition-colors"
                         >
-                          ✕ Eliminar imagen
+                          <FiXCircle size={12} />
+                          Eliminar imagen
                         </button>
                       </div>
                     </div>
@@ -1756,15 +1813,21 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
                 )}
 
                 {/* Subir archivo */}
-                <div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLocalImageUpload}
-                    className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border-2 border-dashed border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer hover:border-blue-400 transition-colors"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Formatos: JPG, PNG, GIF. Máx: 5MB
+                <div className="relative">
+                  <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-pink-300 rounded-lg cursor-pointer bg-white hover:bg-pink-50 transition-colors group">
+                    <div className="flex flex-col items-center justify-center pt-2">
+                      <FiUpload className="text-pink-600 group-hover:text-pink-700 mb-1" size={20} />
+                      <p className="text-xs text-gray-600 font-medium">Click para subir imagen</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLocalImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Formatos: JPG, PNG, GIF • Máx: 5MB
                   </p>
                 </div>
               </div>
@@ -1772,18 +1835,20 @@ function ProductModal({ editingProduct, formData, setFormData, uploading, handle
           </div>
 
           {/* Botones */}
-          <div className="flex gap-2 sm:gap-3 pt-2 sm:pt-4 border-t border-gray-200">
+          <div className="flex gap-3 pt-4 border-t-2 border-gray-200">
             <button
               type="submit"
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 sm:py-2.5 rounded-lg transition-colors font-semibold text-sm sm:text-base"
+              className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white py-3 rounded-lg transition-all font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
             >
-              Guardar
+              <FiSave size={18} />
+              Guardar Producto
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 sm:py-2.5 rounded-lg transition-colors font-semibold text-sm sm:text-base"
+              className="flex-1 flex items-center justify-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-lg transition-all font-semibold text-sm sm:text-base shadow-md hover:shadow-lg"
             >
+              <FiX size={18} />
               Cancelar
             </button>
           </div>

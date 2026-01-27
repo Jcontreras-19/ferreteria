@@ -242,6 +242,45 @@ export default function AutorizarDespachos() {
     }
   }
 
+  const handleReject = async () => {
+    if (!selectedQuote) return
+
+    const rejectionReason = prompt('Ingresa la razón del rechazo (opcional):')
+    
+    // Si el usuario cancela el prompt, no hacer nada
+    if (rejectionReason === null) {
+      return
+    }
+
+    setProcessing(true)
+    try {
+      const res = await fetch(`/api/cotizaciones/${selectedQuote.id}/rechazar`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          rejectionReason: rejectionReason || null,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        showNotification('Cotización rechazada exitosamente', 'success')
+        setShowDetailModal(false)
+        setSelectedQuote(null)
+        fetchQuotes()
+      } else {
+        showNotification(data.error || 'Error al rechazar cotización', 'error')
+      }
+    } catch (error) {
+      console.error('Error rejecting quote:', error)
+      showNotification('Error de red al rechazar cotización', 'error')
+    } finally {
+      setProcessing(false)
+    }
+  }
+
   const openActionModal = (quote) => {
     setSelectedQuote(quote)
     setClientEmail(quote.email || '')
@@ -1430,6 +1469,20 @@ export default function AutorizarDespachos() {
                     <FiCheckCircle size={12} />
                     <span>Autorizar</span>
                   </button>
+                  {selectedQuote && !['rejected', 'completed', 'dispatched'].includes(selectedQuote.status) && (
+                    <button
+                      onClick={() => {
+                        if (confirm('¿Estás seguro de rechazar esta cotización?')) {
+                          handleReject()
+                        }
+                      }}
+                      disabled={processing}
+                      className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-lg text-xs font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 flex-1 sm:flex-initial min-w-[100px] disabled:cursor-not-allowed"
+                    >
+                      <FiXCircle size={12} />
+                      <span>Rechazar</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => setShowDetailModal(false)}
                     className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm hover:shadow flex-1 sm:flex-initial min-w-[100px]"
