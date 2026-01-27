@@ -76,7 +76,15 @@ export default function AdminCotizaciones() {
       quote.whatsapp?.includes(searchQuery) ||
       (quote.quoteNumber && quote.quoteNumber.toString().includes(searchQuery))
     
-    const matchesStatus = statusFilter === 'all' || quote.status === statusFilter
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'approved' &&
+        (quote.status === 'approved' || quote.status === 'authorized')) ||
+      (statusFilter === 'completed' &&
+        (quote.status === 'completed' || quote.status === 'dispatched')) ||
+      (statusFilter !== 'approved' &&
+        statusFilter !== 'completed' &&
+        quote.status === statusFilter)
     
     const matchesDate = (!dateFrom && !dateTo) || (
       (!dateFrom || new Date(quote.createdAt) >= new Date(dateFrom)) &&
@@ -90,7 +98,9 @@ export default function AdminCotizaciones() {
     total: quotes.length,
     pending: quotes.filter(q => q.status === 'pending').length,
     sent: quotes.filter(q => q.status === 'sent').length,
-    completed: quotes.filter(q => q.status === 'completed').length,
+    approved: quotes.filter(q => q.status === 'approved' || q.status === 'authorized').length,
+    completed: quotes.filter(q => q.status === 'completed' || q.status === 'dispatched').length,
+    rejected: quotes.filter(q => q.status === 'rejected').length,
     totalAmount: quotes.reduce((sum, q) => sum + (q.total || 0), 0),
     avgAmount: quotes.length > 0 ? quotes.reduce((sum, q) => sum + (q.total || 0), 0) / quotes.length : 0,
   }
@@ -138,7 +148,9 @@ export default function AdminCotizaciones() {
       case 'approved':
         return 'Aprobada'
       case 'authorized':
-        return 'Autorizada'
+        return 'Aprobada'
+      case 'dispatched':
+        return 'Completada'
       case 'rejected':
         return 'Rechazada'
       case 'pending':
@@ -604,12 +616,14 @@ export default function AdminCotizaciones() {
     switch (status) {
       case 'completed':
         return 'bg-emerald-50 text-emerald-700 border-2 border-emerald-400 shadow-sm'
+      case 'dispatched':
+        return 'bg-emerald-50 text-emerald-700 border-2 border-emerald-400 shadow-sm'
       case 'sent':
         return 'bg-cyan-50 text-cyan-700 border-2 border-cyan-400 shadow-sm'
       case 'approved':
         return 'bg-violet-50 text-violet-700 border-2 border-violet-400 shadow-sm'
       case 'authorized':
-        return 'bg-blue-50 text-blue-700 border-2 border-blue-400 shadow-sm'
+        return 'bg-violet-50 text-violet-700 border-2 border-violet-400 shadow-sm'
       case 'rejected':
         return 'bg-rose-50 text-rose-700 border-2 border-rose-400 shadow-sm'
       default:
@@ -680,7 +694,7 @@ export default function AdminCotizaciones() {
             </div>
 
             {/* Estadísticas Compactas con Mejor Contraste */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-2">
               <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-3 border-2 border-yellow-300 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-yellow-800 text-xs font-semibold">Pendientes</span>
@@ -699,6 +713,15 @@ export default function AdminCotizaciones() {
                 </div>
                 <p className="text-2xl font-bold text-blue-900">{stats.sent}</p>
               </div>
+              <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-3 border-2 border-indigo-300 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-indigo-800 text-xs font-semibold">Aprobadas</span>
+                  <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center shadow-md">
+                    <FiCheckCircle className="text-white" size={16} />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-indigo-900">{stats.approved}</p>
+              </div>
               <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border-2 border-green-300 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-green-800 text-xs font-semibold">Completadas</span>
@@ -707,6 +730,15 @@ export default function AdminCotizaciones() {
                   </div>
                 </div>
                 <p className="text-2xl font-bold text-green-900">{stats.completed}</p>
+              </div>
+              <div className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-lg p-3 border-2 border-rose-300 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-rose-800 text-xs font-semibold">Rechazadas</span>
+                  <div className="w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center shadow-md">
+                    <FiX className="text-white" size={16} />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-rose-900">{stats.rejected}</p>
               </div>
               <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border-2 border-purple-300 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
@@ -749,7 +781,7 @@ export default function AdminCotizaciones() {
                 </div>
 
                 {/* Estado */}
-                <div className="min-w-[150px]">
+                <div className="min-w-[170px]">
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
@@ -760,7 +792,6 @@ export default function AdminCotizaciones() {
                     <option value="pending">Pendientes</option>
                     <option value="sent">Enviadas</option>
                     <option value="approved">Aprobadas</option>
-                    <option value="authorized">Autorizadas</option>
                     <option value="completed">Completadas</option>
                     <option value="rejected">Rechazadas</option>
                   </select>

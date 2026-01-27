@@ -267,7 +267,9 @@ export default function CotizadorPanel() {
         'Email': quote.email,
         'WhatsApp': quote.whatsapp,
         'Estado': quote.status === 'pending' ? 'Pendiente' : 
-                  quote.status === 'approved' ? 'Aprobada' : 
+                  quote.status === 'sent' ? 'Enviada' :
+                  (quote.status === 'approved' || quote.status === 'authorized') ? 'Aprobada' : 
+                  (quote.status === 'completed' || quote.status === 'dispatched') ? 'Completada' :
                   quote.status === 'rejected' ? 'Rechazada' : quote.status,
         'Total (S/.)': quote.total?.toFixed(2) || '0.00',
         'Cant. Productos': products.length,
@@ -568,9 +570,10 @@ export default function CotizadorPanel() {
   const getStatusBadge = (status) => {
     const badges = {
       pending: { text: 'Pendiente', class: 'bg-yellow-100 text-yellow-800 border-2 border-yellow-300' },
+      sent: { text: 'Enviada', class: 'bg-blue-100 text-blue-800 border-2 border-blue-300' },
       approved: { text: 'Aprobada', class: 'bg-green-100 text-green-800 border-2 border-green-300' },
-      authorized: { text: 'Autorizada', class: 'bg-blue-100 text-blue-800 border-2 border-blue-300' },
-      dispatched: { text: 'Despachada', class: 'bg-purple-100 text-purple-800 border-2 border-purple-300' },
+      authorized: { text: 'Aprobada', class: 'bg-green-100 text-green-800 border-2 border-green-300' },
+      dispatched: { text: 'Completada', class: 'bg-green-100 text-green-800 border-2 border-green-300' },
       completed: { text: 'Completada', class: 'bg-green-100 text-green-800 border-2 border-green-300' },
       rejected: { text: 'Rechazada', class: 'bg-red-100 text-red-800 border-2 border-red-300' },
     }
@@ -580,9 +583,10 @@ export default function CotizadorPanel() {
   const getStatusColor = (status) => {
     const colors = {
       pending: 'bg-yellow-50 text-yellow-700 border-2 border-yellow-300',
+      sent: 'bg-blue-50 text-blue-700 border-2 border-blue-300',
       approved: 'bg-green-50 text-green-700 border-2 border-green-300',
-      authorized: 'bg-blue-50 text-blue-700 border-2 border-blue-300',
-      dispatched: 'bg-indigo-50 text-indigo-700 border-2 border-indigo-300',
+      authorized: 'bg-green-50 text-green-700 border-2 border-green-300',
+      dispatched: 'bg-green-50 text-green-700 border-2 border-green-300',
       completed: 'bg-green-50 text-green-700 border-2 border-green-300',
       rejected: 'bg-red-50 text-red-700 border-2 border-red-300',
     }
@@ -592,9 +596,10 @@ export default function CotizadorPanel() {
   const getStatusIcon = (status) => {
     const icons = {
       pending: <FiClock size={12} />,
+      sent: <FiFileText size={12} />,
       approved: <FiCheckCircle size={12} />,
       authorized: <FiCheckCircle size={12} />,
-      dispatched: <FiPackage size={12} />,
+      dispatched: <FiCheckCircle size={12} />,
       completed: <FiCheckCircle size={12} />,
       rejected: <FiXCircle size={12} />,
     }
@@ -604,9 +609,10 @@ export default function CotizadorPanel() {
   const getStatusLabel = (status) => {
     const labels = {
       pending: 'Pendiente',
+      sent: 'Enviada',
       approved: 'Aprobada',
-      authorized: 'Autorizada',
-      dispatched: 'Despachada',
+      authorized: 'Aprobada',
+      dispatched: 'Completada',
       completed: 'Completada',
       rejected: 'Rechazada',
     }
@@ -616,7 +622,7 @@ export default function CotizadorPanel() {
   const stats = {
     total: quotes.length,
     pending: quotes.filter(q => q.status === 'pending').length,
-    approved: quotes.filter(q => q.status === 'approved').length,
+    approved: quotes.filter(q => q.status === 'approved' || q.status === 'authorized').length,
     rejected: quotes.filter(q => q.status === 'rejected').length,
     totalAmount: quotes.reduce((sum, q) => sum + (q.total || 0), 0),
   }

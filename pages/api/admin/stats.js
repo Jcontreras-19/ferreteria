@@ -184,10 +184,9 @@ export default async function handler(req, res) {
     // Cotizaciones por estado
     const quotesByStatus = {
       pending: quotes.filter((q) => q.status === 'pending').length,
-      approved: quotes.filter((q) => q.status === 'approved').length,
-      authorized: quotes.filter((q) => q.status === 'authorized').length,
       sent: quotes.filter((q) => q.status === 'sent').length,
-      completed: quotes.filter((q) => q.status === 'completed').length,
+      approved: quotes.filter((q) => q.status === 'approved' || q.status === 'authorized').length,
+      completed: quotes.filter((q) => q.status === 'completed' || q.status === 'dispatched').length,
       rejected: quotes.filter((q) => q.status === 'rejected').length,
     }
 

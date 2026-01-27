@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 
       const { status } = req.body
 
-      if (!status || !['pending', 'sent', 'completed'].includes(status)) {
+      if (!status || !['pending', 'sent', 'approved', 'completed', 'rejected'].includes(status)) {
         return res.status(400).json({ error: 'Estado inválido' })
       }
 

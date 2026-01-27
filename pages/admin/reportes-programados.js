@@ -199,7 +199,7 @@ export default function ReportesProgramados() {
       <Head>
         <title>Reportes Programados - Admin</title>
       </Head>
-      <AdminLayout>
+      <AdminLayout user={user}>
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
