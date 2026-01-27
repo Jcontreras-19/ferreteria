@@ -26,10 +26,10 @@ export default async function handler(req, res) {
 
     // POST: Crear nueva programación
     if (req.method === 'POST') {
-      const { email, scheduleType, time, dateFrom, dateTo } = req.body
+      const { email, sendDate, time, dateFrom, dateTo } = req.body
 
-      if (!email || !scheduleType || !time) {
-        return res.status(400).json({ error: 'Email, tipo de programación y hora son requeridos' })
+      if (!email || !sendDate || !time) {
+        return res.status(400).json({ error: 'Email, fecha de envío y hora son requeridos' })
       }
 
       // Validar formato de email
@@ -38,19 +38,19 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Email inválido' })
       }
 
-      // Validar tipo de programación
-      const validTypes = ['daily', 'weekly', 'monthly']
-      if (!validTypes.includes(scheduleType)) {
-        return res.status(400).json({ error: 'Tipo de programación inválido. Debe ser: daily, weekly o monthly' })
-      }
-
       // Validar formato de hora (HH:mm)
       const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/
       if (!timeRegex.test(time)) {
         return res.status(400).json({ error: 'Formato de hora inválido. Debe ser HH:mm (ej: 18:00)' })
       }
 
-      // Validar fechas si están presentes
+      // Validar fecha de envío
+      const sendDateObj = new Date(sendDate)
+      if (isNaN(sendDateObj.getTime())) {
+        return res.status(400).json({ error: 'Fecha de envío inválida' })
+      }
+
+      // Validar fechas del rango si están presentes
       let dateFromDate = null
       let dateToDate = null
       if (dateFrom) {
@@ -69,10 +69,11 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'La fecha desde no puede ser mayor que la fecha hasta' })
       }
 
+      // Usar 'daily' como scheduleType por defecto (para compatibilidad con el cron)
       const schedule = await prisma.reportSchedule.create({
         data: {
           email,
-          scheduleType,
+          scheduleType: 'daily', // Valor por defecto para compatibilidad
           time,
           dateFrom: dateFromDate,
           dateTo: dateToDate,

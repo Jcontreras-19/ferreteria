@@ -20,9 +20,9 @@ export default function ReportesProgramados() {
 
   const [formData, setFormData] = useState({
     email: '',
-    scheduleType: 'daily',
+    sendDate: getTodayDate(), // Fecha de envío
     time: '18:00',
-    dateFrom: getTodayDate(),
+    dateFrom: getTodayDate(), // Rango de fechas del reporte
     dateTo: getTodayDate()
   })
   const [notifications, setNotifications] = useState([])
@@ -108,7 +108,7 @@ export default function ReportesProgramados() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          periodType: formData.scheduleType,
+          periodType: 'daily', // Valor por defecto para el PDF
           startDate: formData.dateFrom,
           endDate: formData.dateTo
         })
@@ -185,10 +185,13 @@ export default function ReportesProgramados() {
     const dateTo = schedule.dateTo
       ? new Date(schedule.dateTo).toISOString().split('T')[0]
       : getTodayDate()
+    const sendDate = schedule.sendDate || schedule.createdAt
+      ? new Date(schedule.sendDate || schedule.createdAt).toISOString().split('T')[0]
+      : getTodayDate()
     
     setFormData({
       email: schedule.email,
-      scheduleType: schedule.scheduleType,
+      sendDate: sendDate,
       time: schedule.time,
       dateFrom: dateFrom,
       dateTo: dateTo
@@ -245,13 +248,14 @@ export default function ReportesProgramados() {
     }
   }
 
-  const getScheduleTypeLabel = (type) => {
-    const labels = {
-      daily: 'Diario',
-      weekly: 'Semanal',
-      monthly: 'Mensual'
-    }
-    return labels[type] || type
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A'
+    const date = new Date(dateString)
+    return date.toLocaleDateString('es-PE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
   }
 
   if (loading) {
@@ -282,7 +286,7 @@ export default function ReportesProgramados() {
                 setEditingSchedule(null)
                 setFormData({ 
                   email: '', 
-                  scheduleType: 'daily', 
+                  sendDate: getTodayDate(), 
                   time: '18:00',
                   dateFrom: getTodayDate(),
                   dateTo: getTodayDate()
@@ -312,7 +316,7 @@ export default function ReportesProgramados() {
                   <thead className="bg-green-600 text-white">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Email</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Tipo</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Fecha Envío</th>
                       <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Hora</th>
                       <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Estado</th>
                       <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Último Envío</th>
@@ -331,7 +335,7 @@ export default function ReportesProgramados() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <FiCalendar className="text-gray-400" />
-                            <span className="text-sm text-gray-900">{getScheduleTypeLabel(schedule.scheduleType)}</span>
+                            <span className="text-sm text-gray-900">{formatDate(schedule.sendDate || schedule.createdAt)}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -393,21 +397,21 @@ export default function ReportesProgramados() {
             )}
           </div>
 
-          {/* Modal para crear/editar programación - Diseño Mejorado */}
+          {/* Modal para crear/editar programación - Diseño Mejorado y Responsive */}
           {showModal && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-              <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border-2 border-gray-200 overflow-hidden animate-slideUp">
-                {/* Header con Gradiente */}
-                <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-6 py-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center ring-2 ring-white/30">
-                      <FiCalendar className="text-white" size={24} />
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 animate-fadeIn overflow-y-auto">
+              <div className="bg-white rounded-xl sm:rounded-2xl max-w-2xl w-full shadow-2xl border-2 border-gray-200 overflow-hidden animate-slideUp my-4 sm:my-8">
+                {/* Header con Gradiente Responsive */}
+                <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl flex items-center justify-center ring-2 ring-white/30 flex-shrink-0">
+                      <FiCalendar className="text-white" size={20} />
                     </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-white">
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-lg sm:text-2xl font-bold text-white truncate">
                         {editingSchedule ? 'Editar Programación' : 'Nueva Programación'}
                       </h2>
-                      <p className="text-green-100 text-sm">Configura el envío automático de reportes</p>
+                      <p className="text-green-100 text-xs sm:text-sm hidden sm:block">Configura el envío automático de reportes</p>
                     </div>
                   </div>
                   <button
@@ -415,95 +419,97 @@ export default function ReportesProgramados() {
                       closePdfPreview()
                       setShowModal(false)
                       setEditingSchedule(null)
-                      setFormData({ email: '', scheduleType: 'daily', time: '18:00', dateFrom: getTodayDate(), dateTo: getTodayDate() })
+                      setFormData({ email: '', sendDate: getTodayDate(), time: '18:00', dateFrom: getTodayDate(), dateTo: getTodayDate() })
                     }}
-                    className="w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg flex items-center justify-center transition-all hover:scale-110 ring-2 ring-white/30"
+                    className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg flex items-center justify-center transition-all hover:scale-110 ring-2 ring-white/30 flex-shrink-0 ml-2"
                   >
-                    <FiX className="text-white" size={20} />
+                    <FiX className="text-white" size={18} />
                   </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-5 bg-gradient-to-br from-gray-50 to-white">
+                <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5 bg-gradient-to-br from-gray-50 to-white">
                   {/* Campo Email con Icono */}
-                  <div className="bg-white rounded-xl border-2 border-blue-200 shadow-sm p-4">
-                    <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <FiMail className="text-blue-600" size={18} />
+                  <div className="bg-white rounded-lg sm:rounded-xl border-2 border-blue-200 shadow-sm p-3 sm:p-4">
+                    <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FiMail className="text-blue-600" size={16} />
                       </div>
                       <span>Correo Electrónico</span>
                       <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                      <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                       <input
                         type="email"
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 border-2 border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 text-sm sm:text-base"
                         placeholder="ejemplo@correo.com"
                       />
                     </div>
                   </div>
 
-                  {/* Campo Tipo de Reporte con Icono */}
-                  <div className="bg-white rounded-xl border-2 border-purple-200 shadow-sm p-4">
-                    <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3">
-                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <FiFileText className="text-purple-600" size={18} />
+                  {/* Campo Fecha de Envío con Icono */}
+                  <div className="bg-white rounded-lg sm:rounded-xl border-2 border-purple-200 shadow-sm p-3 sm:p-4">
+                    <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FiCalendar className="text-purple-600" size={16} />
                       </div>
-                      <span>Tipo de Reporte</span>
+                      <span>Fecha de Envío</span>
                       <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <FiCalendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
-                      <select
+                      <FiCalendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                      <input
+                        type="date"
                         required
-                        value={formData.scheduleType}
-                        onChange={(e) => setFormData({ ...formData, scheduleType: e.target.value })}
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 appearance-none bg-white transition-all"
-                      >
-                        <option value="daily">📅 Diario</option>
-                        <option value="weekly">📆 Semanal</option>
-                        <option value="monthly">🗓️ Mensual</option>
-                      </select>
+                        value={formData.sendDate}
+                        onChange={(e) => setFormData({ ...formData, sendDate: e.target.value })}
+                        min={getTodayDate()}
+                        className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 border-2 border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-gray-900 text-sm sm:text-base"
+                      />
                     </div>
+                    <p className="text-xs text-purple-600 mt-2 flex items-center gap-1">
+                      <FiSend size={12} />
+                      Fecha en que se enviará el reporte
+                    </p>
                   </div>
 
-                  {/* Campos de Fecha Desde/Hasta */}
-                  <div className="bg-white rounded-xl border-2 border-indigo-200 shadow-sm p-4">
-                    <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3">
-                      <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                        <FiCalendar className="text-indigo-600" size={18} />
+                  {/* Campos de Rango de Fechas del Reporte */}
+                  <div className="bg-white rounded-lg sm:rounded-xl border-2 border-indigo-200 shadow-sm p-3 sm:p-4">
+                    <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FiCalendar className="text-indigo-600" size={16} />
                       </div>
-                      <span>Rango de Fechas</span>
+                      <span>Rango de Fechas del Reporte PDF</span>
                       <span className="text-red-500">*</span>
                     </label>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-2">Desde</label>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">Desde</label>
                         <div className="relative">
-                          <FiCalendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                          <FiCalendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
                           <input
                             type="date"
                             required
                             value={formData.dateFrom}
                             onChange={(e) => setFormData({ ...formData, dateFrom: e.target.value })}
-                            className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                            className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-gray-900 text-sm sm:text-base"
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-2">Hasta</label>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">Hasta</label>
                         <div className="relative">
-                          <FiCalendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                          <FiCalendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
                           <input
                             type="date"
                             required
                             value={formData.dateTo}
                             onChange={(e) => setFormData({ ...formData, dateTo: e.target.value })}
                             min={formData.dateFrom}
-                            className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                            className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-gray-900 text-sm sm:text-base"
                           />
                         </div>
                       </div>
@@ -515,22 +521,22 @@ export default function ReportesProgramados() {
                   </div>
 
                   {/* Campo Hora con Icono */}
-                  <div className="bg-white rounded-xl border-2 border-orange-200 shadow-sm p-4">
-                    <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3">
-                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <FiClock className="text-orange-600" size={18} />
+                  <div className="bg-white rounded-lg sm:rounded-xl border-2 border-orange-200 shadow-sm p-3 sm:p-4">
+                    <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FiClock className="text-orange-600" size={16} />
                       </div>
                       <span>Hora de Envío</span>
                       <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <FiClock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                      <FiClock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                       <input
                         type="time"
                         required
                         value={formData.time}
                         onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                        className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 border-2 border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all text-gray-900 text-sm sm:text-base"
                       />
                     </div>
                     <p className="text-xs text-orange-600 mt-2 flex items-center gap-1">
@@ -539,22 +545,22 @@ export default function ReportesProgramados() {
                     </p>
                   </div>
 
-                  {/* Botón de Previsualización */}
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 p-4">
+                  {/* Botón de Previsualización Responsive */}
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg sm:rounded-xl border-2 border-blue-200 p-3 sm:p-4">
                     <button
                       type="button"
                       onClick={handlePreviewPDF}
                       disabled={loadingPreview || !formData.dateFrom || !formData.dateTo}
-                      className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:transform-none flex items-center justify-center gap-2"
+                      className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:transform-none flex items-center justify-center gap-2 text-sm sm:text-base"
                     >
                       {loadingPreview ? (
                         <>
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                           <span>Generando PDF...</span>
                         </>
                       ) : (
                         <>
-                          <FiEye size={20} />
+                          <FiEye size={18} />
                           <span>Previsualizar Reporte PDF</span>
                         </>
                       )}
@@ -565,25 +571,25 @@ export default function ReportesProgramados() {
                     </p>
                   </div>
 
-                  {/* Botones con Diseño Mejorado */}
-                  <div className="flex gap-3 pt-4 border-t-2 border-gray-200">
+                  {/* Botones con Diseño Mejorado Responsive */}
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4 border-t-2 border-gray-200">
                     <button
                       type="button"
                       onClick={() => {
                         closePdfPreview()
                         setShowModal(false)
                         setEditingSchedule(null)
-                        setFormData({ email: '', scheduleType: 'daily', time: '18:00', dateFrom: getTodayDate(), dateTo: getTodayDate() })
+                        setFormData({ email: '', sendDate: getTodayDate(), time: '18:00', dateFrom: getTodayDate(), dateTo: getTodayDate() })
                       }}
-                      className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-semibold transition-all shadow-sm hover:shadow"
+                      className="w-full sm:flex-1 px-4 sm:px-6 py-2.5 sm:py-3 border-2 border-gray-300 rounded-lg sm:rounded-xl text-gray-700 hover:bg-gray-50 font-semibold transition-all shadow-sm hover:shadow text-sm sm:text-base"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2"
+                      className="w-full sm:flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2 text-sm sm:text-base"
                     >
-                      <FiCheckCircle size={20} />
+                      <FiCheckCircle size={18} />
                       {editingSchedule ? 'Actualizar' : 'Crear Programación'}
                     </button>
                   </div>

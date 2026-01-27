@@ -55,18 +55,29 @@ export default async function handler(req, res) {
 
         const productsInfo = products.map(p => {
           const productInfo = productsWithStock.find(ps => ps.id === p.id)
+          const requestedQuantity = p.quantity || p.cantidad || 1 // Manejar diferentes nombres de campo
+          const availableStock = productInfo?.stock || 0
+          const inStock = availableStock >= requestedQuantity
+          
           return {
             ...p,
-            stock: productInfo?.stock || 0,
-            inStock: (productInfo?.stock || 0) >= p.quantity,
+            stock: availableStock,
+            quantity: requestedQuantity, // Asegurar que quantity esté definido
+            inStock: inStock,
             description: productInfo?.description || p.description || '',
           }
         })
+        
+        // Calcular estado de stock considerando solo productos encontrados
+        const foundProducts = productsInfo.filter(p => productsWithStock.some(ps => ps.id === p.id))
+        const allInStock = foundProducts.length > 0 && foundProducts.every(p => p.inStock)
+        const someInStock = foundProducts.some(p => p.inStock)
+        
         return {
           ...quote,
           productsParsed: productsInfo,
-          allInStock: productsInfo.every(p => p.inStock),
-          someInStock: productsInfo.some(p => p.inStock),
+          allInStock: allInStock,
+          someInStock: someInStock,
         }
       } catch (e) {
         console.error(`Error parsing products for quote ${quote.id}:`, e)
