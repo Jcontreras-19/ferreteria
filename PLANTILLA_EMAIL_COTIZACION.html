@@ -58,8 +58,6 @@
     </div>
     
     <div class="content">
-      <h2 style="color: #0a6fb7; text-align: center; margin-top: 0;">¡Gracias por tu preferencia!</h2>
-      
       <p>Hola <strong>{{ $json.body.clientNombre || $json.body.name || 'Cliente' }}</strong>,</p>
       
       <p>Adjunto encontrarás tu cotización en formato PDF.</p>
@@ -75,6 +73,8 @@
           <b>Total:</b> {{ new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(parseFloat($json.body.total || 0)) }}
         </p>
       </div>
+      
+      <h2 style="color: #0a6fb7; text-align: center; margin: 20px 0;">¡Gracias por tu preferencia!</h2>
       
       <p>Si tienes alguna consulta o desea realizar algún cambio, no dudes en contactarnos.</p>
       
