@@ -39,9 +39,30 @@ export default async function handler(req, res) {
     const results = []
 
     for (const schedule of activeSchedules) {
-      // Verificar si es la hora programada
-      if (schedule.time !== currentTime) {
-        continue
+      // Verificar si es la hora programada (con tolerancia de 5 minutos)
+      // Como el cron se ejecuta cada 5 minutos, verificamos si la hora programada
+      // está dentro del rango de los últimos 5 minutos
+      const [scheduleHour, scheduleMinute] = schedule.time.split(':').map(Number)
+      const scheduleTimeInMinutes = scheduleHour * 60 + scheduleMinute
+      const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes()
+      
+      // Verificar si la hora programada está dentro de los últimos 5 minutos
+      const timeDifference = currentTimeInMinutes - scheduleTimeInMinutes
+      if (timeDifference < 0 || timeDifference >= 5) {
+        continue // No es la hora programada o ya pasó más de 5 minutos
+      }
+
+      // Verificar si la fecha de envío es hoy (si está configurada)
+      if (schedule.sendDate) {
+        const sendDate = new Date(schedule.sendDate)
+        const today = new Date()
+        if (
+          sendDate.getDate() !== today.getDate() ||
+          sendDate.getMonth() !== today.getMonth() ||
+          sendDate.getFullYear() !== today.getFullYear()
+        ) {
+          continue // No es la fecha programada
+        }
       }
 
       // Verificar si ya se envió hoy (para daily)
@@ -99,6 +120,14 @@ export default async function handler(req, res) {
 
       // Enviar a N8N - Usar webhook específico para reportes programados
       const n8nWebhookUrl = process.env.N8N_REPORTES_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL
+      
+      console.log(`[Reporte Programado] Procesando schedule ${schedule.id}:`)
+      console.log(`  - Email: ${schedule.email}`)
+      console.log(`  - Hora programada: ${schedule.time}`)
+      console.log(`  - Hora actual: ${currentTime}`)
+      console.log(`  - Cotizaciones encontradas: ${quotes.length}`)
+      console.log(`  - N8N Webhook URL configurada: ${n8nWebhookUrl ? 'Sí' : 'No'}`)
+      
       if (n8nWebhookUrl) {
         try {
           // Calcular estadísticas del reporte
@@ -167,6 +196,7 @@ export default async function handler(req, res) {
           })
 
           if (webhookResponse.ok) {
+            console.log(`  ✅ Reporte enviado exitosamente a N8N para ${schedule.email}`)
             // Actualizar lastSent
             await prisma.reportSchedule.update({
               where: { id: schedule.id },
@@ -180,15 +210,17 @@ export default async function handler(req, res) {
               quotesCount: quotes.length
             })
           } else {
+            const errorText = await webhookResponse.text().catch(() => 'No se pudo leer el error')
+            console.error(`  ❌ Error en N8N webhook: Status ${webhookResponse.status}`, errorText)
             results.push({
               scheduleId: schedule.id,
               email: schedule.email,
               status: 'error',
-              error: `N8N webhook responded with status ${webhookResponse.status}`
+              error: `N8N webhook responded with status ${webhookResponse.status}: ${errorText}`
             })
           }
         } catch (webhookError) {
-          console.error(`Error enviando reporte a ${schedule.email}:`, webhookError)
+          console.error(`  ❌ Error enviando reporte a ${schedule.email}:`, webhookError)
           results.push({
             scheduleId: schedule.id,
             email: schedule.email,
@@ -197,6 +229,7 @@ export default async function handler(req, res) {
           })
         }
       } else {
+        console.error(`  ❌ N8N_REPORTES_WEBHOOK_URL o N8N_WEBHOOK_URL no configurada`)
         results.push({
           scheduleId: schedule.id,
           email: schedule.email,
