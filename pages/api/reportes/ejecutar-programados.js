@@ -281,36 +281,8 @@ export default async function handler(req, res) {
           })
           const period = `${periodFrom} - ${periodTo}`
           
-          // Crear FormData
+          // Crear FormData (igual que en cotización normal que funciona)
           const formData = new FormData()
-          
-          // Preparar el PDF para enviar como binary (igual que en otros endpoints que funcionan)
-          const fileName = `reporte-cotizaciones-${schedule.scheduleType}-${startDate.toISOString().split('T')[0]}.pdf`
-          
-          console.log(`  📎 Archivo PDF: ${fileName}, Tamaño Buffer: ${pdfBuffer.length} bytes`)
-          
-          // Verificar que el Buffer tiene contenido
-          if (pdfBuffer.length === 0 || pdfBuffer.length < 100) {
-            console.error(`  ❌ Error: Buffer PDF está vacío o muy pequeño (${pdfBuffer.length} bytes)`)
-            results.push({
-              scheduleId: schedule.id,
-              email: schedule.email,
-              status: 'error',
-              error: `PDF corrupto o vacío (${pdfBuffer.length} bytes)`
-            })
-            continue
-          }
-          
-          // Convertir Buffer a Blob para FormData (igual que en otros endpoints que funcionan)
-          const pdfUint8Array = new Uint8Array(pdfBuffer)
-          const pdfBlob = new Blob([pdfUint8Array], { type: 'application/pdf' })
-          
-          console.log(`  📎 Blob creado: ${pdfBlob.size} bytes (debería ser igual a ${pdfBuffer.length})`)
-          
-          // Verificar que el Blob tiene el mismo tamaño que el Buffer
-          if (pdfBlob.size !== pdfBuffer.length) {
-            console.warn(`  ⚠️ Advertencia: Tamaño del Blob (${pdfBlob.size}) no coincide con el Buffer (${pdfBuffer.length})`)
-          }
           
           // Estructurar datos como objeto body (similar a cambio de precios)
           const bodyPayload = {
@@ -333,7 +305,7 @@ export default async function handler(req, res) {
             createdAt: schedule.createdAt ? new Date(schedule.createdAt).toISOString() : null
           }
           
-          // Agregar el body como JSON stringificado
+          // Agregar el body como JSON stringificado (PRIMERO, igual que en cotización normal)
           formData.append('body', JSON.stringify(bodyPayload))
           
           // También agregar campos individuales para compatibilidad (IMPORTANTE: estos deben estar al nivel raíz del JSON)
@@ -346,11 +318,44 @@ export default async function handler(req, res) {
           formData.append('approvedQuotes', approvedQuotes.toString())
           formData.append('pendingQuotes', pendingQuotes.toString())
           
-          // Agregar el PDF como binary (igual que en otros endpoints que funcionan)
-          // Usar Blob con el nombre del archivo para que N8N lo reconozca como archivo adjunto
+          // Preparar el PDF para enviar como binary (AL FINAL, igual que en cotización normal)
+          const fileName = `reporte-cotizaciones-${schedule.scheduleType}-${startDate.toISOString().split('T')[0]}.pdf`
+          
+          console.log(`  📎 Archivo PDF: ${fileName}, Tamaño Buffer: ${pdfBuffer.length} bytes`)
+          
+          // Verificar que el Buffer tiene contenido
+          if (pdfBuffer.length === 0 || pdfBuffer.length < 100) {
+            console.error(`  ❌ Error: Buffer PDF está vacío o muy pequeño (${pdfBuffer.length} bytes)`)
+            results.push({
+              scheduleId: schedule.id,
+              email: schedule.email,
+              status: 'error',
+              error: `PDF corrupto o vacío (${pdfBuffer.length} bytes)`
+            })
+            continue
+          }
+          
+          // Convertir Buffer a Blob para FormData (igual que en cotización normal que funciona)
+          const pdfUint8Array = new Uint8Array(pdfBuffer)
+          const pdfBlob = new Blob([pdfUint8Array], { type: 'application/pdf' })
+          
+          console.log(`  📎 Blob creado: ${pdfBlob.size} bytes (debería ser igual a ${pdfBuffer.length})`)
+          
+          // Verificar que el Blob tiene el mismo tamaño que el Buffer
+          if (pdfBlob.size !== pdfBuffer.length) {
+            console.warn(`  ⚠️ Advertencia: Tamaño del Blob (${pdfBlob.size}) no coincide con el Buffer (${pdfBuffer.length})`)
+          }
+          
+          // Agregar el PDF como archivo adjunto (AL FINAL, igual que en cotización normal)
           formData.append('pdf', pdfBlob, fileName)
           
+          // También enviar el PDF como base64 como respaldo (por si N8N no recibe el binary correctamente)
+          const pdfBase64 = pdfBuffer.toString('base64')
+          formData.append('pdfBase64', pdfBase64)
+          formData.append('pdfFileName', fileName)
+          
           console.log(`  ✅ PDF agregado al FormData: ${fileName} (${pdfBlob.size} bytes, tipo: application/pdf)`)
+          console.log(`  ✅ PDF también enviado como base64: ${pdfBase64.length} caracteres`)
 
           console.log(`  📤 Enviando a N8N webhook: ${n8nWebhookUrl}`)
           console.log(`  📊 Datos: ${quotes.length} cotizaciones, Total: S/. ${totalAmount.toFixed(2)}`)
