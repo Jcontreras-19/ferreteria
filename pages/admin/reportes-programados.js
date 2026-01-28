@@ -12,10 +12,14 @@ export default function ReportesProgramados() {
   const [schedules, setSchedules] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [editingSchedule, setEditingSchedule] = useState(null)
-  // Función para obtener fecha de hoy en formato YYYY-MM-DD
+  // Función para obtener fecha de hoy en formato YYYY-MM-DD (usando zona horaria local)
   const getTodayDate = () => {
     const today = new Date()
-    return today.toISOString().split('T')[0]
+    // Usar componentes locales en lugar de UTC para evitar problemas de zona horaria
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   }
 
   const [formData, setFormData] = useState({
