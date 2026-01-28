@@ -104,14 +104,6 @@
             <div class="stat-label">Monto Total</div>
             <div class="stat-value">S/. {{ $json["totalAmount"] || $json.totalAmount || ($json.body && ($json.body.totalAmount || (typeof $json.body === 'string' ? JSON.parse($json.body).totalAmount : null))) || "0.00" }}</div>
           </div>
-          <div class="stat-item">
-            <div class="stat-label">Aprobadas</div>
-            <div class="stat-value">{{ $json["approvedQuotes"] || $json.approvedQuotes || 0 }}</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-label">Pendientes</div>
-            <div class="stat-value">{{ $json["pendingQuotes"] || $json.pendingQuotes || 0 }}</div>
-          </div>
         </div>
       </div>
       
