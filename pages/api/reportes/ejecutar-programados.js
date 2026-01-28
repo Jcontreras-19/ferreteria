@@ -211,9 +211,25 @@ export default async function handler(req, res) {
           createdAt: 'desc'
         }
       })
+      
+      console.log(`  📊 Cotizaciones encontradas en el rango: ${quotes.length}`)
+      console.log(`  📅 Rango de fechas: ${startDate.toISOString()} - ${endDate.toISOString()}`)
 
-      // Generar PDF
-      const pdfBuffer = generateQuotesSummaryPDF(quotes, schedule.scheduleType, startDate, endDate)
+      // Generar PDF (incluso si no hay cotizaciones, el PDF mostrará estadísticas en 0)
+      console.log(`  📄 Generando PDF...`)
+      let pdfBuffer
+      try {
+        pdfBuffer = generateQuotesSummaryPDF(quotes, schedule.scheduleType, startDate, endDate)
+      } catch (pdfError) {
+        console.error(`  ❌ Error generando PDF para schedule ${schedule.id}:`, pdfError)
+        results.push({
+          scheduleId: schedule.id,
+          email: schedule.email,
+          status: 'error',
+          error: `Error generando PDF: ${pdfError.message}`
+        })
+        continue
+      }
       
       // Verificar que el PDF se generó correctamente
       if (!pdfBuffer || pdfBuffer.length === 0) {
@@ -227,7 +243,13 @@ export default async function handler(req, res) {
         continue
       }
       
-      console.log(`  📄 PDF generado: ${pdfBuffer.length} bytes`)
+      console.log(`  ✅ PDF generado exitosamente: ${pdfBuffer.length} bytes`)
+      
+      // Verificar que el PDF tiene un tamaño razonable (mínimo 2KB para un PDF válido con contenido)
+      if (pdfBuffer.length < 2048) {
+        console.warn(`  ⚠️ Advertencia: PDF muy pequeño (${pdfBuffer.length} bytes), podría estar corrupto o incompleto`)
+        // No detenemos el proceso, pero registramos la advertencia
+      }
 
       // Enviar a N8N - Usar webhook específico para reportes programados
       const n8nWebhookUrl = process.env.N8N_REPORTES_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL
@@ -262,13 +284,12 @@ export default async function handler(req, res) {
           // Crear FormData
           const formData = new FormData()
           
-          // Convertir Buffer a Blob para FormData (Node.js 18+ tiene Blob global)
-          // Asegurarse de que el Buffer se convierta correctamente
+          // Preparar el PDF para enviar como binary (igual que en otros endpoints que funcionan)
           const fileName = `reporte-cotizaciones-${schedule.scheduleType}-${startDate.toISOString().split('T')[0]}.pdf`
           
           console.log(`  📎 Archivo PDF: ${fileName}, Tamaño Buffer: ${pdfBuffer.length} bytes`)
           
-          // Verificar que el Buffer tiene contenido antes de convertir
+          // Verificar que el Buffer tiene contenido
           if (pdfBuffer.length === 0 || pdfBuffer.length < 100) {
             console.error(`  ❌ Error: Buffer PDF está vacío o muy pequeño (${pdfBuffer.length} bytes)`)
             results.push({
@@ -280,7 +301,7 @@ export default async function handler(req, res) {
             continue
           }
           
-          // Convertir Buffer a Blob - usar el Buffer directamente
+          // Convertir Buffer a Blob para FormData (igual que en otros endpoints que funcionan)
           const pdfUint8Array = new Uint8Array(pdfBuffer)
           const pdfBlob = new Blob([pdfUint8Array], { type: 'application/pdf' })
           
@@ -325,12 +346,11 @@ export default async function handler(req, res) {
           formData.append('approvedQuotes', approvedQuotes.toString())
           formData.append('pendingQuotes', pendingQuotes.toString())
           
-          // Agregar el PDF - usar el Buffer directamente en lugar de Blob para evitar problemas
-          // N8N puede recibir el archivo como Buffer o como Blob, pero es mejor usar el Buffer directamente
+          // Agregar el PDF como binary (igual que en otros endpoints que funcionan)
+          // Usar Blob con el nombre del archivo para que N8N lo reconozca como archivo adjunto
           formData.append('pdf', pdfBlob, fileName)
           
-          // Verificar que el PDF se agregó correctamente al FormData
-          console.log(`  ✅ PDF agregado al FormData: ${fileName} (${pdfBlob.size} bytes)`)
+          console.log(`  ✅ PDF agregado al FormData: ${fileName} (${pdfBlob.size} bytes, tipo: application/pdf)`)
 
           console.log(`  📤 Enviando a N8N webhook: ${n8nWebhookUrl}`)
           console.log(`  📊 Datos: ${quotes.length} cotizaciones, Total: S/. ${totalAmount.toFixed(2)}`)
