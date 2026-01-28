@@ -28,42 +28,104 @@ export default async function handler(req, res) {
     })
 
     if (activeSchedules.length === 0) {
+      console.log('[Reportes Programados] No hay programaciones activas')
       return res.status(200).json({ message: 'No hay programaciones activas' })
     }
+
+    console.log(`[Reportes Programados] Procesando ${activeSchedules.length} programación(es) activa(s)`)
 
     const now = new Date()
     const currentHour = String(now.getHours()).padStart(2, '0')
     const currentMinute = String(now.getMinutes()).padStart(2, '0')
     const currentTime = `${currentHour}:${currentMinute}`
 
+    console.log(`[Reportes Programados] Hora actual: ${currentTime}`)
+
     const results = []
+    const skippedSchedules = [] // Para trackear programaciones saltadas
 
     for (const schedule of activeSchedules) {
       // Verificar si es la hora programada (con tolerancia de 5 minutos)
       // Como el cron se ejecuta cada 5 minutos, verificamos si la hora programada
-      // está dentro del rango de los últimos 5 minutos
+      // está dentro del rango de los últimos 5 minutos (incluyendo el minuto exacto)
       const [scheduleHour, scheduleMinute] = schedule.time.split(':').map(Number)
       const scheduleTimeInMinutes = scheduleHour * 60 + scheduleMinute
       const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes()
       
-      // Verificar si la hora programada está dentro de los últimos 5 minutos
+      // Verificar si la hora programada está dentro del rango de los últimos 5 minutos
+      // Esto permite que funcione aunque el cron no se ejecute exactamente a esa hora
       const timeDifference = currentTimeInMinutes - scheduleTimeInMinutes
-      if (timeDifference < 0 || timeDifference >= 5) {
-        continue // No es la hora programada o ya pasó más de 5 minutos
+      console.log(`[Schedule ${schedule.id}] Hora programada: ${schedule.time}, Hora actual: ${currentTime}, Diferencia: ${timeDifference} minutos`)
+      
+      // Permitir ejecución si:
+      // 1. La hora programada ya pasó (timeDifference >= 0)
+      // 2. No ha pasado más de 5 minutos (timeDifference < 5)
+      // 3. O si es exactamente la hora programada
+      if (timeDifference < 0) {
+        const skipReason = `Hora programada aún no ha llegado (diferencia: ${timeDifference} minutos)`
+        console.log(`[Schedule ${schedule.id}] ⏭️ Saltando: ${skipReason}`)
+        skippedSchedules.push({
+          id: schedule.id,
+          email: schedule.email,
+          time: schedule.time,
+          reason: skipReason,
+          timeDifference
+        })
+        continue // La hora programada aún no ha llegado
+      }
+      
+      if (timeDifference >= 5) {
+        const skipReason = `Hora programada ya pasó hace más de 5 minutos (diferencia: ${timeDifference} minutos)`
+        console.log(`[Schedule ${schedule.id}] ⏭️ Saltando: ${skipReason}`)
+        skippedSchedules.push({
+          id: schedule.id,
+          email: schedule.email,
+          time: schedule.time,
+          reason: skipReason,
+          timeDifference
+        })
+        continue // Ya pasó más de 5 minutos, no ejecutar
       }
 
       // Verificar si la fecha de envío es hoy (si está configurada)
+      // Usar componentes locales para evitar problemas de zona horaria
       if (schedule.sendDate) {
         const sendDate = new Date(schedule.sendDate)
         const today = new Date()
+        
+        // Comparar usando componentes locales (no UTC) para evitar problemas de zona horaria
+        const sendDateLocal = {
+          year: sendDate.getFullYear(),
+          month: sendDate.getMonth(),
+          day: sendDate.getDate()
+        }
+        const todayLocal = {
+          year: today.getFullYear(),
+          month: today.getMonth(),
+          day: today.getDate()
+        }
+        
+        console.log(`[Schedule ${schedule.id}] Fecha de envío: ${sendDateLocal.year}-${String(sendDateLocal.month + 1).padStart(2, '0')}-${String(sendDateLocal.day).padStart(2, '0')}, Hoy: ${todayLocal.year}-${String(todayLocal.month + 1).padStart(2, '0')}-${String(todayLocal.day).padStart(2, '0')}`)
+        
         if (
-          sendDate.getDate() !== today.getDate() ||
-          sendDate.getMonth() !== today.getMonth() ||
-          sendDate.getFullYear() !== today.getFullYear()
+          sendDateLocal.year !== todayLocal.year ||
+          sendDateLocal.month !== todayLocal.month ||
+          sendDateLocal.day !== todayLocal.day
         ) {
+          const skipReason = `Fecha de envío no es hoy (programada: ${sendDateLocal.year}-${String(sendDateLocal.month + 1).padStart(2, '0')}-${String(sendDateLocal.day).padStart(2, '0')}, hoy: ${todayLocal.year}-${String(todayLocal.month + 1).padStart(2, '0')}-${String(todayLocal.day).padStart(2, '0')})`
+          console.log(`[Schedule ${schedule.id}] ⏭️ Saltando: ${skipReason}`)
+          skippedSchedules.push({
+            id: schedule.id,
+            email: schedule.email,
+            time: schedule.time,
+            sendDate: schedule.sendDate,
+            reason: skipReason
+          })
           continue // No es la fecha programada
         }
       }
+      
+      console.log(`[Schedule ${schedule.id}] ✅ Hora y fecha coinciden, procesando...`)
 
       // Verificar si ya se envió hoy (para daily)
       if (schedule.scheduleType === 'daily' && schedule.lastSent) {
@@ -190,10 +252,15 @@ export default async function handler(req, res) {
           // Agregar el PDF
           formData.append('pdf', pdfBlob, fileName)
 
+          console.log(`  📤 Enviando a N8N webhook: ${n8nWebhookUrl}`)
+          console.log(`  📊 Datos: ${quotes.length} cotizaciones, Total: S/. ${totalAmount.toFixed(2)}`)
+          
           const webhookResponse = await fetch(n8nWebhookUrl, {
             method: 'POST',
             body: formData
           })
+          
+          console.log(`  📥 Respuesta de N8N: Status ${webhookResponse.status} ${webhookResponse.statusText}`)
 
           if (webhookResponse.ok) {
             console.log(`  ✅ Reporte enviado exitosamente a N8N para ${schedule.email}`)
@@ -239,10 +306,31 @@ export default async function handler(req, res) {
       }
     }
 
+    console.log(`[Reportes Programados] Proceso completado. Resultados: ${results.length}`)
+    results.forEach((result, index) => {
+      console.log(`  Resultado ${index + 1}: ${result.email} - ${result.status}${result.error ? ` - Error: ${result.error}` : ''}`)
+    })
+
+    // Retornar información detallada para debugging
     return res.status(200).json({
       message: 'Proceso de reportes programados completado',
       processed: results.length,
-      results
+      skipped: skippedSchedules.length,
+      activeSchedules: activeSchedules.length,
+      currentTime: currentTime,
+      results: results,
+      skippedSchedules: skippedSchedules,
+      debug: {
+        totalSchedules: activeSchedules.length,
+        schedulesChecked: activeSchedules.map(s => ({
+          id: s.id,
+          email: s.email,
+          time: s.time,
+          sendDate: s.sendDate,
+          dateFrom: s.dateFrom,
+          dateTo: s.dateTo
+        }))
+      }
     })
   } catch (error) {
     console.error('Error ejecutando reportes programados:', error)
