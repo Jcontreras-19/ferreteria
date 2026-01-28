@@ -34,12 +34,14 @@ export default async function handler(req, res) {
 
     console.log(`[Reportes Programados] Procesando ${activeSchedules.length} programación(es) activa(s)`)
 
+    // Obtener hora actual en zona horaria de Perú (America/Lima, UTC-5)
     const now = new Date()
-    const currentHour = String(now.getHours()).padStart(2, '0')
-    const currentMinute = String(now.getMinutes()).padStart(2, '0')
+    const peruTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Lima' }))
+    const currentHour = String(peruTime.getHours()).padStart(2, '0')
+    const currentMinute = String(peruTime.getMinutes()).padStart(2, '0')
     const currentTime = `${currentHour}:${currentMinute}`
 
-    console.log(`[Reportes Programados] Hora actual: ${currentTime}`)
+    console.log(`[Reportes Programados] Hora actual (UTC): ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}, Hora actual (Perú): ${currentTime}`)
 
     const results = []
     const skippedSchedules = [] // Para trackear programaciones saltadas
@@ -50,7 +52,7 @@ export default async function handler(req, res) {
       // está dentro del rango de los últimos 5 minutos (incluyendo el minuto exacto)
       const [scheduleHour, scheduleMinute] = schedule.time.split(':').map(Number)
       const scheduleTimeInMinutes = scheduleHour * 60 + scheduleMinute
-      const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes()
+      const currentTimeInMinutes = peruTime.getHours() * 60 + peruTime.getMinutes()
       
       // Verificar si la hora programada está dentro del rango de los últimos 5 minutos
       // Esto permite que funcione aunque el cron no se ejecute exactamente a esa hora
@@ -59,7 +61,7 @@ export default async function handler(req, res) {
       
       // Permitir ejecución si:
       // 1. La hora programada ya pasó (timeDifference >= 0)
-      // 2. No ha pasado más de 5 minutos (timeDifference < 5)
+      // 2. No ha pasado más de 5 minutos (timeDifference <= 5) - INCLUSIVE para permitir hasta 5 minutos
       // 3. O si es exactamente la hora programada
       if (timeDifference < 0) {
         const skipReason = `Hora programada aún no ha llegado (diferencia: ${timeDifference} minutos)`
@@ -74,7 +76,7 @@ export default async function handler(req, res) {
         continue // La hora programada aún no ha llegado
       }
       
-      if (timeDifference >= 5) {
+      if (timeDifference > 5) {
         const skipReason = `Hora programada ya pasó hace más de 5 minutos (diferencia: ${timeDifference} minutos)`
         console.log(`[Schedule ${schedule.id}] ⏭️ Saltando: ${skipReason}`)
         skippedSchedules.push({
@@ -87,32 +89,65 @@ export default async function handler(req, res) {
         continue // Ya pasó más de 5 minutos, no ejecutar
       }
 
-      // Verificar si la fecha de envío es hoy (si está configurada)
-      // Usar componentes locales para evitar problemas de zona horaria
+      // Verificar si la fecha de envío es hoy o ayer (si está configurada)
+      // Permitir hasta 24 horas de retraso para ejecuciones que fallaron el día anterior
+      // Usar zona horaria de Perú para comparar fechas
       if (schedule.sendDate) {
         const sendDate = new Date(schedule.sendDate)
-        const today = new Date()
         
-        // Comparar usando componentes locales (no UTC) para evitar problemas de zona horaria
+        // Obtener componentes de fecha en zona horaria de Perú usando Intl.DateTimeFormat
+        const peruFormatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: 'America/Lima',
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric'
+        })
+        
+        // Obtener fecha actual en Perú
+        const todayParts = peruFormatter.formatToParts(now)
+        const todayPeru = {
+          year: parseInt(todayParts.find(p => p.type === 'year').value),
+          month: parseInt(todayParts.find(p => p.type === 'month').value) - 1, // Mes es 0-indexed
+          day: parseInt(todayParts.find(p => p.type === 'day').value)
+        }
+        
+        // Obtener fecha de ayer en Perú
+        const yesterdayDate = new Date(now)
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1)
+        const yesterdayParts = peruFormatter.formatToParts(yesterdayDate)
+        const yesterdayPeru = {
+          year: parseInt(yesterdayParts.find(p => p.type === 'year').value),
+          month: parseInt(yesterdayParts.find(p => p.type === 'month').value) - 1,
+          day: parseInt(yesterdayParts.find(p => p.type === 'day').value)
+        }
+        
+        // Obtener fecha programada en Perú
+        const sendDateParts = peruFormatter.formatToParts(sendDate)
         const sendDateLocal = {
-          year: sendDate.getFullYear(),
-          month: sendDate.getMonth(),
-          day: sendDate.getDate()
-        }
-        const todayLocal = {
-          year: today.getFullYear(),
-          month: today.getMonth(),
-          day: today.getDate()
+          year: parseInt(sendDateParts.find(p => p.type === 'year').value),
+          month: parseInt(sendDateParts.find(p => p.type === 'month').value) - 1,
+          day: parseInt(sendDateParts.find(p => p.type === 'day').value)
         }
         
-        console.log(`[Schedule ${schedule.id}] Fecha de envío: ${sendDateLocal.year}-${String(sendDateLocal.month + 1).padStart(2, '0')}-${String(sendDateLocal.day).padStart(2, '0')}, Hoy: ${todayLocal.year}-${String(todayLocal.month + 1).padStart(2, '0')}-${String(todayLocal.day).padStart(2, '0')}`)
+        const todayLocal = todayPeru
+        const yesterdayLocal = yesterdayPeru
         
-        if (
-          sendDateLocal.year !== todayLocal.year ||
-          sendDateLocal.month !== todayLocal.month ||
-          sendDateLocal.day !== todayLocal.day
-        ) {
-          const skipReason = `Fecha de envío no es hoy (programada: ${sendDateLocal.year}-${String(sendDateLocal.month + 1).padStart(2, '0')}-${String(sendDateLocal.day).padStart(2, '0')}, hoy: ${todayLocal.year}-${String(todayLocal.month + 1).padStart(2, '0')}-${String(todayLocal.day).padStart(2, '0')})`
+        console.log(`[Schedule ${schedule.id}] Fecha de envío: ${sendDateLocal.year}-${String(sendDateLocal.month + 1).padStart(2, '0')}-${String(sendDateLocal.day).padStart(2, '0')}, Hoy: ${todayLocal.year}-${String(todayLocal.month + 1).padStart(2, '0')}-${String(todayLocal.day).padStart(2, '0')}, Ayer: ${yesterdayLocal.year}-${String(yesterdayLocal.month + 1).padStart(2, '0')}-${String(yesterdayLocal.day).padStart(2, '0')}`)
+        
+        // Permitir ejecutar si la fecha programada es hoy o ayer (para permitir ejecuciones retrasadas)
+        const isToday = (
+          sendDateLocal.year === todayLocal.year &&
+          sendDateLocal.month === todayLocal.month &&
+          sendDateLocal.day === todayLocal.day
+        )
+        const isYesterday = (
+          sendDateLocal.year === yesterdayLocal.year &&
+          sendDateLocal.month === yesterdayLocal.month &&
+          sendDateLocal.day === yesterdayLocal.day
+        )
+        
+        if (!isToday && !isYesterday) {
+          const skipReason = `Fecha de envío no es hoy ni ayer (programada: ${sendDateLocal.year}-${String(sendDateLocal.month + 1).padStart(2, '0')}-${String(sendDateLocal.day).padStart(2, '0')}, hoy: ${todayLocal.year}-${String(todayLocal.month + 1).padStart(2, '0')}-${String(todayLocal.day).padStart(2, '0')})`
           console.log(`[Schedule ${schedule.id}] ⏭️ Saltando: ${skipReason}`)
           skippedSchedules.push({
             id: schedule.id,
@@ -121,7 +156,7 @@ export default async function handler(req, res) {
             sendDate: schedule.sendDate,
             reason: skipReason
           })
-          continue // No es la fecha programada
+          continue // No es la fecha programada ni ayer
         }
       }
       
