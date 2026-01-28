@@ -214,6 +214,20 @@ export default async function handler(req, res) {
 
       // Generar PDF
       const pdfBuffer = generateQuotesSummaryPDF(quotes, schedule.scheduleType, startDate, endDate)
+      
+      // Verificar que el PDF se generó correctamente
+      if (!pdfBuffer || pdfBuffer.length === 0) {
+        console.error(`  ❌ Error: PDF generado está vacío para schedule ${schedule.id}`)
+        results.push({
+          scheduleId: schedule.id,
+          email: schedule.email,
+          status: 'error',
+          error: 'PDF generado está vacío'
+        })
+        continue
+      }
+      
+      console.log(`  📄 PDF generado: ${pdfBuffer.length} bytes`)
 
       // Enviar a N8N - Usar webhook específico para reportes programados
       const n8nWebhookUrl = process.env.N8N_REPORTES_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL
@@ -249,9 +263,33 @@ export default async function handler(req, res) {
           const formData = new FormData()
           
           // Convertir Buffer a Blob para FormData (Node.js 18+ tiene Blob global)
+          // Asegurarse de que el Buffer se convierta correctamente
+          const fileName = `reporte-cotizaciones-${schedule.scheduleType}-${startDate.toISOString().split('T')[0]}.pdf`
+          
+          console.log(`  📎 Archivo PDF: ${fileName}, Tamaño Buffer: ${pdfBuffer.length} bytes`)
+          
+          // Verificar que el Buffer tiene contenido antes de convertir
+          if (pdfBuffer.length === 0 || pdfBuffer.length < 100) {
+            console.error(`  ❌ Error: Buffer PDF está vacío o muy pequeño (${pdfBuffer.length} bytes)`)
+            results.push({
+              scheduleId: schedule.id,
+              email: schedule.email,
+              status: 'error',
+              error: `PDF corrupto o vacío (${pdfBuffer.length} bytes)`
+            })
+            continue
+          }
+          
+          // Convertir Buffer a Blob - usar el Buffer directamente
           const pdfUint8Array = new Uint8Array(pdfBuffer)
           const pdfBlob = new Blob([pdfUint8Array], { type: 'application/pdf' })
-          const fileName = `reporte-cotizaciones-${schedule.scheduleType}-${startDate.toISOString().split('T')[0]}.pdf`
+          
+          console.log(`  📎 Blob creado: ${pdfBlob.size} bytes (debería ser igual a ${pdfBuffer.length})`)
+          
+          // Verificar que el Blob tiene el mismo tamaño que el Buffer
+          if (pdfBlob.size !== pdfBuffer.length) {
+            console.warn(`  ⚠️ Advertencia: Tamaño del Blob (${pdfBlob.size}) no coincide con el Buffer (${pdfBuffer.length})`)
+          }
           
           // Estructurar datos como objeto body (similar a cambio de precios)
           const bodyPayload = {
@@ -287,8 +325,12 @@ export default async function handler(req, res) {
           formData.append('approvedQuotes', approvedQuotes.toString())
           formData.append('pendingQuotes', pendingQuotes.toString())
           
-          // Agregar el PDF
+          // Agregar el PDF - usar el Buffer directamente en lugar de Blob para evitar problemas
+          // N8N puede recibir el archivo como Buffer o como Blob, pero es mejor usar el Buffer directamente
           formData.append('pdf', pdfBlob, fileName)
+          
+          // Verificar que el PDF se agregó correctamente al FormData
+          console.log(`  ✅ PDF agregado al FormData: ${fileName} (${pdfBlob.size} bytes)`)
 
           console.log(`  📤 Enviando a N8N webhook: ${n8nWebhookUrl}`)
           console.log(`  📊 Datos: ${quotes.length} cotizaciones, Total: S/. ${totalAmount.toFixed(2)}`)
