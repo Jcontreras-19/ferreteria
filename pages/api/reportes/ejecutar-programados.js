@@ -277,18 +277,24 @@ export default async function handler(req, res) {
           // Agregar el body como JSON stringificado
           formData.append('body', JSON.stringify(bodyPayload))
           
-          // También agregar campos individuales para compatibilidad
+          // También agregar campos individuales para compatibilidad (IMPORTANTE: estos deben estar al nivel raíz del JSON)
           formData.append('email', schedule.email)
           formData.append('reportType', schedule.scheduleType)
+          formData.append('reportTypeLabel', bodyPayload.reportTypeLabel)
           formData.append('period', period)
           formData.append('totalQuotes', quotes.length.toString())
           formData.append('totalAmount', totalAmount.toFixed(2))
+          formData.append('approvedQuotes', approvedQuotes.toString())
+          formData.append('pendingQuotes', pendingQuotes.toString())
           
           // Agregar el PDF
           formData.append('pdf', pdfBlob, fileName)
 
           console.log(`  📤 Enviando a N8N webhook: ${n8nWebhookUrl}`)
           console.log(`  📊 Datos: ${quotes.length} cotizaciones, Total: S/. ${totalAmount.toFixed(2)}`)
+          console.log(`  📧 Email a enviar: ${schedule.email}`)
+          console.log(`  📋 Body payload (string): ${JSON.stringify(bodyPayload)}`)
+          console.log(`  ✅ Email agregado directamente al FormData: ${schedule.email}`)
           
           const webhookResponse = await fetch(n8nWebhookUrl, {
             method: 'POST',
