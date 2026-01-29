@@ -40,10 +40,10 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'No autorizado' })
     }
 
-    // Solo admin y superadmin pueden autorizar despachos
+    // Solo admin y superadmin pueden autorizar cotizaciones
     const allowedRoles = ['admin', 'superadmin']
     if (!allowedRoles.includes(user.role)) {
-      return res.status(403).json({ error: 'Solo administradores pueden autorizar despachos' })
+      return res.status(403).json({ error: 'Solo administradores pueden autorizar cotizaciones' })
     }
 
     const { id } = req.query
@@ -292,6 +292,6 @@ export default async function handler(req, res) {
     })
   } catch (error) {
     console.error('Error authorizing dispatch:', error)
-    return res.status(500).json({ error: 'Error al autorizar despacho' })
+    return res.status(500).json({ error: 'Error al autorizar cotización' })
   }
 }

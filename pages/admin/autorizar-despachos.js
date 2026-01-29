@@ -226,17 +226,17 @@ export default function AutorizarDespachos() {
       const data = await res.json()
 
       if (res.ok) {
-        showNotification(data.message || 'Despacho autorizado exitosamente', 'success')
+        showNotification(data.message || 'Cotización autorizada exitosamente', 'success')
         setShowActionModal(false)
         setShowDetailModal(false)
         setClientEmail('')
         fetchQuotes()
       } else {
-        showNotification(data.error || 'Error al autorizar despacho', 'error')
+        showNotification(data.error || 'Error al autorizar cotización', 'error')
       }
     } catch (error) {
       console.error('Error authorizing dispatch:', error)
-      showNotification('Error de red al autorizar despacho', 'error')
+      showNotification('Error de red al autorizar cotización', 'error')
     } finally {
       setProcessing(false)
     }
@@ -508,7 +508,7 @@ export default function AutorizarDespachos() {
       doc.text('CORPORACIÓN GRC', pageWidth - margin, 12, { align: 'right' })
       doc.setFontSize(12)
       doc.setFont('helvetica', 'normal')
-      doc.text('Reporte de Autorización de Despachos', pageWidth - margin, 20, { align: 'right' })
+      doc.text('Reporte de Autorización de Cotizaciones', pageWidth - margin, 20, { align: 'right' })
       doc.setFontSize(8)
       doc.text('ISO 9001:2015', pageWidth - margin, 26, { align: 'right' })
 
@@ -670,7 +670,7 @@ export default function AutorizarDespachos() {
   return (
     <AdminLayout user={user} loading={false}>
       <Head>
-        <title>Autorizar Despachos - Panel Admin</title>
+        <title>Autorizar Cotizaciones - Panel Admin</title>
       </Head>
 
       <div className="space-y-4">
@@ -678,7 +678,7 @@ export default function AutorizarDespachos() {
         <div className="bg-white rounded-xl shadow-md border border-gray-200 p-3">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h1 className="text-xl font-bold text-gray-900 uppercase tracking-wide">AUTORIZAR DESPACHOS</h1>
+              <h1 className="text-xl font-bold text-gray-900 uppercase tracking-wide">AUTORIZAR COTIZACIONES</h1>
               <p className="text-gray-600 text-xs mt-0.5">
                 {quotes.length} cotización{quotes.length !== 1 ? 'es' : ''} pendiente{quotes.length !== 1 ? 's' : ''}
               </p>
@@ -1548,7 +1548,7 @@ export default function AutorizarDespachos() {
                 <FiCheckCircle className="text-white" size={24} />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white">Autorizar Despacho</h3>
+                <h3 className="text-xl font-bold text-white">Autorizar Cotización</h3>
                 <p className="text-green-100 text-sm">Cotización #{selectedQuote.quoteNumber || 'N/A'}</p>
               </div>
             </div>
@@ -1592,7 +1592,7 @@ export default function AutorizarDespachos() {
                   <div className="text-sm text-green-800 flex-1">
                     <p className="font-bold text-base mb-3 flex items-center gap-2">
                       <FiInfo size={16} />
-                      Al autorizar este despacho:
+                      Al autorizar esta cotización:
                     </p>
                     <ul className="list-disc list-inside space-y-2 text-gray-700">
                       <li className="flex items-start gap-2">
@@ -1639,7 +1639,7 @@ export default function AutorizarDespachos() {
                 ) : (
                   <>
                     <FiCheckCircle size={18} />
-                    <span>Autorizar Despacho</span>
+                    <span>Autorizar Cotización</span>
                   </>
                 )}
               </button>

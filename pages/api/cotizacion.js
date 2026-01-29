@@ -51,7 +51,7 @@ export default async function handler(req, res) {
         : null,
     }
     
-    // Si es Super Admin, crear la cotización con status 'approved' para que vaya directo a "Autorizar Despachos"
+    // Si es Super Admin, crear la cotización con status 'approved' para que vaya directo a "Autorizar Cotizaciones"
     // Si no es Super Admin, crear con status 'pending' (flujo normal: espera aprobación del cotizador)
     const initialStatus = isSuperAdmin ? 'approved' : 'pending'
     
