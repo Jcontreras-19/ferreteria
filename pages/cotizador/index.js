@@ -41,6 +41,17 @@ export default function CotizadorPanel() {
     }
   }, [user, statusFilter])
 
+  // Refresco automático periódico para que el cotizador vea cambios casi en tiempo real
+  useEffect(() => {
+    if (!user) return
+
+    const interval = setInterval(() => {
+      fetchQuotes()
+    }, 10000)
+
+    return () => clearInterval(interval)
+  }, [user, statusFilter])
+
   useEffect(() => {
     if (queryStatus) {
       setStatusFilter(queryStatus)

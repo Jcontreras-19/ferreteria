@@ -29,7 +29,6 @@ export default function AdminCotizaciones() {
 
   useEffect(() => {
     checkAuth()
-    fetchQuotes()
   }, [])
 
   const checkAuth = async () => {
@@ -57,9 +56,11 @@ export default function AdminCotizaciones() {
     }
   }
 
-  const fetchQuotes = async () => {
+  const fetchQuotes = useCallback(async () => {
     try {
-      const res = await fetch('/api/cotizaciones')
+      const res = await fetch('/api/cotizaciones', {
+        headers: { 'Cache-Control': 'no-cache' },
+      })
       if (res.ok) {
         const data = await res.json()
         setQuotes(data)
@@ -67,7 +68,20 @@ export default function AdminCotizaciones() {
     } catch (error) {
       console.error('Error fetching quotes:', error)
     }
-  }
+  }, [])
+
+  // Refresco automático periódico para ver cambios casi en tiempo real
+  useEffect(() => {
+    // Cargar una vez al montar
+    fetchQuotes()
+
+    // Actualizar cada 10 segundos
+    const interval = setInterval(() => {
+      fetchQuotes()
+    }, 10000)
+
+    return () => clearInterval(interval)
+  }, [fetchQuotes])
 
   const filteredQuotes = quotes.filter(quote => {
     const matchesSearch = searchQuery === '' ||

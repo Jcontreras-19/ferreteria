@@ -103,6 +103,17 @@ export default function AutorizarDespachos() {
     }
   }, [user, fetchQuotes])
 
+  // Refresco automático periódico para ver estados en casi tiempo real
+  useEffect(() => {
+    if (!user) return
+
+    const interval = setInterval(() => {
+      fetchQuotes()
+    }, 10000)
+
+    return () => clearInterval(interval)
+  }, [user, fetchQuotes])
+
   const getStockBadge = (quote) => {
     if (quote.allInStock) {
       return { text: 'En Stock', class: 'bg-green-100 text-green-800 border-2 border-green-300' }
