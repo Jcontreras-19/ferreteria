@@ -181,12 +181,18 @@ export default function AdminCotizaciones() {
       
       filteredQuotes.forEach(quote => {
         let products = []
+        let notFoundProducts = []
         try {
           const parsed = typeof quote.products === 'string' ? JSON.parse(quote.products) : quote.products
           products = parsed.items || parsed
           if (!Array.isArray(products)) products = []
+
+          // Productos no encontrados (si existen)
+          notFoundProducts = (parsed.notFoundProducts || []).filter(p => p && p.name && p.name.trim() !== '')
+          if (!Array.isArray(products)) products = []
         } catch (e) {
           products = []
+          notFoundProducts = []
         }
 
         // Formatear fecha
@@ -200,7 +206,7 @@ export default function AdminCotizaciones() {
         }
 
         // Si no hay productos, crear una fila con datos de la cotización
-        if (products.length === 0) {
+        if (products.length === 0 && notFoundProducts.length === 0) {
           data.push({
             'N° Cotización': quote.quoteNumber || 'N/A',
             'Fecha': formatDate(quote.createdAt),
@@ -210,7 +216,9 @@ export default function AdminCotizaciones() {
             'P. Unitario': 0,
             'Estado': getStatusLabel(quote.status),
             'Productos': 'Sin productos',
+            'Productos No Encontrados': '',
             'Número de celular o whtsp': quote.whatsapp || quote.phone || 'N/A',
+            'Motivo Rechazo': quote.rejectionReason || '',
           })
         } else {
           // Crear una fila por cada producto
@@ -227,7 +235,28 @@ export default function AdminCotizaciones() {
               'P. Unitario': parseFloat(unitPrice.toFixed(2)),
               'Estado': getStatusLabel(quote.status),
               'Productos': product.name || 'N/A',
+              'Productos No Encontrados': '',
               'Número de celular o whtsp': quote.whatsapp || quote.phone || 'N/A',
+              'Motivo Rechazo': quote.rejectionReason || '',
+            })
+          })
+
+          // Agregar filas para productos NO encontrados (si existen)
+          notFoundProducts.forEach(product => {
+            const quantity = product.quantity || 1
+
+            data.push({
+              'N° Cotización': quote.quoteNumber || 'N/A',
+              'Fecha': formatDate(quote.createdAt),
+              'Email': quote.email || 'N/A',
+              'Total': quote.total || 0,
+              'Cantidad': quantity,
+              'P. Unitario': 0,
+              'Estado': getStatusLabel(quote.status),
+              'Productos': `${product.name || 'N/A'} (NO ENCONTRADO)`,
+              'Productos No Encontrados': product.description || '',
+              'Número de celular o whtsp': quote.whatsapp || quote.phone || 'N/A',
+              'Motivo Rechazo': quote.rejectionReason || '',
             })
           })
         }
@@ -261,7 +290,7 @@ export default function AdminCotizaciones() {
 
       // Agregar logo/icono de la empresa
       worksheet.insertRow(1, [''])
-      worksheet.mergeCells('A1:I1')
+      worksheet.mergeCells('A1:K1')
       const logoCell = worksheet.getCell('A1')
       logoCell.value = 'CORPORACIÓN GRC'
       logoCell.font = {
@@ -281,7 +310,7 @@ export default function AdminCotizaciones() {
 
       // Información de la empresa
       worksheet.insertRow(2, [''])
-      worksheet.mergeCells('A2:I2')
+      worksheet.mergeCells('A2:K2')
       const companyCell = worksheet.getCell('A2')
       companyCell.value = 'SERVICIOS DE APOYO A LAS EMPRESAS - ISO 9001:2015'
       companyCell.font = {
@@ -295,7 +324,7 @@ export default function AdminCotizaciones() {
 
       // Fecha de exportación
       worksheet.insertRow(3, [''])
-      worksheet.mergeCells('A3:I3')
+      worksheet.mergeCells('A3:J3')
       const dateCell = worksheet.getCell('A3')
       dateCell.value = `Fecha de exportación: ${new Date().toLocaleDateString('es-PE', {
         year: 'numeric',
@@ -318,7 +347,19 @@ export default function AdminCotizaciones() {
       worksheet.getRow(4).height = 5
 
       // Encabezados
-      const headers = ['N° Cotización', 'Fecha', 'Email', 'Total', 'Cantidad', 'P. Unitario', 'Estado', 'Productos', 'Número de celular o whtsp']
+      const headers = [
+        'N° Cotización',
+        'Fecha',
+        'Email',
+        'Total',
+        'Cantidad',
+        'P. Unitario',
+        'Estado',
+        'Productos',
+        'Productos No Encontrados',
+        'Número de celular o whtsp',
+        'Motivo Rechazo',
+      ]
       const headerRow = worksheet.addRow(headers)
       
       headerRow.eachCell((cell) => {
@@ -340,7 +381,9 @@ export default function AdminCotizaciones() {
           rowData['P. Unitario'],
           rowData['Estado'],
           rowData['Productos'],
-          rowData['Número de celular o whtsp']
+          rowData['Productos No Encontrados'],
+          rowData['Número de celular o whtsp'],
+          rowData['Motivo Rechazo']
         ])
 
         // Aplicar formato y alineación a cada celda
@@ -358,11 +401,29 @@ export default function AdminCotizaciones() {
           // Aplicar bordes negros
           cell.border = blackBorder
 
-          // Fondo alternado
-          if (index % 2 === 0) {
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
-          } else {
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } }
+          // Fondo alternado base
+          const isEven = index % 2 === 0
+          const baseColor = isEven ? 'FFFFFFFF' : 'FFF9FAFB'
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: baseColor } }
+
+          // Resaltar celda de Estado según el valor
+          if (colNumber === 7) {
+            const status = rowData['Estado']
+            const statusColors = {
+              'Pendiente': { bg: 'FFFEF3C7', text: 'FF92400E' },   // amarillo
+              'Enviada': { bg: 'FFDBEAFE', text: 'FF1D4ED8' },     // azul
+              'Aprobada': { bg: 'FFEDE9FE', text: 'FF5B21B6' },    // violeta
+              'Completada': { bg: 'FFDCFCE7', text: 'FF166534' },  // verde
+              'Rechazada': { bg: 'FFFEE2E2', text: 'FF991B1B' },   // rojo
+            }
+            const colors = statusColors[status] || { bg: baseColor, text: 'FF111827' }
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.bg } }
+            cell.font = {
+              name: 'Arial',
+              size: 10,
+              bold: true,
+              color: { argb: colors.text }
+            }
           }
 
           // Aplicar alineación CENTRADA AL FINAL (asegura que se aplique correctamente)
@@ -387,7 +448,9 @@ export default function AdminCotizaciones() {
       worksheet.getColumn(6).width = 12 // P. Unitario
       worksheet.getColumn(7).width = 15 // Estado
       worksheet.getColumn(8).width = 40 // Productos
-      worksheet.getColumn(9).width = 25 // Número de celular
+      worksheet.getColumn(9).width = 35 // Productos No Encontrados
+      worksheet.getColumn(10).width = 25 // Número de celular
+      worksheet.getColumn(11).width = 35 // Motivo Rechazo
 
       // Generar archivo
       const buffer = await workbook.xlsx.writeBuffer()
