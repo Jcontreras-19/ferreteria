@@ -66,7 +66,7 @@ export function AuthProvider({ children }) {
     if (!user) return
 
     let idleTimer
-    const INACTIVITY_LIMIT_MS = 5 * 60 * 1000 // 5 minutos
+    const INACTIVITY_LIMIT_MS = 2 * 60 * 1000 // 2 minutos
 
     const resetTimer = () => {
       if (idleTimer) clearTimeout(idleTimer)
