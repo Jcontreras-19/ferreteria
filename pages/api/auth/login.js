@@ -35,12 +35,11 @@ export default async function handler(req, res) {
 
     const token = generateToken(user)
 
-    // Configurar cookie con opciones mejoradas
+    // Configurar cookie de sesión (se elimina al cerrar el navegador)
     const cookieOptions = [
       `token=${token}`,
       'HttpOnly',
       'Path=/',
-      `Max-Age=${7 * 24 * 60 * 60}`,
       'SameSite=Lax',
       process.env.NODE_ENV === 'production' ? 'Secure' : ''
     ].filter(Boolean).join('; ')

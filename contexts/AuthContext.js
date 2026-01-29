@@ -61,6 +61,33 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // Cerrar sesión automáticamente tras 5 minutos de inactividad
+  useEffect(() => {
+    if (!user) return
+
+    let idleTimer
+    const INACTIVITY_LIMIT_MS = 5 * 60 * 1000 // 5 minutos
+
+    const resetTimer = () => {
+      if (idleTimer) clearTimeout(idleTimer)
+      idleTimer = setTimeout(() => {
+        console.log('AuthContext: Sesión cerrada por inactividad')
+        logout()
+      }, INACTIVITY_LIMIT_MS)
+    }
+
+    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
+    events.forEach((event) => window.addEventListener(event, resetTimer))
+
+    // Iniciar el temporizador cuando el usuario está autenticado
+    resetTimer()
+
+    return () => {
+      if (idleTimer) clearTimeout(idleTimer)
+      events.forEach((event) => window.removeEventListener(event, resetTimer))
+    }
+  }, [user, logout])
+
   return (
     <AuthContext.Provider
       value={{
